@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile · Community</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Spectral:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #4A90E2;
+            --light-blue: #E8F4F8;
+            --lighter-blue: #F5FBFD;
+            --dark-blue: #2C5F8D;
+            --text-dark: #1a2332;
+            --text-medium: #4a5568;
+            --text-light: #718096;
+            --border-color: #d4e8f0;
+            --white: #ffffff;
+            --error: #E74C3C;
+            --success: #27AE60;
+            --shadow-sm: 0 1px 3px rgba(74,144,226,0.08);
+            --shadow-md: 0 4px 12px rgba(74,144,226,0.12);
+            --shadow-lg: 0 10px 30px rgba(74,144,226,0.15);
+            --admin-gold: #F6C90E;
+            --admin-gold-dark: #C9A800;
+            --admin-gradient: linear-gradient(135deg,#F6C90E 0%,#FF8C00 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        h1,h2,h3,h4 { font-family: 'Spectral', serif; font-weight: 700; }
+
+        /* ── Header ── */
+        header {
+            background: var(--white);
+            padding: 1.25rem 2rem;
+            box-shadow: var(--shadow-sm);
+            border-bottom: 2px solid var(--border-color);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header-content { max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-family: 'Spectral', serif; font-size: 1.75rem; font-weight: 700; color: var(--primary-blue); text-decoration: none; }
+        .admin-header-glow { box-shadow: 0 2px 0 var(--admin-gold); }
+
+        /* ── Loading / Auth screens ── */
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        .center-msg { text-align: center; padding: 4rem 2rem; }
+        .center-msg h2 { color: var(--text-medium); margin-bottom: 1rem; }
+
+        /* ── Profile Page Layout ── */
+        .page-wrap {
+            max-width: 900px; margin: 2.5rem auto; padding: 0 2rem;
+            display: flex; flex-direction: column; gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--white); border-radius: 18px; padding: 2rem;
+            box-shadow: var(--shadow-md); border: 1px solid var(--border-color);
+        }
+        .card-title {
+            font-size: 1.3rem; color: var(--primary-blue); margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem; border-bottom: 2px solid var(--light-blue);
+        }
+
+        /* avatar row */
+        .avatar-row { display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; }
+        .avatar-wrap { position: relative; display: inline-block; }
+        .profile-avatar {
+            width: 110px; height: 110px; border-radius: 50%; object-fit: cover;
+            border: 4px solid var(--primary-blue); box-shadow: var(--shadow-md);
+            transition: opacity 0.3s;
+        }
+        .avatar-wrap:hover .avatar-overlay { opacity: 1; }
+        .avatar-overlay {
+            position: absolute; inset: 0; border-radius: 50%;
+            background: rgba(74,144,226,0.55); display: flex; align-items: center;
+            justify-content: center; opacity: 0; transition: opacity 0.2s; cursor: pointer;
+            font-size: 1.4rem; color: white;
+        }
+        .admin-avatar { border-color: var(--admin-gold); box-shadow: 0 0 0 3px rgba(246,201,14,0.3); }
+
+        /* username + email display */
+        .profile-meta h2 { font-size: 1.6rem; }
+        .profile-meta p  { color: var(--text-medium); margin-top: 0.25rem; }
+
+        .admin-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            background: var(--admin-gradient); color: #1a1a1a;
+            padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem;
+            font-weight: 700; letter-spacing: 0.08em; margin-left: 0.5rem;
+            box-shadow: 0 2px 8px rgba(246,201,14,0.4); vertical-align: middle;
+        }
+
+        /* form elements */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        @media(max-width:600px) { .form-row { grid-template-columns: 1fr; } .avatar-row { flex-direction: column; } }
+
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; margin-bottom: 0.4rem; font-weight: 500; color: var(--text-dark); font-size: 0.95rem; }
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%; padding: 0.8rem 1rem; border: 2px solid var(--border-color);
+            border-radius: 10px; font-size: 1rem; font-family: 'DM Sans', sans-serif;
+            background: var(--lighter-blue); transition: all 0.25s;
+        }
+        input:focus { outline: none; border-color: var(--primary-blue); background: var(--white); }
+        input:disabled { background: #f0f0f0; color: var(--text-light); cursor: not-allowed; }
+
+        .btn {
+            padding: 0.8rem 1.75rem; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: 500; cursor: pointer;
+            transition: all 0.25s; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-primary { background: var(--primary-blue); color: var(--white); }
+        .btn-primary:hover { background: var(--dark-blue); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-danger  { background: var(--error); color: var(--white); }
+        .btn-danger:hover { background: #c0392b; transform: translateY(-1px); }
+        .btn-back { background: var(--lighter-blue); color: var(--text-dark); border: 2px solid var(--border-color); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.2rem; border-radius: 10px; font-weight: 500; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; }
+        .btn-back:hover { background: var(--light-blue); border-color: var(--primary-blue); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            padding: 1rem 1.5rem; border-radius: 12px; font-weight: 500;
+            box-shadow: var(--shadow-lg); z-index: 9999;
+            transform: translateY(120%); transition: transform 0.35s cubic-bezier(.25,.8,.25,1);
+            max-width: 340px;
+        }
+        .toast.show { transform: translateY(0); }
+        .toast.success { background: var(--success); color: white; }
+        .toast.error   { background: var(--error);   color: white; }
+
+        /* Section divider */
+        .section-hint { font-size: 0.875rem; color: var(--text-light); margin-bottom: 1rem; }
+
+        /* Password strength */
+        .pw-strength { height: 4px; border-radius: 4px; margin-top: 0.4rem; transition: all 0.3s; background: #eee; }
+        .pw-strength.weak   { background: var(--error);   width: 33%; }
+        .pw-strength.medium { background: #F6C90E; width: 66%; }
+        .pw-strength.strong { background: var(--success); width: 100%; }
+    </style>
+</head>
+<body>
+
+<header id="mainHeader">
+    <div class="header-content">
+        <a href="/" class="logo">Community</a>
+        <a href="/" class="btn-back">← Back to Feed</a>
+    </div>
+</header>
+
+<div id="loadingScreen" class="screen active center-msg">
+    <h2>Loading your profile…</h2>
+</div>
+
+<div id="notLoggedIn" class="screen center-msg">
+    <h2>You're not logged in</h2>
+    <p style="color:var(--text-medium);margin-top:0.5rem;">Please <a href="/" style="color:var(--primary-blue);">return to the community</a> and sign in first.</p>
+</div>
+
+<div id="profilePage" class="screen">
+    <div class="page-wrap">
+
+        <!-- Avatar + name card -->
+        <div class="card">
+            <h2 class="card-title">My Profile</h2>
+            <div class="avatar-row">
+                <div class="avatar-wrap" onclick="document.getElementById('avatarInput').click()" title="Change photo">
+                    <img id="avatarImg" src="https://via.placeholder.com/110" class="profile-avatar">
+                    <div class="avatar-overlay">📷</div>
+                </div>
+                <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(event)">
+                <div class="profile-meta">
+                    <h2 id="displayUsername">Username <span id="adminBadge" style="display:none;" class="admin-badge">⚡ ADMIN</span></h2>
+                    <p id="displayEmail" style="color:var(--text-medium);"></p>
+                    <p style="color:var(--text-light);font-size:0.85rem;margin-top:0.25rem;">Click the photo to change it</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Username card -->
+        <div class="card">
+            <h3 class="card-title">Display Name</h3>
+            <div class="form-group">
+                <label for="newUsername">Username</label>
+                <input type="text" id="newUsername" placeholder="Your display name">
+            </div>
+            <button class="btn btn-primary" onclick="saveUsername()">Save Username</button>
+        </div>
+
+        <!-- Email card -->
+        <div class="card">
+            <h3 class="card-title">Change Email</h3>
+            <p class="section-hint">You'll need to enter your current password to change your email address.</p>
+            <div class="form-group">
+                <label for="newEmail">New Email Address</label>
+                <input type="email" id="newEmail" placeholder="new@example.com">
+            </div>
+            <div class="form-group">
+                <label for="emailPassword">Current Password</label>
+                <input type="password" id="emailPassword" placeholder="Your current password">
+            </div>
+            <button class="btn btn-primary" onclick="changeEmail()">Update Email</button>
+        </div>
+
+        <!-- Password card -->
+        <div class="card">
+            <h3 class="card-title">Change Password</h3>
+            <p class="section-hint">Passwords must be at least 6 characters.</p>
+            <div class="form-group">
+                <label for="currentPassword">Current Password</label>
+                <input type="password" id="currentPassword" placeholder="Your current password">
+            </div>
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" placeholder="New password" oninput="checkStrength(this.value)">
+                <div class="pw-strength" id="pwStrength"></div>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm New Password</label>
+                <input type="password" id="confirmPassword" placeholder="Confirm new password">
+            </div>
+            <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="card" style="border:2px solid #fde8e8;">
+            <h3 class="card-title" style="color:var(--error);">Danger Zone</h3>
+            <p style="color:var(--text-medium);margin-bottom:1.25rem;">Logging out will take you back to the home page.</p>
+            <button class="btn btn-danger" onclick="doLogout()">Log Out</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import {
+    getAuth, onAuthStateChanged, signOut,
+    updateEmail, updatePassword, reauthenticateWithCredential,
+    EmailAuthProvider, GoogleAuthProvider, reauthenticateWithPopup
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDzQlAqhCeytCLEYafboYGpFu6pY3Kv9WE",
+    authDomain: "allforonemedia-9a7d8.firebaseapp.com",
+    projectId: "allforonemedia-9a7d8",
+    storageBucket: "allforonemedia-9a7d8.firebasestorage.app",
+    messagingSenderId: "892787060584",
+    appId: "1:892787060584:web:e65609062592f9ba96f0dd"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+const CLOUDINARY_CLOUD_NAME    = 'dgrmpcha9';
+const CLOUDINARY_UPLOAD_PRESET = 'AllForOne Posts';
+
+let currentUser  = null;
+let userData     = null;
+
+// ── Screens ─────────────────────────────────────────────────────
+function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+// ── Toast ───────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className   = `toast ${type}`;
+    void el.offsetWidth;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ── Auth state ──────────────────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+    if (!user) { show('notLoggedIn'); return; }
+    currentUser = user;
+
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (!snap.exists()) { show('notLoggedIn'); return; }
+    userData = snap.data();
+
+    if (!userData.approved) { show('notLoggedIn'); return; }
+
+    populateProfile();
+    show('profilePage');
+
+    if (userData.isAdmin) {
+        document.getElementById('mainHeader').classList.add('admin-header-glow');
+    }
+});
+
+function populateProfile() {
+    document.getElementById('avatarImg').src = userData.profilePicture || 'https://via.placeholder.com/110';
+    if (userData.isAdmin) {
+        document.getElementById('avatarImg').classList.add('admin-avatar');
+        document.getElementById('adminBadge').style.display = 'inline-flex';
+    }
+    document.getElementById('displayUsername').childNodes[0].nodeValue = userData.username + ' ';
+    document.getElementById('displayEmail').textContent = currentUser.email;
+    document.getElementById('newUsername').value = userData.username;
+    document.getElementById('newEmail').value = currentUser.email;
+}
+
+// ── Upload avatar ───────────────────────────────────────────────
+window.uploadAvatar = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method:'POST', body:fd });
+        const data = await res.json();
+        const url  = data.secure_url;
+
+        await updateDoc(doc(db, 'users', currentUser.uid), { profilePicture: url });
+        userData.profilePicture = url;
+        document.getElementById('avatarImg').src = url;
+        toast('Profile picture updated!');
+    } catch (e) { toast('Upload failed: ' + e.message, 'error'); }
+};
+
+// ── Save username ───────────────────────────────────────────────
+window.saveUsername = async () => {
+    const val = document.getElementById('newUsername').value.trim();
+    if (!val) { toast('Username cannot be empty', 'error'); return; }
+    try {
+        await updateDoc(doc(db, 'users', currentUser.uid), { username: val });
+        userData.username = val;
+        document.getElementById('displayUsername').childNodes[0].nodeValue = val + ' ';
+        toast('Username updated!');
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+};
+
+// ── Reauthenticate helper ───────────────────────────────────────
+async function reauth(password) {
+    // Check if user signed in with Google
+    const isGoogle = currentUser.providerData.some(p => p.providerId === 'google.com');
+    if (isGoogle) {
+        await reauthenticateWithPopup(currentUser, new GoogleAuthProvider());
+    } else {
+        const cred = EmailAuthProvider.credential(currentUser.email, password);
+        await reauthenticateWithCredential(currentUser, cred);
+    }
+}
+
+// ── Change email ────────────────────────────────────────────────
+window.changeEmail = async () => {
+    const newEmail = document.getElementById('newEmail').value.trim();
+    const password = document.getElementById('emailPassword').value;
+
+    if (!newEmail) { toast('Enter a new email address', 'error'); return; }
+    if (newEmail === currentUser.email) { toast('That\'s already your email', 'error'); return; }
+
+    try {
+        await reauth(password);
+        await updateEmail(currentUser, newEmail);
+        await updateDoc(doc(db, 'users', currentUser.uid), { email: newEmail });
+        document.getElementById('displayEmail').textContent = newEmail;
+        document.getElementById('emailPassword').value = '';
+        toast('Email updated successfully!');
+    } catch (e) {
+        if (e.code === 'auth/wrong-password') toast('Incorrect password', 'error');
+        else toast('Error: ' + e.message, 'error');
+    }
+};
+
+// ── Change password ─────────────────────────────────────────────
+window.changePassword = async () => {
+    const current  = document.getElementById('currentPassword').value;
+    const newPw    = document.getElementById('newPassword').value;
+    const confirm  = document.getElementById('confirmPassword').value;
+
+    if (!newPw)            { toast('Enter a new password', 'error'); return; }
+    if (newPw.length < 6)  { toast('Password must be at least 6 characters', 'error'); return; }
+    if (newPw !== confirm) { toast('Passwords do not match', 'error'); return; }
+
+    try {
+        await reauth(current);
+        await updatePassword(currentUser, newPw);
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value     = '';
+        document.getElementById('confirmPassword').value = '';
+        document.getElementById('pwStrength').className  = 'pw-strength';
+        toast('Password changed successfully!');
+    } catch (e) {
+        if (e.code === 'auth/wrong-password') toast('Current password is incorrect', 'error');
+        else toast('Error: ' + e.message, 'error');
+    }
+};
+
+// ── Password strength ───────────────────────────────────────────
+window.checkStrength = (val) => {
+    const el = document.getElementById('pwStrength');
+    if (!val) { el.className = 'pw-strength'; return; }
+    const strong = /[A-Z]/.test(val) && /[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val) && val.length >= 10;
+    const medium = val.length >= 6;
+    el.className = 'pw-strength ' + (strong ? 'strong' : medium ? 'medium' : 'weak');
+};
+
+// ── Logout ──────────────────────────────────────────────────────
+window.doLogout = async () => {
+    await signOut(auth);
+    window.location.href = '/';
+};
+</script>
+</body>
+</html>
