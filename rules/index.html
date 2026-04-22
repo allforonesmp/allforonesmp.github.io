@@ -65,6 +65,71 @@
                 margin-top: 20px;
                 line-height: 1.6;
             }
+
+            /* ── Search Bar ── */
+            .search-wrapper {
+                max-width: 900px;
+                margin: 16px auto 0;
+                padding: 0 16px;
+                box-sizing: border-box;
+            }
+            .search-bar {
+                display: flex;
+                align-items: center;
+                background: white;
+                border: 2px solid #1e90ff;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 6px rgba(30, 144, 255, 0.15);
+            }
+            .search-bar input {
+                flex: 1;
+                border: none;
+                outline: none;
+                padding: 11px 14px;
+                font-size: 15px;
+                font-family: Arial, sans-serif;
+                color: #222;
+                background: transparent;
+            }
+            .search-bar input::placeholder {
+                color: #aaa;
+            }
+            .search-bar button {
+                background: #1e90ff;
+                border: none;
+                color: white;
+                padding: 11px 18px;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background 0.2s;
+            }
+            .search-bar button:hover {
+                background: #1070d0;
+            }
+            .search-count {
+                font-size: 13px;
+                color: #555;
+                margin-top: 7px;
+                padding-left: 2px;
+                min-height: 18px;
+            }
+
+            /* ── Highlight ── */
+            mark.search-highlight {
+                background: #ffe066;
+                color: inherit;
+                border-radius: 2px;
+                padding: 0 1px;
+            }
+            mark.search-highlight.active {
+                background: #ff9800;
+            }
+
+            /* ── Section hidden when no match ── */
+            .section-hidden {
+                display: none;
+            }
         </style>
     </head>
 
@@ -77,7 +142,18 @@
             </p>
         </header>
 
-        <div class="container">
+        <!-- Search Bar -->
+        <div class="search-wrapper">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search rules…" autocomplete="off" />
+                <button onclick="stepMatch(1)" title="Next result">&#8595;</button>
+                <button onclick="stepMatch(-1)" title="Previous result">&#8593;</button>
+                <button onclick="clearSearch()" title="Clear search">&#10005;</button>
+            </div>
+            <div class="search-count" id="searchCount"></div>
+        </div>
+
+        <div class="container" id="mainContent">
             <div class="punishment-box">
                 <p>Not agreeing to all the rules on the server can result in a <b>PERMANENT BAN</b></p>
             </div>
@@ -274,5 +350,114 @@
                 detected within these areas.
             </div>
         </div>
+
+        <script>
+            const input = document.getElementById("searchInput");
+            const countEl = document.getElementById("searchCount");
+            const content = document.getElementById("mainContent");
+
+            // Save original HTML once
+            const originalHTML = content.innerHTML;
+
+            let matches = [];
+            let currentIndex = -1;
+
+            input.addEventListener("input", runSearch);
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") stepMatch(1);
+                if (e.key === "Escape") clearSearch();
+            });
+
+            function runSearch() {
+                const query = input.value.trim();
+
+                // Restore original content first
+                content.innerHTML = originalHTML;
+                matches = [];
+                currentIndex = -1;
+
+                if (!query) {
+                    countEl.textContent = "";
+                    return;
+                }
+
+                // Walk text nodes and wrap matches
+                highlightInNode(content, query);
+
+                matches = Array.from(content.querySelectorAll("mark.search-highlight"));
+
+                if (matches.length === 0) {
+                    countEl.textContent = "No results found.";
+                } else {
+                    currentIndex = 0;
+                    activateCurrent();
+                    updateCount();
+                }
+            }
+
+            function highlightInNode(node, query) {
+                const re = new RegExp(escapeRe(query), "gi");
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent;
+                    if (re.test(text)) {
+                        const frag = document.createDocumentFragment();
+                        let last = 0;
+                        re.lastIndex = 0;
+                        let m;
+                        while ((m = re.exec(text)) !== null) {
+                            frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+                            const mark = document.createElement("mark");
+                            mark.className = "search-highlight";
+                            mark.textContent = m[0];
+                            frag.appendChild(mark);
+                            last = re.lastIndex;
+                        }
+                        frag.appendChild(document.createTextNode(text.slice(last)));
+                        node.parentNode.replaceChild(frag, node);
+                    }
+                } else if (
+                    node.nodeType === Node.ELEMENT_NODE &&
+                    node.tagName !== "SCRIPT" &&
+                    node.tagName !== "STYLE"
+                ) {
+                    // Use a static list so DOM mutations don't break iteration
+                    Array.from(node.childNodes).forEach((child) => highlightInNode(child, query));
+                }
+            }
+
+            function activateCurrent() {
+                matches.forEach((m, i) => {
+                    m.classList.toggle("active", i === currentIndex);
+                });
+                if (matches[currentIndex]) {
+                    matches[currentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }
+
+            function stepMatch(direction) {
+                if (matches.length === 0) return;
+                currentIndex = (currentIndex + direction + matches.length) % matches.length;
+                activateCurrent();
+                updateCount();
+            }
+
+            function updateCount() {
+                if (matches.length === 0) return;
+                countEl.textContent = `${currentIndex + 1} of ${matches.length} result${matches.length !== 1 ? "s" : ""}`;
+            }
+
+            function clearSearch() {
+                input.value = "";
+                content.innerHTML = originalHTML;
+                matches = [];
+                currentIndex = -1;
+                countEl.textContent = "";
+                input.focus();
+            }
+
+            function escapeRe(str) {
+                return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            }
+        </script>
     </body>
 </html>
