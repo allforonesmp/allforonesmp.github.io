@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AllForOne SMP – Admin Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Spectral:wght@600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #4A90E2;
+            --light-blue: #E8F4F8;
+            --lighter-blue: #F5FBFD;
+            --dark-blue: #2C5F8D;
+            --text-dark: #1a2332;
+            --text-medium: #4a5568;
+            --text-light: #718096;
+            --border-color: #d4e8f0;
+            --white: #ffffff;
+            --error: #E74C3C;
+            --success: #27AE60;
+            --admin-gold: #F6C90E;
+            --admin-gold-dark: #C9A800;
+            --admin-gradient: linear-gradient(135deg, #F6C90E 0%, #FF8C00 100%);
+            --shadow-sm: 0 1px 3px rgba(74,144,226,0.08);
+            --shadow-md: 0 4px 12px rgba(74,144,226,0.12);
+            --shadow-lg: 0 10px 30px rgba(74,144,226,0.15);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, var(--lighter-blue), var(--light-blue));
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+        h1,h2,h3,h4 { font-family: 'Spectral', serif; font-weight: 700; }
+
+        /* ── LOGIN SCREEN ── */
+        .login-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .login-card h2 { color: var(--admin-gold-dark); font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .login-card p  { color: var(--text-medium); margin-bottom: 2rem; }
+        .login-card input {
+            width: 100%; padding: 0.875rem 1rem; border: 2px solid var(--border-color);
+            border-radius: 10px; font-size: 1rem; font-family: 'DM Sans', sans-serif;
+            background: var(--lighter-blue); margin-bottom: 1rem;
+            transition: border-color 0.2s;
+        }
+        .login-card input:focus { outline:none; border-color: var(--primary-blue); }
+        .login-error { color: var(--error); font-size:0.9rem; margin-top:0.5rem; display:none; }
+
+        /* ── ADMIN APP ── */
+        #adminApp { display: none; }
+
+        header {
+            background: var(--text-dark);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 0 var(--admin-gold);
+        }
+        header .logo { font-family: 'Spectral', serif; font-size: 1.5rem; color: var(--admin-gold); }
+        header span  { color: #a0aec0; font-size: 0.9rem; }
+        header button {
+            background: var(--error); color: white; border: none;
+            padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+        }
+
+        .admin-layout {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            letter-spacing: 0.08em;
+            color: var(--admin-gold-dark);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .section-title::after {
+            content:''; flex:1; height:2px;
+            background: linear-gradient(to right, var(--admin-gold), transparent);
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+        .card.gold-border { border: 2px solid var(--admin-gold); background: linear-gradient(135deg, #fffbe6, #fff9d6); }
+
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; color: var(--text-dark); }
+        input[type="text"], input[type="url"], input[type="datetime-local"], textarea {
+            width: 100%; padding: 0.75rem 1rem; border: 2px solid var(--border-color);
+            border-radius: 10px; font-size: 0.95rem; font-family: 'DM Sans', sans-serif;
+            background: var(--lighter-blue); transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus { outline:none; border-color: var(--primary-blue); background: var(--white); }
+        textarea { resize:vertical; min-height:90px; }
+
+        .btn {
+            padding: 0.75rem 1.5rem; border:none; border-radius: 10px;
+            font-size: 0.95rem; font-weight: 600; cursor: pointer;
+            font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary-blue); color: white; }
+        .btn-primary:hover { background: var(--dark-blue); transform: translateY(-1px); }
+        .btn-gold { background: var(--admin-gradient); color: #1a1a1a; }
+        .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(246,201,14,0.4); }
+        .btn-danger { background: var(--error); color: white; padding: 0.4rem 0.875rem; font-size:0.85rem; border-radius:8px; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #1e8449; transform: translateY(-1px); }
+
+        /* Upload zone */
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            background: var(--lighter-blue);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 1rem;
+        }
+        .upload-zone:hover { border-color: var(--primary-blue); background: var(--light-blue); }
+        .upload-zone p { color: var(--text-medium); margin-bottom: 0.4rem; }
+        .upload-zone small { color: var(--text-light); }
+
+        .preview-img {
+            width:100%; max-height:250px; object-fit:contain;
+            border-radius:10px; border:2px solid var(--border-color); margin-top:0.75rem;
+            background: var(--lighter-blue);
+        }
+
+        /* Downtime list */
+        .downtime-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.875rem 1rem;
+            background: var(--lighter-blue);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.75rem;
+        }
+        .downtime-entry .info strong { display: block; color: var(--text-dark); font-size: 0.95rem; }
+        .downtime-entry .info span  { color: var(--text-medium); font-size: 0.85rem; }
+
+        /* News list */
+        .news-entry {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.875rem 1rem;
+            background: var(--lighter-blue);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.75rem;
+        }
+        .news-entry img { width:80px; height:60px; object-fit:cover; border-radius:8px; flex-shrink:0; }
+        .news-entry .info { flex:1; }
+        .news-entry .info strong { display:block; }
+        .news-entry .info small  { color: var(--text-medium); }
+
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            padding: 1rem 1.5rem; border-radius: 12px;
+            color: white; font-weight: 500; font-size: 0.95rem;
+            box-shadow: var(--shadow-lg); z-index: 9999;
+            animation: slideInRight 0.4s ease;
+            display: none;
+        }
+        .toast.success { background: var(--success); }
+        .toast.error   { background: var(--error); }
+        @keyframes slideInRight {
+            from { opacity:0; transform: translateX(60px); }
+            to   { opacity:1; transform: translateX(0); }
+        }
+
+        .spinner { border:3px solid var(--light-blue); border-top:3px solid var(--primary-blue); border-radius:50%; width:30px; height:30px; animation:spin 1s linear infinite; margin:1rem auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state { color: var(--text-light); font-style: italic; padding: 1rem 0; }
+
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem; border-radius: 20px;
+            font-size: 0.78rem; font-weight: 700;
+            background: #e8f5e9; color: var(--success);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-card">
+        <h2>⚡ Admin Panel</h2>
+        <p>AllForOne SMP Server Management</p>
+        <input type="password" id="passwordInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')checkPassword()">
+        <button class="btn btn-gold" style="width:100%;margin-top:0.25rem;" onclick="checkPassword()">Access Admin Panel</button>
+        <div class="login-error" id="loginError">❌ Incorrect password.</div>
+    </div>
+</div>
+
+<!-- ── ADMIN APP ── -->
+<div id="adminApp">
+    <header>
+        <span class="logo">⚡ AllForOne Admin</span>
+        <span>Server Management Panel</span>
+        <button onclick="logout()">Logout</button>
+    </header>
+
+    <div class="admin-layout">
+
+        <!-- JOIN CODE SECTION -->
+        <div>
+            <div class="section-title">🎮 Join Code & Server Info</div>
+            <div class="card gold-border">
+                <div class="two-col">
+
+                    <!-- Left -->
+                    <div>
+                        <div class="form-group">
+                            <label>📷 Join Code Image (Visual Code)</label>
+                            <div class="upload-zone" onclick="document.getElementById('joinCodeInput').click()">
+                                <p>Click to upload join code image</p>
+                                <small>PNG/JPG recommended</small>
+                            </div>
+                            <input type="file" id="joinCodeInput" accept="image/*" style="display:none;" onchange="previewJoinCode(event)">
+                            <img id="joinCodePreview" class="preview-img" style="display:none;" alt="Join Code Preview">
+                        </div>
+                        <div class="form-group">
+                            <label>🔑 Connection ID</label>
+                            <input type="text" id="connectionId" placeholder="e.g. abc123xyz">
+                        </div>
+                    </div>
+
+                    <!-- Right -->
+                    <div>
+                        <div class="form-group">
+                            <label>▶ Play Now! Button Link</label>
+                            <input type="url" id="playNowLink" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label>🎙️ Proximity Voice Chat Link</label>
+                            <input type="url" id="voiceChatLink" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label>🎙️ Voice Chat Description</label>
+                            <textarea id="voiceChatDescription" placeholder="Describe the voice chat feature..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-gold" onclick="saveServerInfo()">💾 Save Server Info</button>
+                <span id="serverInfoStatus" style="margin-left:1rem;color:var(--success);font-size:0.9rem;display:none;">✓ Saved!</span>
+            </div>
+        </div>
+
+        <!-- DOWNTIME SECTION -->
+        <div>
+            <div class="section-title">🕐 Server Downtime</div>
+            <div class="card">
+                <div class="two-col" style="margin-bottom:1.5rem;">
+                    <div class="form-group" style="margin:0;">
+                        <label>Downtime Label</label>
+                        <input type="text" id="dtLabel" placeholder="e.g. Weekly Maintenance">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Scheduled Date & Time</label>
+                        <input type="datetime-local" id="dtDateTime">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addDowntime()">+ Add Downtime</button>
+
+                <div style="margin-top:1.5rem;">
+                    <h4 style="margin-bottom:1rem;color:var(--text-medium);font-size:0.9rem;font-family:'DM Sans';font-weight:700;">CURRENT DOWNTIMES</h4>
+                    <div id="downtimeList"><div class="empty-state">No downtimes scheduled.</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEWS SECTION -->
+        <div>
+            <div class="section-title">📰 News Posts</div>
+            <div class="card">
+                <h3 style="margin-bottom:1.25rem;color:var(--primary-blue);">Add News Item</h3>
+                <div class="form-group">
+                    <label>News Image</label>
+                    <div class="upload-zone" onclick="document.getElementById('newsImageInput').click()">
+                        <p>Click to upload news image</p>
+                        <small>Will appear in the carousel</small>
+                    </div>
+                    <input type="file" id="newsImageInput" accept="image/*" style="display:none;" onchange="previewNewsImage(event)">
+                    <img id="newsImagePreview" class="preview-img" style="display:none;" alt="News Preview">
+                </div>
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="newsTitle" placeholder="News headline">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="newsDescription" placeholder="News details..."></textarea>
+                </div>
+                <button class="btn btn-success" onclick="addNews()">📰 Publish News</button>
+
+                <div style="margin-top:1.75rem;">
+                    <h4 style="margin-bottom:1rem;color:var(--text-medium);font-size:0.9rem;font-family:'DM Sans';font-weight:700;">PUBLISHED NEWS</h4>
+                    <div id="newsList"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDzQlAqhCeytCLEYafboYGpFu6pY3Kv9WE",
+    authDomain: "allforonemedia-9a7d8.firebaseapp.com",
+    databaseURL: "https://allforonemedia-9a7d8-default-rtdb.firebaseio.com",
+    projectId: "allforonemedia-9a7d8",
+    storageBucket: "allforonemedia-9a7d8.firebasestorage.app",
+    messagingSenderId: "892787060584",
+    appId: "1:892787060584:web:e65609062592f9ba96f0dd",
+    measurementId: "G-JSXKLMBRLC"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const rtdb = getDatabase(app);
+
+const CLOUDINARY_CLOUD_NAME    = 'dgrmpcha9';
+const CLOUDINARY_UPLOAD_PRESET = 'AllForOne Posts';
+
+// ─── PASSWORD ─────────────────────────────────────────────────
+window.checkPassword = async function() {
+    const pw = document.getElementById('passwordInput').value.trim();
+    if (!pw) return;
+    try {
+        const snap = await get(ref(rtdb, 'password'));
+        const stored = snap.val();
+        if (String(stored) === String(pw)) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminApp').style.display = 'block';
+            initAdmin();
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    } catch(e) {
+        showToast('Could not verify password: ' + e.message, 'error');
+    }
+};
+
+window.logout = function() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminApp').style.display = 'none';
+    document.getElementById('passwordInput').value = '';
+};
+
+// ─── INIT ─────────────────────────────────────────────────────
+function initAdmin() {
+    loadCurrentServerInfo();
+    loadDowntimes();
+    loadNews();
+}
+
+// ─── CLOUDINARY UPLOAD ────────────────────────────────────────
+async function uploadToCloudinary(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method:'POST', body: fd });
+    const data = await res.json();
+    if (!data.secure_url) throw new Error('Cloudinary upload failed');
+    return data.secure_url;
+}
+
+// ─── JOIN CODE IMAGE PREVIEW ──────────────────────────────────
+let joinCodeFile = null;
+window.previewJoinCode = function(e) {
+    joinCodeFile = e.target.files[0];
+    if (!joinCodeFile) return;
+    const r = new FileReader();
+    r.onload = (ev) => {
+        const img = document.getElementById('joinCodePreview');
+        img.src = ev.target.result;
+        img.style.display = 'block';
+    };
+    r.readAsDataURL(joinCodeFile);
+};
+
+// ─── LOAD SERVER INFO ─────────────────────────────────────────
+async function loadCurrentServerInfo() {
+    try {
+        const snap = await getDoc(doc(db, 'serverInfo', 'main'));
+        if (!snap.exists()) return;
+        const d = snap.data();
+        document.getElementById('connectionId').value = d.connectionId || '';
+        document.getElementById('playNowLink').value  = d.playNowLink  || '';
+        document.getElementById('voiceChatLink').value = d.voiceChatLink || '';
+        document.getElementById('voiceChatDescription').value = d.voiceChatDescription || '';
+        if (d.joinCodeImageUrl) {
+            const img = document.getElementById('joinCodePreview');
+            img.src = d.joinCodeImageUrl;
+            img.style.display = 'block';
+        }
+    } catch(e) { /* ignore */ }
+}
+
+// ─── SAVE SERVER INFO ─────────────────────────────────────────
+window.saveServerInfo = async function() {
+    const btn = document.querySelector('[onclick="saveServerInfo()"]');
+    btn.textContent = '⏳ Saving…'; btn.disabled = true;
+    try {
+        let joinCodeImageUrl = null;
+        if (joinCodeFile) {
+            showToast('Uploading image…', 'success');
+            joinCodeImageUrl = await uploadToCloudinary(joinCodeFile);
+        }
+
+        const existing = (await getDoc(doc(db, 'serverInfo', 'main'))).data() || {};
+        await setDoc(doc(db, 'serverInfo', 'main'), {
+            connectionId: document.getElementById('connectionId').value.trim(),
+            playNowLink:  document.getElementById('playNowLink').value.trim(),
+            voiceChatLink: document.getElementById('voiceChatLink').value.trim(),
+            voiceChatDescription: document.getElementById('voiceChatDescription').value.trim(),
+            joinCodeImageUrl: joinCodeImageUrl || existing.joinCodeImageUrl || null,
+            downtimes: existing.downtimes || [],
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        showToast('✓ Server info saved!', 'success');
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+    btn.textContent = '💾 Save Server Info'; btn.disabled = false;
+};
+
+// ─── DOWNTIMES ────────────────────────────────────────────────
+let currentDowntimes = [];
+
+function loadDowntimes() {
+    onSnapshot(doc(db, 'serverInfo', 'main'), (snap) => {
+        currentDowntimes = snap.exists() ? (snap.data().downtimes || []) : [];
+        renderDowntimeList();
+    });
+}
+
+function renderDowntimeList() {
+    const list = document.getElementById('downtimeList');
+    list.innerHTML = '';
+    if (currentDowntimes.length === 0) {
+        list.innerHTML = '<div class="empty-state">No downtimes scheduled.</div>';
+        return;
+    }
+    currentDowntimes.forEach((dt, i) => {
+        const el = document.createElement('div');
+        el.className = 'downtime-entry';
+        el.innerHTML = `
+            <div class="info">
+                <strong>${dt.label}</strong>
+                <span>${dt.time}</span>
+            </div>
+            <button class="btn btn-danger" onclick="removeDowntime(${i})">Remove</button>`;
+        list.appendChild(el);
+    });
+}
+
+window.addDowntime = async function() {
+    const label = document.getElementById('dtLabel').value.trim();
+    const dtVal = document.getElementById('dtDateTime').value;
+    if (!label || !dtVal) { showToast('Fill in both fields.', 'error'); return; }
+    const dtDate = new Date(dtVal);
+    const formatted = dtDate.toLocaleString('en-US', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    currentDowntimes.push({ label, time: formatted, timestamp: dtDate.toISOString() });
+    await updateDoc(doc(db, 'serverInfo', 'main'), { downtimes: currentDowntimes });
+    document.getElementById('dtLabel').value = '';
+    document.getElementById('dtDateTime').value = '';
+    showToast('Downtime added!', 'success');
+};
+
+window.removeDowntime = async function(idx) {
+    currentDowntimes.splice(idx, 1);
+    await updateDoc(doc(db, 'serverInfo', 'main'), { downtimes: currentDowntimes });
+    showToast('Downtime removed.', 'success');
+};
+
+// ─── NEWS ─────────────────────────────────────────────────────
+let newsImageFile = null;
+
+window.previewNewsImage = function(e) {
+    newsImageFile = e.target.files[0];
+    if (!newsImageFile) return;
+    const r = new FileReader();
+    r.onload = (ev) => {
+        const img = document.getElementById('newsImagePreview');
+        img.src = ev.target.result;
+        img.style.display = 'block';
+    };
+    r.readAsDataURL(newsImageFile);
+};
+
+function loadNews() {
+    const q = query(collection(db, 'news'), orderBy('createdAt', 'desc'));
+    onSnapshot(q, (snap) => {
+        const list = document.getElementById('newsList');
+        list.innerHTML = '';
+        if (snap.empty) {
+            list.innerHTML = '<div class="empty-state">No news published yet.</div>';
+            return;
+        }
+        snap.forEach(d => {
+            const n  = { id: d.id, ...d.data() };
+            const el = document.createElement('div');
+            el.className = 'news-entry';
+            el.innerHTML = `
+                <img src="${n.imageUrl || 'https://via.placeholder.com/80x60/4A90E2/fff?text=News'}" alt="">
+                <div class="info">
+                    <strong>${n.title || 'Untitled'}</strong>
+                    <small>${n.description ? n.description.substring(0,80) + '…' : ''}</small>
+                </div>
+                <button class="btn btn-danger" onclick="deleteNews('${n.id}')">Delete</button>`;
+            list.appendChild(el);
+        });
+    });
+}
+
+window.addNews = async function() {
+    const title       = document.getElementById('newsTitle').value.trim();
+    const description = document.getElementById('newsDescription').value.trim();
+    if (!title) { showToast('Title is required.', 'error'); return; }
+
+    const btn = document.querySelector('[onclick="addNews()"]');
+    btn.textContent = '⏳ Publishing…'; btn.disabled = true;
+
+    try {
+        let imageUrl = null;
+        if (newsImageFile) imageUrl = await uploadToCloudinary(newsImageFile);
+
+        await addDoc(collection(db, 'news'), {
+            title, description, imageUrl,
+            createdAt: serverTimestamp()
+        });
+
+        document.getElementById('newsTitle').value = '';
+        document.getElementById('newsDescription').value = '';
+        document.getElementById('newsImagePreview').style.display = 'none';
+        newsImageFile = null;
+        showToast('News published!', 'success');
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+    btn.textContent = '📰 Publish News'; btn.disabled = false;
+};
+
+window.deleteNews = async function(id) {
+    if (!confirm('Delete this news item?')) return;
+    await deleteDoc(doc(db, 'news', id));
+    showToast('News deleted.', 'success');
+};
+
+// ─── TOAST ────────────────────────────────────────────────────
+function showToast(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type;
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
+</script>
+</body>
+</html>
