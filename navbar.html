@@ -16,10 +16,8 @@
                 --light-blue: #e8f4f8;
                 --lighter-blue: #f5fbfd;
                 --dark-blue: #2c5f8d;
-                --accent-blue: #5ba3f5;
                 --text-dark: #1a2332;
                 --text-medium: #4a5568;
-                --text-light: #718096;
                 --border-color: #d4e8f0;
                 --white: #ffffff;
                 --nav-height: 64px;
@@ -33,13 +31,12 @@
 
             html,
             body {
-                background: transparent;
+                background: var(--white);
                 overflow: hidden;
                 height: var(--nav-height);
                 width: 100%;
             }
 
-            /* ── NAVBAR ── */
             nav {
                 width: 100%;
                 height: var(--nav-height);
@@ -49,7 +46,6 @@
                 display: flex;
                 align-items: center;
                 padding: 0 2rem;
-                position: relative;
                 font-family: "DM Sans", sans-serif;
             }
 
@@ -77,7 +73,6 @@
                 color: var(--dark-blue);
             }
 
-            /* Desktop links */
             .nav-links {
                 display: flex;
                 align-items: center;
@@ -106,7 +101,6 @@
                 font-weight: 600;
             }
 
-            /* Hamburger button */
             .hamburger {
                 display: none;
                 flex-direction: column;
@@ -119,7 +113,6 @@
                 padding: 0.5rem;
                 border-radius: 8px;
                 transition: background 0.18s;
-                z-index: 200;
                 flex-shrink: 0;
             }
             .hamburger:hover {
@@ -145,120 +138,6 @@
                 transform: translateY(-7.5px) rotate(-45deg);
             }
 
-            /* ── MOBILE DRAWER ── */
-            .mobile-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(26, 35, 50, 0.45);
-                backdrop-filter: blur(3px);
-                z-index: 150;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            }
-            .mobile-overlay.visible {
-                opacity: 1;
-            }
-
-            .mobile-drawer {
-                position: fixed;
-                top: 0;
-                right: 0;
-                width: min(300px, 85vw);
-                height: 100vh;
-                background: var(--white);
-                box-shadow: -4px 0 40px rgba(74, 144, 226, 0.18);
-                z-index: 160;
-                transform: translateX(100%);
-                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-                display: flex;
-                flex-direction: column;
-                padding: 0;
-            }
-            .mobile-drawer.open {
-                transform: translateX(0);
-            }
-
-            .drawer-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 1.25rem 1.5rem;
-                border-bottom: 1.5px solid var(--border-color);
-                background: var(--lighter-blue);
-            }
-            .drawer-logo {
-                font-family: "Spectral", serif;
-                font-size: 1.3rem;
-                font-weight: 700;
-                color: var(--primary-blue);
-                text-decoration: none;
-            }
-            .drawer-close {
-                background: none;
-                border: none;
-                cursor: pointer;
-                color: var(--text-light);
-                font-size: 1.5rem;
-                line-height: 1;
-                padding: 0.25rem 0.5rem;
-                border-radius: 6px;
-                transition:
-                    color 0.18s,
-                    background 0.18s;
-            }
-            .drawer-close:hover {
-                color: var(--text-dark);
-                background: var(--light-blue);
-            }
-
-            .drawer-links {
-                list-style: none;
-                padding: 1rem 0.75rem;
-                display: flex;
-                flex-direction: column;
-                gap: 0.25rem;
-            }
-            .drawer-links li a {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                color: var(--text-medium);
-                text-decoration: none;
-                font-weight: 500;
-                font-size: 1.05rem;
-                padding: 0.8rem 1rem;
-                border-radius: 10px;
-                transition:
-                    color 0.18s,
-                    background 0.18s;
-            }
-            .drawer-links li a:hover {
-                color: var(--primary-blue);
-                background: var(--lighter-blue);
-            }
-            .drawer-links li a.active {
-                color: var(--primary-blue);
-                background: var(--light-blue);
-                font-weight: 600;
-            }
-            .drawer-links li a .link-icon {
-                font-size: 1.1rem;
-                width: 24px;
-                text-align: center;
-                flex-shrink: 0;
-            }
-
-            .drawer-footer {
-                margin-top: auto;
-                padding: 1.25rem 1.5rem;
-                border-top: 1.5px solid var(--border-color);
-                color: var(--text-light);
-                font-size: 0.82rem;
-                text-align: center;
-            }
-
-            /* Responsive breakpoint */
             @media (max-width: 700px) {
                 nav {
                     padding: 0 1rem;
@@ -269,9 +148,6 @@
                 .hamburger {
                     display: flex;
                 }
-                .mobile-overlay {
-                    display: block;
-                }
             }
         </style>
     </head>
@@ -280,92 +156,45 @@
             <div class="nav-inner">
                 <a href="https://allforonesmp.github.io" class="logo">AllForOne SMP</a>
 
-                <!-- Desktop nav -->
-                <ul class="nav-links" id="desktopLinks">
-                    <li><a href="https://allforonesmp.github.io" data-path="/">Home</a></li>
-                    <li><a href="https://allforonesmp.github.io/rules" data-path="/rules">Rules</a></li>
-                    <li><a href="https://allforonesmp.github.io/profile" data-path="/profile">Profile</a></li>
-                    <li><a href="https://allforonesmp.github.io/post" data-path="/post">Post</a></li>
+                <ul class="nav-links">
+                    <li><a href="https://allforonesmp.github.io" data-path="/">🏠 Home</a></li>
+                    <li><a href="https://allforonesmp.github.io/rules" data-path="/rules">📜 Rules</a></li>
+                    <li><a href="https://allforonesmp.github.io/profile" data-path="/profile">👤 Profile</a></li>
+                    <li><a href="https://allforonesmp.github.io/post" data-path="/post">📝 Post</a></li>
                 </ul>
 
-                <!-- Hamburger (mobile) -->
-                <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" onclick="toggleDrawer()">
+                <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" onclick="handleHamburger()">
                     <span></span><span></span><span></span>
                 </button>
             </div>
         </nav>
 
-        <!-- Mobile overlay -->
-        <div class="mobile-overlay" id="mobileOverlay" onclick="closeDrawer()"></div>
-
-        <!-- Mobile drawer -->
-        <div class="mobile-drawer" id="mobileDrawer">
-            <div class="drawer-header">
-                <a href="https://allforonesmp.github.io" class="drawer-logo">AllForOne SMP</a>
-                <button class="drawer-close" onclick="closeDrawer()" aria-label="Close menu">✕</button>
-            </div>
-            <ul class="drawer-links" id="drawerLinks">
-                <li><a href="https://allforonesmp.github.io" data-path="/">Home</a></li>
-                <li><a href="https://allforonesmp.github.io/rules" data-path="/rules">Rules</a></li>
-                <li><a href="https://allforonesmp.github.io/profile" data-path="/profile">Profile</a></li>
-                <li><a href="https://allforonesmp.github.io/post" data-path="/post">Post</a></li>
-            </ul>
-            <div class="drawer-footer">AllForOne SMP &copy; 2026</div>
-        </div>
-
         <script>
-            // ── Active link highlight ──────────────────────────────────────
-            // Reads the current page from the parent window's URL via postMessage
-            function setActivePage(pathname) {
-                document.querySelectorAll("[data-path]").forEach((a) => {
-                    const path = a.getAttribute("data-path");
-                    // Match exact or index
-                    const match =
-                        pathname === path || (path === "/" && (pathname === "" || pathname === "/index.html"));
-                    a.classList.toggle("active", match);
-                });
-            }
-
-            // Listen for the parent page telling us its path
             window.addEventListener("message", (e) => {
+                // Highlight active link based on parent page path
                 if (e.data && e.data.type === "afo-pathname") {
-                    setActivePage(e.data.pathname);
+                    const pathname = e.data.pathname;
+                    document.querySelectorAll("[data-path]").forEach((a) => {
+                        const path = a.getAttribute("data-path");
+                        const match =
+                            pathname === path ||
+                            (path === "/" && (pathname === "" || pathname === "/index.html" || pathname === "/"));
+                        a.classList.toggle("active", match);
+                    });
+                }
+                // Sync hamburger icon with drawer open/close state
+                if (e.data && e.data.type === "afo-drawer-state") {
+                    document.getElementById("hamburgerBtn").classList.toggle("open", e.data.open);
                 }
             });
 
-            // ── Drawer controls ────────────────────────────────────────────
-            let drawerOpen = false;
-
-            function toggleDrawer() {
-                drawerOpen ? closeDrawer() : openDrawer();
+            // Clicking hamburger tells the parent to toggle the drawer
+            function handleHamburger() {
+                window.parent.postMessage({ type: "afo-toggle-drawer" }, "*");
             }
 
-            function openDrawer() {
-                drawerOpen = true;
-                document.getElementById("mobileDrawer").classList.add("open");
-                document.getElementById("mobileOverlay").classList.add("visible");
-                document.getElementById("hamburgerBtn").classList.add("open");
-                // Tell parent to lock scroll
-                window.parent.postMessage({ type: "afo-drawer", open: true }, "*");
-            }
-
-            function closeDrawer() {
-                drawerOpen = false;
-                document.getElementById("mobileDrawer").classList.remove("open");
-                document.getElementById("mobileOverlay").classList.remove("visible");
-                document.getElementById("hamburgerBtn").classList.remove("open");
-                window.parent.postMessage({ type: "afo-drawer", open: false }, "*");
-            }
-
-            // Close drawer on escape key
-            document.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") closeDrawer();
-            });
-
-            // Notify parent we're ready
-            window.addEventListener("load", () => {
-                window.parent.postMessage({ type: "afo-navbar-ready" }, "*");
-            });
+            // Signal to parent that navbar iframe is ready
+            window.parent.postMessage({ type: "afo-navbar-ready" }, "*");
         </script>
     </body>
 </html>
