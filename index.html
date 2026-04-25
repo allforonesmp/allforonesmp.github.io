@@ -3,12 +3,13 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>AllForOne SMP | Navbar</title>
+        <title>AllForOne SMP | Home</title>
         <link rel="icon" type="image/x-icon" href="https://allforonesmp.github.io/images/logo.png" />
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Spectral:wght@600;700&family=Bebas+Neue&display=swap"
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Spectral:wght@600;700&family=Bebas+Neue&display=swap"
             rel="stylesheet" />
         <style>
             :root {
@@ -16,185 +17,827 @@
                 --light-blue: #e8f4f8;
                 --lighter-blue: #f5fbfd;
                 --dark-blue: #2c5f8d;
+                --accent-blue: #5ba3f5;
                 --text-dark: #1a2332;
                 --text-medium: #4a5568;
+                --text-light: #718096;
                 --border-color: #d4e8f0;
                 --white: #ffffff;
-                --nav-height: 64px;
+                --error: #e74c3c;
+                --success: #27ae60;
+                --admin-gold: #f6c90e;
+                --admin-gold-dark: #c9a800;
+                --admin-gradient: linear-gradient(135deg, #f6c90e 0%, #ff8c00 100%);
+                --shadow-sm: 0 1px 3px rgba(74, 144, 226, 0.08);
+                --shadow-md: 0 4px 12px rgba(74, 144, 226, 0.12);
+                --shadow-lg: 0 10px 30px rgba(74, 144, 226, 0.15);
             }
 
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
 
-            html,
             body {
-                background: var(--white);
-                overflow: hidden;
-                height: var(--nav-height);
-                width: 100%;
-            }
-
-            nav {
-                width: 100%;
-                height: var(--nav-height);
-                background: var(--white);
-                border-bottom: 2px solid var(--border-color);
-                box-shadow: 0 2px 16px rgba(74, 144, 226, 0.1);
-                display: flex;
-                align-items: center;
-                padding: 0 2rem;
                 font-family: "DM Sans", sans-serif;
+                background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
+                color: var(--text-dark);
+                min-height: 100vh;
+                line-height: 1.6;
+                margin-top: 64px; /* space for fixed navbar */
             }
 
-            .nav-inner {
-                width: 100%;
-                max-width: 1400px;
-                margin: 0 auto;
+            h1, h2, h3, h4, h5, h6 { font-family: "Spectral", serif; font-weight: 700; }
+
+            /* ── NAVBAR IFRAME ── */
+            #afo-navbar-frame {
+                position: fixed;
+                top: 0; left: 0;
+                width: 100%; height: 64px;
+                border: none;
+                z-index: 9000;
+                display: block;
+            }
+
+            /* ── MOBILE OVERLAY ── */
+            #afo-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(26, 35, 50, 0.45);
+                backdrop-filter: blur(3px);
+                -webkit-backdrop-filter: blur(3px);
+                z-index: 9100;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            #afo-overlay.afo-visible { display: block; opacity: 1; }
+
+            /* ── MOBILE DRAWER ── */
+            #afo-drawer {
+                position: fixed;
+                top: 0; right: 0;
+                width: min(300px, 85vw);
+                height: 100vh;
+                background: var(--white);
+                box-shadow: -4px 0 40px rgba(74, 144, 226, 0.18);
+                z-index: 9200;
+                transform: translateX(100%);
+                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                flex-direction: column;
+            }
+            #afo-drawer.afo-open { transform: translateX(0); }
+
+            #afo-drawer-header {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
+                padding: 1.25rem 1.5rem;
+                border-bottom: 1.5px solid var(--border-color);
+                background: var(--lighter-blue);
+                flex-shrink: 0;
             }
-
-            .logo {
+            #afo-drawer-header a {
                 font-family: "Spectral", serif;
-                font-size: 1.6rem;
+                font-size: 1.3rem;
                 font-weight: 700;
                 color: var(--primary-blue);
                 text-decoration: none;
-                letter-spacing: -0.01em;
-                white-space: nowrap;
-                flex-shrink: 0;
-                transition: color 0.2s;
             }
-            .logo:hover {
-                color: var(--dark-blue);
-            }
-
-            .nav-links {
-                display: flex;
-                align-items: center;
-                gap: 0.25rem;
-                list-style: none;
-            }
-            .nav-links a {
-                color: var(--text-medium);
-                text-decoration: none;
-                font-weight: 500;
-                font-size: 0.97rem;
-                padding: 0.45rem 0.9rem;
-                border-radius: 8px;
-                transition:
-                    color 0.18s,
-                    background 0.18s;
-                white-space: nowrap;
-            }
-            .nav-links a:hover {
-                color: var(--primary-blue);
-                background: var(--lighter-blue);
-            }
-            .nav-links a.active {
-                color: var(--primary-blue);
-                background: var(--light-blue);
-                font-weight: 600;
-            }
-
-            .hamburger {
-                display: none;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                gap: 5px;
+            #afo-drawer-close {
                 background: none;
                 border: none;
                 cursor: pointer;
-                padding: 0.5rem;
-                border-radius: 8px;
-                transition: background 0.18s;
+                color: var(--text-light);
+                font-size: 1.4rem;
+                line-height: 1;
+                padding: 0.3rem 0.6rem;
+                border-radius: 6px;
+                transition: color 0.18s, background 0.18s;
+            }
+            #afo-drawer-close:hover { color: var(--text-dark); background: var(--light-blue); }
+
+            #afo-drawer-links {
+                list-style: none;
+                padding: 1rem 0.75rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+                flex: 1;
+            }
+            #afo-drawer-links li a {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                color: var(--text-medium);
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 1.05rem;
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+                transition: color 0.18s, background 0.18s;
+            }
+            #afo-drawer-links li a:hover { color: var(--primary-blue); background: var(--lighter-blue); }
+            #afo-drawer-links li a.afo-active { color: var(--primary-blue); background: var(--light-blue); font-weight: 600; }
+            #afo-drawer-links .afo-icon { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+
+            #afo-drawer-footer {
+                padding: 1.25rem 1.5rem;
+                border-top: 1.5px solid var(--border-color);
+                color: var(--text-light);
+                font-size: 0.82rem;
+                text-align: center;
                 flex-shrink: 0;
             }
-            .hamburger:hover {
-                background: var(--lighter-blue);
-            }
-            .hamburger span {
+
+            /* ── HERO BANNER ── */
+            .hero-banner {
+                width: 100%;
                 display: block;
-                width: 24px;
-                height: 2.5px;
-                background: var(--text-medium);
-                border-radius: 2px;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                transform-origin: center;
+                overflow: hidden;
+                position: relative;
+                max-height: 520px;
             }
-            .hamburger.open span:nth-child(1) {
-                transform: translateY(7.5px) rotate(45deg);
+            .hero-banner img {
+                width: 100%;
+                height: auto;
+                display: block;
+                object-fit: cover;
+                object-position: center;
             }
-            .hamburger.open span:nth-child(2) {
-                opacity: 0;
-                transform: scaleX(0);
-            }
-            .hamburger.open span:nth-child(3) {
-                transform: translateY(-7.5px) rotate(-45deg);
+            .hero-overlay {
+                position: absolute;
+                bottom: 0; left: 0; right: 0;
+                height: 80px;
+                background: linear-gradient(to bottom, transparent, var(--lighter-blue));
+                pointer-events: none;
             }
 
-            @media (max-width: 700px) {
-                nav {
-                    padding: 0 1rem;
-                }
-                .nav-links {
-                    display: none;
-                }
-                .hamburger {
-                    display: flex;
-                }
+            /* ── MAIN LAYOUT ── */
+            .page-content { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+            .section-title {
+                font-family: "Bebas Neue", sans-serif;
+                font-size: 2.4rem;
+                letter-spacing: 0.08em;
+                color: var(--primary-blue);
+                margin-bottom: 1.5rem;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            .section-title::after {
+                content: "";
+                flex: 1;
+                height: 2px;
+                background: linear-gradient(to right, var(--primary-blue), transparent);
+            }
+
+            /* ── NEWS CAROUSEL ── */
+            .news-section { margin-bottom: 3rem; }
+            .carousel-wrapper {
+                position: relative;
+                background: var(--white);
+                border-radius: 20px;
+                box-shadow: var(--shadow-lg);
+                border: 1px solid var(--border-color);
+                overflow: hidden;
+            }
+            .carousel-track-container { overflow: hidden; border-radius: 20px 20px 0 0; }
+            .carousel-track { display: flex; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+            .carousel-slide { min-width: 100%; display: flex; flex-direction: column; }
+            .carousel-slide img { width: 100%; height: 400px; object-fit: cover; }
+            .carousel-info { padding: 1.75rem 2rem; }
+            .carousel-info h3 { font-size: 1.5rem; color: var(--text-dark); margin-bottom: 0.75rem; }
+            .carousel-info p { color: var(--text-medium); line-height: 1.7; }
+            .carousel-controls {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 1rem;
+                padding: 1rem;
+                border-top: 1px solid var(--border-color);
+            }
+            .carousel-btn {
+                background: var(--primary-blue);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 42px; height: 42px;
+                font-size: 1.2rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .carousel-btn:hover { background: var(--dark-blue); transform: scale(1.08); }
+            .carousel-dots { display: flex; gap: 0.5rem; }
+            .carousel-dot {
+                width: 10px; height: 10px;
+                border-radius: 50%;
+                background: var(--border-color);
+                border: none;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+            .carousel-dot.active { background: var(--primary-blue); }
+            .news-empty { padding: 4rem 2rem; text-align: center; color: var(--text-light); font-size: 1.1rem; }
+
+            /* ── JOIN SECTION ── */
+            .join-section { margin-bottom: 3rem; }
+            .join-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+
+            .join-left { display: flex; flex-direction: column; gap: 1.25rem; }
+            .rules-link-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.6rem;
+                background: var(--lighter-blue);
+                border: 2px solid var(--border-color);
+                border-radius: 12px;
+                padding: 0.875rem 1.25rem;
+                text-decoration: none;
+                color: var(--primary-blue);
+                font-weight: 600;
+                font-size: 1rem;
+                transition: all 0.2s ease;
+                width: fit-content;
+            }
+            .rules-link-btn:hover {
+                background: var(--light-blue);
+                border-color: var(--primary-blue);
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
+
+            .play-now-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.6rem;
+                background: linear-gradient(135deg, #27ae60, #1e8449);
+                color: white;
+                border: none;
+                border-radius: 14px;
+                padding: 1rem 2rem;
+                font-size: 1.2rem;
+                font-weight: 700;
+                font-family: "DM Sans", sans-serif;
+                cursor: pointer;
+                text-decoration: none;
+                transition: all 0.25s ease;
+                box-shadow: 0 4px 15px rgba(39, 174, 96, 0.35);
+                width: fit-content;
+            }
+            .play-now-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(39, 174, 96, 0.45); }
+            .play-now-btn[href="#"] { background: #aaa; cursor: default; box-shadow: none; }
+
+            .agree-gate {
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 16px;
+                padding: 1.5rem;
+                box-shadow: var(--shadow-md);
+            }
+            .agree-gate h4 { font-size: 1rem; color: var(--text-dark); margin-bottom: 1rem; }
+            .agree-checkbox-row { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.25rem; }
+            .agree-checkbox-row input[type="checkbox"] {
+                width: 20px; height: 20px;
+                accent-color: var(--primary-blue);
+                flex-shrink: 0;
+                margin-top: 2px;
+                cursor: pointer;
+            }
+            .agree-checkbox-row label { cursor: pointer; color: var(--text-medium); font-size: 0.95rem; }
+            .agree-checkbox-row a { color: var(--primary-blue); font-weight: 600; }
+
+            .code-reveal { display: none; flex-direction: column; gap: 1rem; animation: fadeUp 0.4s ease; }
+            .code-reveal.visible { display: flex; }
+
+            @keyframes fadeUp {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .join-code-image {
+                width: 100%;
+                border-radius: 12px;
+                border: 2px solid var(--border-color);
+                box-shadow: var(--shadow-md);
+                object-fit: contain;
+                background: var(--lighter-blue);
+            }
+            .connection-id-box {
+                background: var(--lighter-blue);
+                border: 2px dashed var(--primary-blue);
+                border-radius: 12px;
+                padding: 1.25rem;
+                text-align: center;
+            }
+            .connection-id-box .label {
+                font-size: 0.8rem;
+                font-weight: 700;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--text-light);
+                margin-bottom: 0.4rem;
+            }
+            .connection-id-box .code-value {
+                font-family: "Bebas Neue", sans-serif;
+                font-size: 2rem;
+                letter-spacing: 0.12em;
+                color: var(--primary-blue);
+            }
+            .code-placeholder { color: var(--text-light); font-style: italic; font-size: 0.9rem; text-align: center; padding: 1rem; }
+
+            .join-right { display: flex; flex-direction: column; gap: 1.25rem; }
+
+            .downtime-container {
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 14px;
+                overflow: hidden;
+                box-shadow: var(--shadow-sm);
+            }
+            .downtime-header {
+                padding: 1rem 1.25rem;
+                background: var(--lighter-blue);
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                user-select: none;
+                transition: background 0.2s;
+            }
+            .downtime-header:hover { background: var(--light-blue); }
+            .downtime-header h4 { font-size: 1rem; color: var(--text-dark); display: flex; align-items: center; gap: 0.5rem; }
+            .downtime-arrow { transition: transform 0.3s; font-size: 0.9rem; color: var(--text-medium); }
+            .downtime-container.open .downtime-arrow { transform: rotate(180deg); }
+            .downtime-body { display: none; padding: 1rem 1.25rem; border-top: 1px solid var(--border-color); }
+            .downtime-container.open .downtime-body { display: block; }
+            .downtime-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem;
+                border-radius: 8px;
+                margin-bottom: 0.5rem;
+                background: var(--lighter-blue);
+                border: 1px solid var(--border-color);
+                font-size: 0.9rem;
+            }
+            .downtime-empty { color: var(--text-light); font-style: italic; font-size: 0.9rem; padding: 0.5rem 0; }
+
+            .downtime-alert {
+                display: none;
+                background: linear-gradient(135deg, #fff3cd, #ffe5a1);
+                border: 2px solid #ffd54f;
+                border-radius: 14px;
+                padding: 1.25rem;
+                animation: fadeUp 0.4s ease;
+            }
+            .downtime-alert.visible { display: block; }
+            .downtime-alert h4 { color: #856404; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem; }
+            .downtime-alert p { color: #856404; font-size: 0.95rem; }
+
+            .voice-card {
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 14px;
+                padding: 1.5rem;
+                box-shadow: var(--shadow-md);
+            }
+            .voice-card h4 { font-size: 1.1rem; color: var(--text-dark); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+            .voice-card p { color: var(--text-medium); font-size: 0.95rem; margin-bottom: 1rem; line-height: 1.6; }
+            .voice-link {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: linear-gradient(135deg, #7289da, #5865f2);
+                color: white;
+                text-decoration: none;
+                padding: 0.75rem 1.25rem;
+                border-radius: 10px;
+                font-weight: 600;
+                font-size: 0.95rem;
+                transition: all 0.2s ease;
+            }
+            .voice-link:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4); }
+            .voice-link-placeholder { color: var(--text-light); font-style: italic; font-size: 0.9rem; }
+
+            .spinner {
+                border: 3px solid var(--light-blue);
+                border-top: 3px solid var(--primary-blue);
+                border-radius: 50%;
+                width: 36px; height: 36px;
+                animation: spin 1s linear infinite;
+                margin: 2rem auto;
+            }
+            @keyframes spin { to { transform: rotate(360deg); } }
+
+            footer {
+                background: var(--text-dark);
+                color: #a0aec0;
+                text-align: center;
+                padding: 2rem;
+                font-size: 0.9rem;
+                margin-top: 2rem;
+            }
+            footer a { color: var(--accent-blue); text-decoration: none; }
+
+            @media (max-width: 768px) {
+                .join-grid { grid-template-columns: 1fr; }
+                .carousel-slide img { height: 220px; }
             }
         </style>
     </head>
     <body>
-        <nav>
-            <div class="nav-inner">
-                <a href="https://allforonesmp.github.io" class="logo">AllForOne SMP</a>
 
-                <ul class="nav-links">
-                    <li><a href="https://allforonesmp.github.io" data-path="/">Home</a></li>
-                    <li><a href="https://allforonesmp.github.io/rules" data-path="/rules">Rules</a></li>
-                    <li><a href="https://allforonesmp.github.io/profile" data-path="/profile">Profile</a></li>
-                    <li><a href="https://allforonesmp.github.io/post" data-path="/post">Post</a></li>
-                </ul>
+        <!-- ── NAVBAR IFRAME ── -->
+        <iframe
+            id="afo-navbar-frame"
+            src="https://allforonesmp.github.io/navbar.html"
+            title="AllForOne SMP Navigation"
+            scrolling="no"
+            allowtransparency="true"
+        ></iframe>
 
-                <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" onclick="handleHamburger()">
-                    <span></span><span></span><span></span>
-                </button>
+        <!-- ── MOBILE OVERLAY ── -->
+        <div id="afo-overlay" onclick="afoCloseDrawer()"></div>
+
+        <!-- ── MOBILE DRAWER ── -->
+        <div id="afo-drawer" role="dialog" aria-label="Navigation menu">
+            <div id="afo-drawer-header">
+                <a href="https://allforonesmp.github.io">AllForOne SMP</a>
+                <button id="afo-drawer-close" onclick="afoCloseDrawer()" aria-label="Close menu">✕</button>
             </div>
-        </nav>
+            <ul id="afo-drawer-links">
+                <li><a href="https://allforonesmp.github.io"         data-path="/"><span class="afo-icon">🏠</span> Home</a></li>
+                <li><a href="https://allforonesmp.github.io/rules"   data-path="/rules"><span class="afo-icon">📜</span> Rules</a></li>
+                <li><a href="https://allforonesmp.github.io/profile" data-path="/profile"><span class="afo-icon">👤</span> Profile</a></li>
+                <li><a href="https://allforonesmp.github.io/post"    data-path="/post"><span class="afo-icon">📝</span> Post</a></li>
+            </ul>
+            <div id="afo-drawer-footer">AllForOne SMP &copy; 2026</div>
+        </div>
 
+        <!-- ── NAVBAR GLUE SCRIPT ── -->
         <script>
-            window.addEventListener("message", (e) => {
-                // Highlight active link based on parent page path
-                if (e.data && e.data.type === "afo-pathname") {
-                    const pathname = e.data.pathname;
-                    document.querySelectorAll("[data-path]").forEach((a) => {
-                        const path = a.getAttribute("data-path");
-                        const match =
-                            pathname === path ||
-                            (path === "/" && (pathname === "" || pathname === "/index.html" || pathname === "/"));
-                        a.classList.toggle("active", match);
-                    });
+        (function () {
+            var frame    = document.getElementById('afo-navbar-frame');
+            var overlay  = document.getElementById('afo-overlay');
+            var drawer   = document.getElementById('afo-drawer');
+            var drawerOpen = false;
+
+            window.afoOpenDrawer = function () {
+                drawerOpen = true;
+                overlay.classList.add('afo-visible');
+                drawer.classList.add('afo-open');
+                document.body.style.overflow = 'hidden';
+                frame.contentWindow.postMessage({ type: 'afo-drawer-state', open: true }, '*');
+            };
+
+            window.afoCloseDrawer = function () {
+                drawerOpen = false;
+                overlay.classList.remove('afo-visible');
+                drawer.classList.remove('afo-open');
+                document.body.style.overflow = '';
+                frame.contentWindow.postMessage({ type: 'afo-drawer-state', open: false }, '*');
+            };
+
+            // Highlight active drawer link
+            (function highlightActive() {
+                var pathname = window.location.pathname;
+                document.querySelectorAll('#afo-drawer-links [data-path]').forEach(function (a) {
+                    var path = a.getAttribute('data-path');
+                    var match = pathname === path ||
+                        (path === '/' && (pathname === '' || pathname === '/' || pathname === '/index.html'));
+                    a.classList.toggle('afo-active', match);
+                });
+            })();
+
+            function sendPathname() {
+                if (frame && frame.contentWindow) {
+                    frame.contentWindow.postMessage(
+                        { type: 'afo-pathname', pathname: window.location.pathname },
+                        'https://allforonesmp.github.io'
+                    );
                 }
-                // Sync hamburger icon with drawer open/close state
-                if (e.data && e.data.type === "afo-drawer-state") {
-                    document.getElementById("hamburgerBtn").classList.toggle("open", e.data.open);
+            }
+            frame.addEventListener('load', sendPathname);
+
+            window.addEventListener('message', function (e) {
+                if (e.origin !== 'https://allforonesmp.github.io') return;
+                if (e.data && e.data.type === 'afo-toggle-drawer') {
+                    drawerOpen ? afoCloseDrawer() : afoOpenDrawer();
+                }
+                if (e.data && e.data.type === 'afo-navbar-ready') {
+                    sendPathname();
                 }
             });
 
-            // Clicking hamburger tells the parent to toggle the drawer
-            function handleHamburger() {
-                window.parent.postMessage({ type: "afo-toggle-drawer" }, "*");
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && drawerOpen) afoCloseDrawer();
+            });
+        })();
+        </script>
+
+        <!-- ── HERO BANNER ── -->
+        <div class="hero-banner">
+            <img id="heroBannerImg" src="https://allforonesmp.github.io/images/banner.png" alt="AllForOne SMP Banner" />
+            <div class="hero-overlay"></div>
+        </div>
+
+        <!-- ── PAGE CONTENT ── -->
+        <div class="page-content">
+            <section class="news-section">
+                <div class="section-title">📰 Latest News</div>
+                <div class="carousel-wrapper" id="newsCarouselWrapper">
+                    <div id="newsLoadingSpinner"><div class="spinner"></div></div>
+                    <div id="newsCarouselInner" style="display: none">
+                        <div class="carousel-track-container">
+                            <div class="carousel-track" id="carouselTrack"></div>
+                        </div>
+                        <div class="carousel-controls">
+                            <button class="carousel-btn" onclick="carouselPrev()">&#8592;</button>
+                            <div class="carousel-dots" id="carouselDots"></div>
+                            <button class="carousel-btn" onclick="carouselNext()">&#8594;</button>
+                        </div>
+                    </div>
+                    <div id="newsEmpty" class="news-empty" style="display: none">No news yet – check back soon!</div>
+                </div>
+            </section>
+
+            <section class="join-section">
+                <div class="section-title">🎮 Join the Server</div>
+
+                <div class="downtime-alert" id="downtimeAlert">
+                    <h4>⚠️ Upcoming Server Downtime</h4>
+                    <p id="downtimeAlertText">Scheduled maintenance approaching.</p>
+                </div>
+                <div style="margin-bottom: 1rem"></div>
+
+                <div class="join-grid">
+                    <div class="join-left">
+                        <a href="https://allforonesmp.github.io/rules" class="rules-link-btn" target="_blank">
+                            📜 Read the Server Rules
+                        </a>
+                        <div class="agree-gate">
+                            <h4>Access the Join Code</h4>
+                            <div class="agree-checkbox-row">
+                                <input type="checkbox" id="agreeCheck" onchange="toggleCodeReveal()" />
+                                <label for="agreeCheck">
+                                    I have read and agreed to the rules for the
+                                    <a href="https://allforonesmp.github.io/rules" target="_blank">AllForOne SMP</a>.
+                                </label>
+                            </div>
+                            <div class="code-reveal" id="codeReveal">
+                                <a id="playNowBtn" href="#" class="play-now-btn" target="_blank"> ▶ Play Now! </a>
+                                <div class="code-placeholder" id="codeLoadingMsg">Loading join code…</div>
+                                <img id="joinCodeImage" src="" alt="Join Code" class="join-code-image" style="display: none" />
+                                <div class="connection-id-box" id="connectionIdBox" style="display: none">
+                                    <div class="label">Connection ID</div>
+                                    <div class="code-value" id="connectionIdValue">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="join-right">
+                        <div class="downtime-container" id="downtimeContainer">
+                            <div class="downtime-header" onclick="toggleDowntime()">
+                                <h4>🕐 Server Downtime Schedule</h4>
+                                <span class="downtime-arrow">▼</span>
+                            </div>
+                            <div class="downtime-body" id="downtimeBody">
+                                <div id="downtimeList"><div class="downtime-empty">No scheduled downtimes.</div></div>
+                            </div>
+                        </div>
+
+                        <div class="voice-card">
+                            <h4>🎙️ Proximity Voice Chat</h4>
+                            <p id="voiceChatDescription">
+                                Connect with other players using spatial proximity voice chat – hear players closer to
+                                you louder, and those far away fade into the distance.
+                            </p>
+                            <div id="voiceChatLinkArea">
+                                <div class="spinner" style="width: 24px; height: 24px; margin: 0"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>
+                AllForOne SMP &copy; 2026 &nbsp;|&nbsp;
+                <a href="https://allforonesmp.github.io/rules">Rules</a> &nbsp;|&nbsp; Built with ❤️
+            </p>
+        </footer>
+
+        <!-- Firebase -->
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+            import {
+                getFirestore, doc, onSnapshot, collection, orderBy, query
+            } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+            import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyDzQlAqhCeytCLEYafboYGpFu6pY3Kv9WE",
+                authDomain: "allforonemedia-9a7d8.firebaseapp.com",
+                databaseURL: "https://allforonemedia-9a7d8-default-rtdb.firebaseio.com",
+                projectId: "allforonemedia-9a7d8",
+                storageBucket: "allforonemedia-9a7d8.firebasestorage.app",
+                messagingSenderId: "892787060584",
+                appId: "1:892787060584:web:e65609062592f9ba96f0dd",
+                measurementId: "G-JSXKLMBRLC"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const db  = getFirestore(app);
+            const rtdb = getDatabase(app);
+
+            // ─── NEWS CAROUSEL ─────────────────────────────────────────
+            let carouselIndex = 0;
+            let newsItems = [];
+
+            async function loadNews() {
+                try {
+                    const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+                    onSnapshot(q, (snapshot) => {
+                        newsItems = [];
+                        snapshot.forEach((d) => newsItems.push({ id: d.id, ...d.data() }));
+                        renderCarousel();
+                    });
+                } catch (e) {
+                    document.getElementById("newsLoadingSpinner").style.display = "none";
+                    document.getElementById("newsEmpty").style.display = "block";
+                }
             }
 
-            // Signal to parent that navbar iframe is ready
-            window.parent.postMessage({ type: "afo-navbar-ready" }, "*");
+            function renderCarousel() {
+                const spinner = document.getElementById("newsLoadingSpinner");
+                const inner   = document.getElementById("newsCarouselInner");
+                const empty   = document.getElementById("newsEmpty");
+                const track   = document.getElementById("carouselTrack");
+                const dots    = document.getElementById("carouselDots");
+
+                spinner.style.display = "none";
+
+                if (newsItems.length === 0) {
+                    inner.style.display = "none";
+                    empty.style.display = "block";
+                    return;
+                }
+                inner.style.display = "block";
+                empty.style.display = "none";
+                track.innerHTML = "";
+                dots.innerHTML  = "";
+
+                newsItems.forEach((item, i) => {
+                    const slide = document.createElement("div");
+                    slide.className = "carousel-slide";
+                    slide.innerHTML = `
+                        <img src="${item.imageUrl || "https://via.placeholder.com/1200x400/4A90E2/ffffff?text=News"}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/1200x400/4A90E2/ffffff?text=News'">
+                        <div class="carousel-info">
+                            <h3>${item.title || "Untitled"}</h3>
+                            <p>${item.description || ""}</p>
+                        </div>`;
+                    track.appendChild(slide);
+
+                    const dot = document.createElement("button");
+                    dot.className = "carousel-dot" + (i === 0 ? " active" : "");
+                    dot.onclick = () => goToSlide(i);
+                    dots.appendChild(dot);
+                });
+
+                goToSlide(0);
+            }
+
+            function goToSlide(idx) {
+                carouselIndex = (idx + newsItems.length) % newsItems.length;
+                document.getElementById("carouselTrack").style.transform = `translateX(-${carouselIndex * 100}%)`;
+                document.querySelectorAll(".carousel-dot").forEach((d, i) => d.classList.toggle("active", i === carouselIndex));
+            }
+
+            window.carouselPrev = () => goToSlide(carouselIndex - 1);
+            window.carouselNext = () => goToSlide(carouselIndex + 1);
+            setInterval(() => { if (newsItems.length > 1) window.carouselNext(); }, 7000);
+
+            // ─── JOIN CODE ─────────────────────────────────────────────
+            let serverData = {};
+            let codeLoaded = false;
+
+            async function loadServerInfo() {
+                onSnapshot(doc(db, "serverInfo", "main"), (snap) => {
+                    if (!snap.exists()) return;
+                    serverData = snap.data();
+
+                    const playBtn = document.getElementById("playNowBtn");
+                    if (serverData.playNowLink) {
+                        playBtn.href = serverData.playNowLink;
+                        playBtn.style.background = "linear-gradient(135deg,#27AE60,#1e8449)";
+                    }
+
+                    const vcArea = document.getElementById("voiceChatLinkArea");
+                    if (serverData.voiceChatDescription) {
+                        document.getElementById("voiceChatDescription").textContent = serverData.voiceChatDescription;
+                    }
+                    if (serverData.voiceChatLink) {
+                        vcArea.innerHTML = `<a href="${serverData.voiceChatLink}" target="_blank" class="voice-link">🎙️ Join Proximity Voice Chat</a>`;
+                    } else {
+                        vcArea.innerHTML = '<span class="voice-link-placeholder">Voice chat link not set yet.</span>';
+                    }
+
+                    renderDowntimes(serverData.downtimes || []);
+
+                    codeLoaded = true;
+                    if (document.getElementById("agreeCheck").checked) renderCode();
+                });
+            }
+
+            function renderDowntimes(downtimes) {
+                const list      = document.getElementById("downtimeList");
+                const alert     = document.getElementById("downtimeAlert");
+                const alertText = document.getElementById("downtimeAlertText");
+
+                list.innerHTML = "";
+
+                if (!downtimes || downtimes.length === 0) {
+                    list.innerHTML = '<div class="downtime-empty">No scheduled downtimes.</div>';
+                    alert.classList.remove("visible");
+                    return;
+                }
+
+                const now = new Date();
+                let upcomingAlert = null;
+
+                downtimes.forEach((dt) => {
+                    const item = document.createElement("div");
+                    item.className = "downtime-item";
+                    item.innerHTML = `
+                        <span style="font-weight:600;color:var(--text-dark);">${dt.label || "Maintenance"}</span>
+                        <span style="color:var(--text-medium);">${dt.time || ""}</span>`;
+                    list.appendChild(item);
+
+                    if (dt.timestamp) {
+                        const dtDate = new Date(dt.timestamp);
+                        const diffHrs = (dtDate - now) / 36e5;
+                        if (diffHrs >= 0 && diffHrs <= 24) upcomingAlert = dt;
+                    }
+                });
+
+                if (upcomingAlert) {
+                    alertText.textContent = `"${upcomingAlert.label || "Maintenance"}" scheduled at ${upcomingAlert.time}. Please make sure you finish what you're doing!`;
+                    alert.classList.add("visible");
+                    document.getElementById("downtimeContainer").classList.add("open");
+                } else {
+                    alert.classList.remove("visible");
+                }
+            }
+
+            window.toggleCodeReveal = function () {
+                const checked = document.getElementById("agreeCheck").checked;
+                const reveal  = document.getElementById("codeReveal");
+                if (checked) {
+                    reveal.classList.add("visible");
+                    if (codeLoaded) renderCode();
+                } else {
+                    reveal.classList.remove("visible");
+                }
+            };
+
+            function renderCode() {
+                const loadingMsg = document.getElementById("codeLoadingMsg");
+                const img        = document.getElementById("joinCodeImage");
+                const idBox      = document.getElementById("connectionIdBox");
+                const idValue    = document.getElementById("connectionIdValue");
+
+                loadingMsg.style.display = "none";
+
+                if (serverData.joinCodeImageUrl) {
+                    img.src = serverData.joinCodeImageUrl;
+                    img.style.display = "block";
+                } else {
+                    img.style.display = "none";
+                    loadingMsg.textContent = "Join code image not uploaded yet.";
+                    loadingMsg.style.display = "block";
+                }
+
+                if (serverData.connectionId) {
+                    idValue.textContent = serverData.connectionId;
+                    idBox.style.display = "block";
+                } else {
+                    idBox.style.display = "none";
+                }
+            }
+
+            window.toggleDowntime = function () {
+                document.getElementById("downtimeContainer").classList.toggle("open");
+            };
+
+            loadNews();
+            loadServerInfo();
         </script>
     </body>
 </html>
