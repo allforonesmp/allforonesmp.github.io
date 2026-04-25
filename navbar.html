@@ -154,13 +154,13 @@
     <body>
         <nav>
             <div class="nav-inner">
-                <a href="https://allforonesmp.github.io" class="logo">AllForOne SMP</a>
+                <a href="https://allforonesmp.github.io" class="logo" target="_blank" rel="noopener noreferrer">AllForOne SMP</a>
 
                 <ul class="nav-links">
-                    <li><a href="https://allforonesmp.github.io" data-path="/">Home</a></li>
-                    <li><a href="https://allforonesmp.github.io/rules" data-path="/rules">Rules</a></li>
-                    <li><a href="https://allforonesmp.github.io/profile" data-path="/profile">Profile</a></li>
-                    <li><a href="https://allforonesmp.github.io/post" data-path="/post">Post</a></li>
+                    <li><a href="https://allforonesmp.github.io" data-path="/" target="_blank" rel="noopener noreferrer">Home</a></li>
+                    <li><a href="https://allforonesmp.github.io/rules" data-path="/rules" target="_blank" rel="noopener noreferrer">Rules</a></li>
+                    <li><a href="https://allforonesmp.github.io/profile" data-path="/profile" target="_blank" rel="noopener noreferrer">Profile</a></li>
+                    <li><a href="https://allforonesmp.github.io/post" data-path="/post" target="_blank" rel="noopener noreferrer">Post</a></li>
                 </ul>
 
                 <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" onclick="handleHamburger()">
@@ -171,7 +171,6 @@
 
         <script>
             window.addEventListener("message", (e) => {
-                // Highlight active link based on parent page path
                 if (e.data && e.data.type === "afo-pathname") {
                     const pathname = e.data.pathname;
                     document.querySelectorAll("[data-path]").forEach((a) => {
@@ -182,18 +181,15 @@
                         a.classList.toggle("active", match);
                     });
                 }
-                // Sync hamburger icon with drawer open/close state
                 if (e.data && e.data.type === "afo-drawer-state") {
                     document.getElementById("hamburgerBtn").classList.toggle("open", e.data.open);
                 }
             });
 
-            // Clicking hamburger tells the parent to toggle the drawer
             function handleHamburger() {
                 window.parent.postMessage({ type: "afo-toggle-drawer" }, "*");
             }
 
-            // Signal to parent that navbar iframe is ready
             window.parent.postMessage({ type: "afo-navbar-ready" }, "*");
         </script>
     </body>
