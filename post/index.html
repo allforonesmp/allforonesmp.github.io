@@ -43,31 +43,6 @@
 
         h1,h2,h3,h4,h5,h6 { font-family: 'Spectral', serif; font-weight: 700; }
 
-        /* ── Header ── */
-        header {
-            background: var(--white);
-            padding: 1.25rem 2rem;
-            box-shadow: var(--shadow-sm);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 2px solid var(--border-color);
-        }
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo { font-family: 'Spectral', serif; font-size: 1.75rem; font-weight: 700; color: var(--primary-blue); text-decoration: none; }
-        .user-info { display: flex; align-items: center; gap: 1rem; }
-        .profile-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-blue); }
-        .username-display { font-weight: 500; color: var(--text-dark); }
-
-        /* Admin header glow */
-        .admin-header-glow { box-shadow: 0 2px 0 var(--admin-gold); }
-
         /* ── Auth Modal ── */
         .modal {
             display: none;
@@ -337,10 +312,209 @@
 
         /* Responsive */
         @media (max-width:1200px) { .container { grid-template-columns: 1fr 2fr; } .sidebar:last-child { display:none; } }
-        @media (max-width:768px) { .container { grid-template-columns: 1fr; } .sidebar { display:none; } header { padding: 1rem; } }
+        @media (max-width:768px) { .container { grid-template-columns: 1fr; } .sidebar { display:none; } }
     </style>
 </head>
 <body>
+
+<!-- =====================================================================
+     AllForOne SMP — Navbar Embed Snippet
+     ===================================================================== -->
+
+<!-- 1. Push page content below the navbar -->
+<style>
+  body { margin-top: 64px !important; }
+
+  #afo-navbar-frame {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 64px;
+    border: none;
+    z-index: 9000;
+    display: block;
+  }
+
+  #afo-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 35, 50, 0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 9100;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  #afo-overlay.afo-visible { display: block; opacity: 1; }
+
+  #afo-drawer {
+    position: fixed;
+    top: 0; right: 0;
+    width: min(300px, 85vw);
+    height: 100vh;
+    background: #ffffff;
+    box-shadow: -4px 0 40px rgba(74, 144, 226, 0.18);
+    z-index: 9200;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    font-family: "DM Sans", sans-serif;
+  }
+  #afo-drawer.afo-open { transform: translateX(0); }
+
+  #afo-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1.5px solid #d4e8f0;
+    background: #f5fbfd;
+    flex-shrink: 0;
+  }
+  #afo-drawer-header a {
+    font-family: "Spectral", serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #4a90e2;
+    text-decoration: none;
+  }
+  #afo-drawer-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #718096;
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    transition: color 0.18s, background 0.18s;
+  }
+  #afo-drawer-close:hover { color: #1a2332; background: #e8f4f8; }
+
+  #afo-drawer-links {
+    list-style: none;
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+  }
+  #afo-drawer-links li a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #4a5568;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1.05rem;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    transition: color 0.18s, background 0.18s;
+  }
+  #afo-drawer-links li a:hover { color: #4a90e2; background: #f5fbfd; }
+  #afo-drawer-links li a.afo-active { color: #4a90e2; background: #e8f4f8; font-weight: 600; }
+  #afo-drawer-links .afo-icon { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+
+  #afo-drawer-footer {
+    padding: 1.25rem 1.5rem;
+    border-top: 1.5px solid #d4e8f0;
+    color: #718096;
+    font-size: 0.82rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Spectral:wght@700&family=DM+Sans:wght@500;600&display=swap');
+</style>
+
+<!-- 2. The sticky navbar iframe -->
+<iframe
+  id="afo-navbar-frame"
+  src="https://allforonesmp.github.io/navbar.html"
+  title="AllForOne SMP Navigation"
+  scrolling="no"
+  allowtransparency="true"
+></iframe>
+
+<!-- 3. Full-screen overlay -->
+<div id="afo-overlay" onclick="afoCloseDrawer()"></div>
+
+<!-- 4. Slide-in mobile drawer -->
+<div id="afo-drawer" role="dialog" aria-label="Navigation menu">
+  <div id="afo-drawer-header">
+    <a href="https://allforonesmp.github.io">AllForOne SMP</a>
+    <button id="afo-drawer-close" onclick="afoCloseDrawer()" aria-label="Close menu">✕</button>
+  </div>
+  <ul id="afo-drawer-links">
+    <li><a href="https://allforonesmp.github.io"         data-path="/"><span class="afo-icon">🏠</span> Home</a></li>
+    <li><a href="https://allforonesmp.github.io/rules"   data-path="/rules"><span class="afo-icon">📜</span> Rules</a></li>
+    <li><a href="https://allforonesmp.github.io/profile" data-path="/profile"><span class="afo-icon">👤</span> Profile</a></li>
+    <li><a href="https://allforonesmp.github.io/post"    data-path="/post"><span class="afo-icon">📝</span> Post</a></li>
+  </ul>
+  <div id="afo-drawer-footer">AllForOne SMP &copy; 2026</div>
+</div>
+
+<!-- 5. Navbar glue script -->
+<script>
+(function () {
+  var frame    = document.getElementById('afo-navbar-frame');
+  var overlay  = document.getElementById('afo-overlay');
+  var drawer   = document.getElementById('afo-drawer');
+  var drawerOpen = false;
+
+  window.afoOpenDrawer = function () {
+    drawerOpen = true;
+    overlay.classList.add('afo-visible');
+    drawer.classList.add('afo-open');
+    document.body.style.overflow = 'hidden';
+    frame.contentWindow.postMessage({ type: 'afo-drawer-state', open: true }, '*');
+  };
+
+  window.afoCloseDrawer = function () {
+    drawerOpen = false;
+    overlay.classList.remove('afo-visible');
+    drawer.classList.remove('afo-open');
+    document.body.style.overflow = '';
+    frame.contentWindow.postMessage({ type: 'afo-drawer-state', open: false }, '*');
+  };
+
+  function highlightActive() {
+    var pathname = window.location.pathname;
+    document.querySelectorAll('#afo-drawer-links [data-path]').forEach(function (a) {
+      var path = a.getAttribute('data-path');
+      var match = pathname === path ||
+        (path === '/' && (pathname === '' || pathname === '/' || pathname === '/index.html'));
+      a.classList.toggle('afo-active', match);
+    });
+  }
+  highlightActive();
+
+  function sendPathname() {
+    if (frame && frame.contentWindow) {
+      frame.contentWindow.postMessage(
+        { type: 'afo-pathname', pathname: window.location.pathname },
+        'https://allforonesmp.github.io'
+      );
+    }
+  }
+  frame.addEventListener('load', sendPathname);
+
+  window.addEventListener('message', function (e) {
+    if (e.origin !== 'https://allforonesmp.github.io') return;
+    if (e.data && e.data.type === 'afo-toggle-drawer') {
+      drawerOpen ? afoCloseDrawer() : afoOpenDrawer();
+    }
+    if (e.data && e.data.type === 'afo-navbar-ready') {
+      sendPathname();
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && drawerOpen) afoCloseDrawer();
+  });
+})();
+</script>
 
 <!-- Auth Modal -->
 <div id="authModal" class="modal active">
@@ -381,19 +555,6 @@
     </div>
 </div>
 
-<!-- Header -->
-<header id="mainHeader" style="display:none;">
-    <div class="header-content">
-        <a href="#" class="logo">Community</a>
-        <div class="user-info">
-            <span class="username-display" id="headerUsername"></span>
-            <img src="https://via.placeholder.com/40" alt="Profile" class="profile-pic" id="headerProfilePic">
-            <a href="https://allforonesmp.github.io/profile" class="btn btn-primary" style="padding:0.5rem 1.2rem;text-decoration:none;font-size:0.9rem;">Profile</a>
-<a href="https://allforonesmp.github.io" class="btn btn-primary" style="padding:0.5rem 1.2rem;text-decoration:none;font-size:0.9rem;">Homepage</a>
-        </div>
-    </div>
-</header>
-
 <!-- Pending Message -->
 <div id="pendingMessage" style="display:none; padding:2rem;">
     <div class="pending-message">
@@ -407,12 +568,7 @@
 <div id="mainContainer" class="container" style="display:none;">
     <!-- Left Sidebar -->
     <aside class="sidebar">
-        <div class="sidebar-card">
-            <h3>Navigation</h3>
-            <a href="#" class="nav-link" onclick="showSection('feed')">🏠 Home Feed</a>
-            <a href="https://allforonesmp.github.io/profile" class="nav-link">👤 My Profile</a>
-            <button class="btn btn-logout" onclick="logout()">Logout</button>
-        </div>
+        
         <div class="sidebar-card" id="adminPanel" style="display:none;">
             <h3>⚡ Admin Panel</h3>
             <a href="#" class="nav-link" onclick="showSection('announcements')">📢 Announcements</a>
@@ -617,30 +773,23 @@ window.logout = async () => { await signOut(auth); };
 // ── UI helpers ──────────────────────────────────────────────────
 function showAuthModal() {
     document.getElementById('authModal').classList.add('active');
-    document.getElementById('mainHeader').style.display = 'none';
     document.getElementById('mainContainer').style.display = 'none';
     document.getElementById('pendingMessage').style.display = 'none';
 }
 function showPendingMessage() {
     document.getElementById('authModal').classList.remove('active');
-    document.getElementById('mainHeader').style.display = 'none';
     document.getElementById('mainContainer').style.display = 'none';
     document.getElementById('pendingMessage').style.display = 'block';
 }
 function showMainApp() {
     document.getElementById('authModal').classList.remove('active');
     document.getElementById('pendingMessage').style.display = 'none';
-    document.getElementById('mainHeader').style.display = 'block';
     document.getElementById('mainContainer').style.display = 'grid';
-
-    document.getElementById('headerUsername').textContent = window.currentUser.username;
-    document.getElementById('headerProfilePic').src = window.currentUser.profilePicture;
 
     if (window.currentUser.isAdmin) {
         document.getElementById('adminPanel').style.display = 'block';
         document.getElementById('adminColorTools').style.display = 'flex';
         document.getElementById('editorToolbar').classList.add('admin-toolbar');
-        document.getElementById('mainHeader').classList.add('admin-header-glow');
     }
     showSection('feed');
 }
