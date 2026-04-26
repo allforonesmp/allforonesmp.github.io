@@ -1,939 +1,1727 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AllForOne | Post</title>
- <link rel="icon" type="image/x-icon" href="https://allforonesmp.github.io/images/logo.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Spectral:wght@600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-blue: #4A90E2;
-            --light-blue: #E8F4F8;
-            --lighter-blue: #F5FBFD;
-            --dark-blue: #2C5F8D;
-            --accent-blue: #5BA3F5;
-            --text-dark: #1a2332;
-            --text-medium: #4a5568;
-            --text-light: #718096;
-            --border-color: #d4e8f0;
-            --white: #ffffff;
-            --error: #E74C3C;
-            --success: #27AE60;
-            --shadow-sm: 0 1px 3px rgba(74,144,226,0.08);
-            --shadow-md: 0 4px 12px rgba(74,144,226,0.12);
-            --shadow-lg: 0 10px 30px rgba(74,144,226,0.15);
-            /* Admin exclusive palette */
-            --admin-gold: #F6C90E;
-            --admin-gold-dark: #C9A800;
-            --admin-gradient: linear-gradient(135deg, #F6C90E 0%, #FF8C00 100%);
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AllForOne | Post</title>
+        <link rel="icon" type="image/x-icon" href="https://allforonesmp.github.io/images/logo.png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Spectral:wght@600;700&display=swap"
+            rel="stylesheet" />
+        <style>
+            :root {
+                --primary-blue: #4a90e2;
+                --light-blue: #e8f4f8;
+                --lighter-blue: #f5fbfd;
+                --dark-blue: #2c5f8d;
+                --accent-blue: #5ba3f5;
+                --text-dark: #1a2332;
+                --text-medium: #4a5568;
+                --text-light: #718096;
+                --border-color: #d4e8f0;
+                --white: #ffffff;
+                --error: #e74c3c;
+                --success: #27ae60;
+                --shadow-sm: 0 1px 3px rgba(74, 144, 226, 0.08);
+                --shadow-md: 0 4px 12px rgba(74, 144, 226, 0.12);
+                --shadow-lg: 0 10px 30px rgba(74, 144, 226, 0.15);
+                /* Admin exclusive palette */
+                --admin-gold: #f6c90e;
+                --admin-gold-dark: #c9a800;
+                --admin-gradient: linear-gradient(135deg, #f6c90e 0%, #ff8c00 100%);
+            }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
-            color: var(--text-dark);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
+            body {
+                font-family: "DM Sans", sans-serif;
+                background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
+                color: var(--text-dark);
+                min-height: 100vh;
+                line-height: 1.6;
+            }
 
-        h1,h2,h3,h4,h5,h6 { font-family: 'Spectral', serif; font-weight: 700; }
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
+                font-family: "Spectral", serif;
+                font-weight: 700;
+            }
 
-        /* ── Auth Modal ── */
-        .modal {
-            display: none;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(26,35,50,0.8); backdrop-filter: blur(8px);
-            z-index: 1000; align-items: center; justify-content: center;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: var(--white); padding: 3rem; border-radius: 20px;
-            width: 90%; max-width: 450px; box-shadow: var(--shadow-lg);
-            animation: modalSlideIn 0.3s ease;
-        }
-        @keyframes modalSlideIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .modal-header { margin-bottom: 2rem; text-align: center; }
-        .modal-header h2 { color: var(--primary-blue); font-size: 2rem; margin-bottom: 0.5rem; }
-        .auth-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid var(--light-blue); }
-        .auth-tab {
-            flex: 1; padding: 0.75rem; background: none; border: none;
-            font-size: 1rem; font-weight: 500; color: var(--text-medium); cursor: pointer;
-            position: relative; transition: all 0.3s ease;
-        }
-        .auth-tab.active { color: var(--primary-blue); }
-        .auth-tab.active::after {
-            content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
-            height: 2px; background: var(--primary-blue);
-        }
-        .auth-form { display: none; }
-        .auth-form.active { display: block; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-dark); }
-        input[type="text"], input[type="email"], input[type="password"] {
-            width: 100%; padding: 0.875rem 1rem; border: 2px solid var(--border-color);
-            border-radius: 10px; font-size: 1rem; font-family: 'DM Sans', sans-serif;
-            transition: all 0.3s ease; background: var(--lighter-blue);
-        }
-        input:focus { outline: none; border-color: var(--primary-blue); background: var(--white); }
+            /* ── Auth Modal ── */
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(26, 35, 50, 0.8);
+                backdrop-filter: blur(8px);
+                z-index: 1000;
+                align-items: center;
+                justify-content: center;
+            }
+            .modal.active {
+                display: flex;
+            }
+            .modal-content {
+                background: var(--white);
+                padding: 3rem;
+                border-radius: 20px;
+                width: 90%;
+                max-width: 450px;
+                box-shadow: var(--shadow-lg);
+                animation: modalSlideIn 0.3s ease;
+            }
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .modal-header {
+                margin-bottom: 2rem;
+                text-align: center;
+            }
+            .modal-header h2 {
+                color: var(--primary-blue);
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+            .auth-tabs {
+                display: flex;
+                gap: 1rem;
+                margin-bottom: 2rem;
+                border-bottom: 2px solid var(--light-blue);
+            }
+            .auth-tab {
+                flex: 1;
+                padding: 0.75rem;
+                background: none;
+                border: none;
+                font-size: 1rem;
+                font-weight: 500;
+                color: var(--text-medium);
+                cursor: pointer;
+                position: relative;
+                transition: all 0.3s ease;
+            }
+            .auth-tab.active {
+                color: var(--primary-blue);
+            }
+            .auth-tab.active::after {
+                content: "";
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: var(--primary-blue);
+            }
+            .auth-form {
+                display: none;
+            }
+            .auth-form.active {
+                display: block;
+            }
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+            label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 500;
+                color: var(--text-dark);
+            }
+            input[type="text"],
+            input[type="email"],
+            input[type="password"] {
+                width: 100%;
+                padding: 0.875rem 1rem;
+                border: 2px solid var(--border-color);
+                border-radius: 10px;
+                font-size: 1rem;
+                font-family: "DM Sans", sans-serif;
+                transition: all 0.3s ease;
+                background: var(--lighter-blue);
+            }
+            input:focus {
+                outline: none;
+                border-color: var(--primary-blue);
+                background: var(--white);
+            }
 
-        /* ── Buttons ── */
-        .btn {
-            padding: 0.875rem 1.75rem; border: none; border-radius: 10px;
-            font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease;
-            font-family: 'DM Sans', sans-serif;
-        }
-        .btn-primary { background: var(--primary-blue); color: var(--white); }
-        .btn-primary:hover { background: var(--dark-blue); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .btn-google {
-            background: var(--white); color: var(--text-dark);
-            border: 2px solid var(--border-color); width: 100%; margin-bottom: 1rem;
-            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-        }
-        .btn-google:hover { background: var(--lighter-blue); border-color: var(--primary-blue); }
-        .btn-logout { background: var(--error); color: var(--white); width: 100%; margin-top: 1rem; }
-        .btn-delete { background: var(--error); color: var(--white); padding: 0.5rem 1rem; border-radius: 8px; }
-        .btn-delete:hover { background: #c0392b; }
-        .btn-comment { background: var(--primary-blue); color: var(--white); padding: 0.875rem 1.5rem; border-radius: 10px; }
-        .divider {
-            text-align: center; margin: 1.5rem 0; position: relative; color: var(--text-light);
-        }
-        .divider::before, .divider::after {
-            content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: var(--border-color);
-        }
-        .divider::before { left: 0; }
-        .divider::after  { right: 0; }
+            /* ── Buttons ── */
+            .btn {
+                padding: 0.875rem 1.75rem;
+                border: none;
+                border-radius: 10px;
+                font-size: 1rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-family: "DM Sans", sans-serif;
+            }
+            .btn-primary {
+                background: var(--primary-blue);
+                color: var(--white);
+            }
+            .btn-primary:hover {
+                background: var(--dark-blue);
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
+            .btn-google {
+                background: var(--white);
+                color: var(--text-dark);
+                border: 2px solid var(--border-color);
+                width: 100%;
+                margin-bottom: 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+            .btn-google:hover {
+                background: var(--lighter-blue);
+                border-color: var(--primary-blue);
+            }
+            .btn-logout {
+                background: var(--error);
+                color: var(--white);
+                width: 100%;
+                margin-top: 1rem;
+            }
+            .btn-delete {
+                background: var(--error);
+                color: var(--white);
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+            }
+            .btn-delete:hover {
+                background: #c0392b;
+            }
+            .btn-comment {
+                background: var(--primary-blue);
+                color: var(--white);
+                padding: 0.875rem 1.5rem;
+                border-radius: 10px;
+            }
+            .divider {
+                text-align: center;
+                margin: 1.5rem 0;
+                position: relative;
+                color: var(--text-light);
+            }
+            .divider::before,
+            .divider::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                width: 40%;
+                height: 1px;
+                background: var(--border-color);
+            }
+            .divider::before {
+                left: 0;
+            }
+            .divider::after {
+                right: 0;
+            }
 
-        /* ── Pending ── */
-        .pending-message {
-            background: linear-gradient(135deg, #FFF3CD 0%, #FFE5A1 100%);
-            padding: 2rem; border-radius: 15px; text-align: center;
-            box-shadow: var(--shadow-md); border: 2px solid #FFD54F;
-        }
-        .pending-message h2 { color: #856404; margin-bottom: 1rem; }
-        .pending-message p  { color: #856404; font-size: 1.1rem; }
+            /* ── Pending ── */
+            .pending-message {
+                background: linear-gradient(135deg, #fff3cd 0%, #ffe5a1 100%);
+                padding: 2rem;
+                border-radius: 15px;
+                text-align: center;
+                box-shadow: var(--shadow-md);
+                border: 2px solid #ffd54f;
+            }
+            .pending-message h2 {
+                color: #856404;
+                margin-bottom: 1rem;
+            }
+            .pending-message p {
+                color: #856404;
+                font-size: 1.1rem;
+            }
 
-        /* ── Layout ── */
-        .container {
-            max-width: 1400px; margin: 2rem auto; padding: 0 2rem;
-            display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 2rem;
-        }
-        .main-content { display: flex; flex-direction: column; gap: 2rem; }
-        .card {
-            background: var(--white); border-radius: 15px; padding: 2rem;
-            box-shadow: var(--shadow-md); border: 1px solid var(--border-color);
-        }
+            /* ── Layout ── */
+            .container {
+                max-width: 1400px;
+                margin: 2rem auto;
+                padding: 0 2rem;
+                display: grid;
+                grid-template-columns: 1fr 2fr 1fr;
+                gap: 2rem;
+            }
+            .main-content {
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+            }
+            .card {
+                background: var(--white);
+                border-radius: 15px;
+                padding: 2rem;
+                box-shadow: var(--shadow-md);
+                border: 1px solid var(--border-color);
+            }
 
-        /* ── Sidebar ── */
-        .sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
-        .sidebar-card {
-            background: var(--white); border-radius: 15px; padding: 1.5rem;
-            box-shadow: var(--shadow-md); border: 1px solid var(--border-color);
-        }
-        .sidebar-card h3 { color: var(--primary-blue); margin-bottom: 1rem; font-size: 1.25rem; }
-        .nav-link {
-            display: block; padding: 0.875rem 1rem; color: var(--text-dark); text-decoration: none;
-            border-radius: 8px; transition: all 0.3s ease; font-weight: 500; margin-bottom: 0.5rem;
-        }
-        .nav-link:hover { background: var(--light-blue); color: var(--primary-blue); transform: translateX(5px); }
+            /* ── Sidebar ── */
+            .sidebar {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .sidebar-card {
+                background: var(--white);
+                border-radius: 15px;
+                padding: 1.5rem;
+                box-shadow: var(--shadow-md);
+                border: 1px solid var(--border-color);
+            }
+            .sidebar-card h3 {
+                color: var(--primary-blue);
+                margin-bottom: 1rem;
+                font-size: 1.25rem;
+            }
+            .nav-link {
+                display: block;
+                padding: 0.875rem 1rem;
+                color: var(--text-dark);
+                text-decoration: none;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+                font-weight: 500;
+                margin-bottom: 0.5rem;
+            }
+            .nav-link:hover {
+                background: var(--light-blue);
+                color: var(--primary-blue);
+                transform: translateX(5px);
+            }
 
-        /* ── Admin Panel – gold card ── */
-        #adminPanel {
-            background: linear-gradient(135deg, #fffbe6 0%, #fff3cd 100%);
-            border: 2px solid var(--admin-gold);
-        }
-        #adminPanel h3 { color: var(--admin-gold-dark); }
-        #adminPanel .nav-link:hover { background: #fff3b0; color: var(--admin-gold-dark); }
+            /* ── Admin Panel – gold card ── */
+            #adminPanel {
+                background: linear-gradient(135deg, #fffbe6 0%, #fff3cd 100%);
+                border: 2px solid var(--admin-gold);
+            }
+            #adminPanel h3 {
+                color: var(--admin-gold-dark);
+            }
+            #adminPanel .nav-link:hover {
+                background: #fff3b0;
+                color: var(--admin-gold-dark);
+            }
 
-        /* ── Admin Badge (inline) ── */
-        .admin-badge {
-            display: inline-flex; align-items: center; gap: 0.3rem;
-            background: var(--admin-gradient);
-            color: #1a1a1a; padding: 0.2rem 0.65rem;
-            border-radius: 20px; font-size: 0.72rem; font-weight: 700;
-            letter-spacing: 0.08em; margin-left: 0.5rem;
-            box-shadow: 0 2px 8px rgba(246,201,14,0.4);
-            vertical-align: middle;
-        }
+            /* ── Admin Badge (inline) ── */
+            .admin-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
+                background: var(--admin-gradient);
+                color: #1a1a1a;
+                padding: 0.2rem 0.65rem;
+                border-radius: 20px;
+                font-size: 0.72rem;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                margin-left: 0.5rem;
+                box-shadow: 0 2px 8px rgba(246, 201, 14, 0.4);
+                vertical-align: middle;
+            }
 
-        /* ── Post editor ── */
-        .create-post { animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity:1; transform:translateY(0); } }
-        .post-editor { margin-top: 1.5rem; }
-        .editor-toolbar {
-            display: flex; gap: 0.5rem; padding: 0.75rem;
-            background: var(--lighter-blue); border-radius: 10px 10px 0 0;
-            border: 2px solid var(--border-color); border-bottom: none; flex-wrap: wrap;
-        }
+            /* ── Post editor ── */
+            .create-post {
+                animation: fadeIn 0.5s ease;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .post-editor {
+                margin-top: 1.5rem;
+            }
+            .editor-toolbar {
+                display: flex;
+                gap: 0.5rem;
+                padding: 0.75rem;
+                background: var(--lighter-blue);
+                border-radius: 10px 10px 0 0;
+                border: 2px solid var(--border-color);
+                border-bottom: none;
+                flex-wrap: wrap;
+            }
 
-        /* Admin-only rainbow toolbar */
-        .admin-toolbar { background: linear-gradient(90deg,#fff3b0,#fffbe6,#fff3b0); }
+            /* Admin-only rainbow toolbar */
+            .admin-toolbar {
+                background: linear-gradient(90deg, #fff3b0, #fffbe6, #fff3b0);
+            }
 
-        .toolbar-btn {
-            padding: 0.5rem 0.875rem; background: var(--white); border: 1px solid var(--border-color);
-            border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; font-size: 0.9rem;
-        }
-        .toolbar-btn:hover { background: var(--light-blue); border-color: var(--primary-blue); }
-        .editor-content {
-            min-height: 200px; padding: 1.25rem; border: 2px solid var(--border-color);
-            border-radius: 0 0 10px 10px; font-size: 1rem; line-height: 1.7;
-            background: var(--white); outline: none;
-        }
-        .editor-content:focus { border-color: var(--primary-blue); }
-        .editor-content h1 { font-size:2rem; margin:1rem 0; }
-        .editor-content h2 { font-size:1.65rem; margin:0.875rem 0; }
-        .editor-content h3 { font-size:1.35rem; margin:0.75rem 0; }
-        .editor-content ul, .editor-content ol { margin:1rem 0; padding-left:2rem; }
-        .editor-content li { margin:0.5rem 0; }
-        .editor-content p  { margin:0.75rem 0; }
+            .toolbar-btn {
+                padding: 0.5rem 0.875rem;
+                background: var(--white);
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                font-size: 0.9rem;
+            }
+            .toolbar-btn:hover {
+                background: var(--light-blue);
+                border-color: var(--primary-blue);
+            }
+            .editor-content {
+                min-height: 200px;
+                padding: 1.25rem;
+                border: 2px solid var(--border-color);
+                border-radius: 0 0 10px 10px;
+                font-size: 1rem;
+                line-height: 1.7;
+                background: var(--white);
+                outline: none;
+                transition: border-color 0.2s ease;
+            }
+            .editor-content:focus {
+                border-color: var(--primary-blue);
+            }
+            /* Paste highlight flash */
+            .editor-content.paste-flash {
+                border-color: var(--success);
+                box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2);
+            }
+            .editor-content h1 {
+                font-size: 2rem;
+                margin: 1rem 0;
+            }
+            .editor-content h2 {
+                font-size: 1.65rem;
+                margin: 0.875rem 0;
+            }
+            .editor-content h3 {
+                font-size: 1.35rem;
+                margin: 0.75rem 0;
+            }
+            .editor-content ul,
+            .editor-content ol {
+                margin: 1rem 0;
+                padding-left: 2rem;
+            }
+            .editor-content li {
+                margin: 0.5rem 0;
+            }
+            .editor-content p {
+                margin: 0.75rem 0;
+            }
 
-        /* Admin text color buttons */
-        .color-swatch {
-            width: 28px; height: 28px; border-radius: 6px; border: 2px solid var(--border-color);
-            cursor: pointer; transition: transform 0.15s;
-        }
-        .color-swatch:hover { transform: scale(1.2); border-color: #333; }
+            /* Admin text color buttons */
+            .color-swatch {
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+                border: 2px solid var(--border-color);
+                cursor: pointer;
+                transition: transform 0.15s;
+            }
+            .color-swatch:hover {
+                transform: scale(1.2);
+                border-color: #333;
+            }
 
-        /* Media upload */
-        .media-upload { margin-top: 1.5rem; }
-        .upload-area {
-            border: 2px dashed var(--border-color); border-radius: 10px; padding: 2rem;
-            text-align: center; background: var(--lighter-blue); cursor: pointer; transition: all 0.3s ease;
-        }
-        .upload-area:hover, .upload-area.dragging { border-color: var(--primary-blue); background: var(--light-blue); }
-        .media-preview { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
-        .media-item { position: relative; width: 150px; height: 150px; border-radius: 10px; overflow: hidden; border: 2px solid var(--border-color); }
-        .media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
-        .remove-media {
-            position: absolute; top: 0.5rem; right: 0.5rem; background: var(--error); color: white;
-            border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer;
-            font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
-        }
-        .post-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
-        .btn-post { background: var(--primary-blue); color: var(--white); flex: 1; }
-        .btn-cancel { background: var(--white); color: var(--text-medium); border: 2px solid var(--border-color); }
+            /* Media upload */
+            .media-upload {
+                margin-top: 1.5rem;
+            }
+            .upload-area {
+                border: 2px dashed var(--border-color);
+                border-radius: 10px;
+                padding: 2rem;
+                text-align: center;
+                background: var(--lighter-blue);
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .upload-area:hover,
+            .upload-area.dragging {
+                border-color: var(--primary-blue);
+                background: var(--light-blue);
+            }
+            .media-preview {
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+                margin-top: 1rem;
+            }
+            .media-item {
+                position: relative;
+                width: 150px;
+                height: 150px;
+                border-radius: 10px;
+                overflow: hidden;
+                border: 2px solid var(--border-color);
+            }
+            .media-item img,
+            .media-item video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .remove-media {
+                position: absolute;
+                top: 0.5rem;
+                right: 0.5rem;
+                background: var(--error);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                cursor: pointer;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .post-actions {
+                display: flex;
+                gap: 1rem;
+                margin-top: 1.5rem;
+            }
+            .btn-post {
+                background: var(--primary-blue);
+                color: var(--white);
+                flex: 1;
+            }
+            .btn-cancel {
+                background: var(--white);
+                color: var(--text-medium);
+                border: 2px solid var(--border-color);
+            }
 
-        /* ── Pinned Announcement Post ── */
-        .post-announcement {
-            background: linear-gradient(135deg, #fffbe6 0%, #fff9d6 100%);
-            border: 2.5px solid var(--admin-gold);
-            border-radius: 15px; padding: 2rem;
-            box-shadow: 0 4px 20px rgba(246,201,14,0.25);
-            position: relative; overflow: hidden;
-            animation: fadeIn 0.5s ease;
-        }
-        .post-announcement::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; height: 4px;
-            background: var(--admin-gradient);
-        }
-        .pin-label {
-            display: inline-flex; align-items: center; gap: 0.35rem;
-            background: var(--admin-gradient); color: #1a1a1a;
-            font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
-            padding: 0.2rem 0.6rem; border-radius: 20px; margin-bottom: 0.75rem;
-        }
+            /* Paste hint */
+            .paste-hint {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.82rem;
+                color: var(--text-light);
+                margin-top: 0.5rem;
+                padding: 0 0.25rem;
+            }
+            .paste-hint kbd {
+                background: var(--lighter-blue);
+                border: 1px solid var(--border-color);
+                border-radius: 4px;
+                padding: 0.1rem 0.4rem;
+                font-size: 0.78rem;
+                font-family: monospace;
+                color: var(--text-medium);
+            }
 
-        /* ── Regular Post ── */
-        .post {
-            background: var(--white); border-radius: 15px; padding: 2rem;
-            box-shadow: var(--shadow-md); border: 1px solid var(--border-color);
-            animation: fadeIn 0.5s ease;
-        }
-        .post-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
-        .post-author-pic { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-blue); }
+            /* ── Pinned Announcement Post ── */
+            .post-announcement {
+                background: linear-gradient(135deg, #fffbe6 0%, #fff9d6 100%);
+                border: 2.5px solid var(--admin-gold);
+                border-radius: 15px;
+                padding: 2rem;
+                box-shadow: 0 4px 20px rgba(246, 201, 14, 0.25);
+                position: relative;
+                overflow: hidden;
+                animation: fadeIn 0.5s ease;
+            }
+            .post-announcement::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: var(--admin-gradient);
+            }
+            .pin-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                background: var(--admin-gradient);
+                color: #1a1a1a;
+                font-size: 0.7rem;
+                font-weight: 700;
+                letter-spacing: 0.1em;
+                padding: 0.2rem 0.6rem;
+                border-radius: 20px;
+                margin-bottom: 0.75rem;
+            }
 
-        /* Admin author pic gets gold ring */
-        .post-author-pic.admin-pic { border: 2.5px solid var(--admin-gold); box-shadow: 0 0 0 2px rgba(246,201,14,0.35); }
+            /* ── Regular Post ── */
+            .post {
+                background: var(--white);
+                border-radius: 15px;
+                padding: 2rem;
+                box-shadow: var(--shadow-md);
+                border: 1px solid var(--border-color);
+                animation: fadeIn 0.5s ease;
+            }
+            .post-header {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .post-author-pic {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid var(--primary-blue);
+            }
 
-        .post-author-info h4 { color: var(--text-dark); font-size: 1.1rem; }
-        .post-date { color: var(--text-light); font-size: 0.875rem; }
-        .post-content { margin-bottom: 1.5rem; line-height: 1.8; }
-        .post-content h1 { font-size:1.85rem; margin:1rem 0; }
-        .post-content h2 { font-size:1.5rem; margin:0.875rem 0; }
-        .post-content h3 { font-size:1.25rem; margin:0.75rem 0; }
-        .post-content ul, .post-content ol { margin:1rem 0; padding-left:2rem; }
-        .post-content li { margin:0.5rem 0; }
-        .post-content p  { margin:0.75rem 0; }
-        .post-media { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .post-media img, .post-media video { width: 100%; border-radius: 10px; max-height: 400px; object-fit: cover; cursor: pointer; transition: transform 0.3s ease; }
-        .post-media img:hover { transform: scale(1.02); }
+            /* Admin author pic gets gold ring */
+            .post-author-pic.admin-pic {
+                border: 2.5px solid var(--admin-gold);
+                box-shadow: 0 0 0 2px rgba(246, 201, 14, 0.35);
+            }
 
-        /* ── Likes/Dislikes bar ── */
-        .reactions-bar {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.75rem 0; border-top: 1px solid var(--border-color);
-            margin-bottom: 0.75rem;
-        }
-        .reaction-btn {
-            display: flex; align-items: center; gap: 0.4rem;
-            padding: 0.45rem 1rem; border-radius: 25px; border: 2px solid var(--border-color);
-            background: var(--lighter-blue); cursor: pointer; font-size: 0.95rem;
-            font-weight: 500; transition: all 0.2s ease; font-family: 'DM Sans', sans-serif;
-            color: var(--text-medium);
-        }
-        .reaction-btn:hover { transform: translateY(-2px); }
-        .reaction-btn.liked   { background: #e8f4fd; border-color: var(--primary-blue); color: var(--primary-blue); }
-        .reaction-btn.disliked{ background: #fde8e8; border-color: var(--error); color: var(--error); }
-        .reaction-count { font-weight: 700; min-width: 1.2ch; }
+            .post-author-info h4 {
+                color: var(--text-dark);
+                font-size: 1.1rem;
+            }
+            .post-date {
+                color: var(--text-light);
+                font-size: 0.875rem;
+            }
+            .post-content {
+                margin-bottom: 1.5rem;
+                line-height: 1.8;
+            }
+            .post-content h1 {
+                font-size: 1.85rem;
+                margin: 1rem 0;
+            }
+            .post-content h2 {
+                font-size: 1.5rem;
+                margin: 0.875rem 0;
+            }
+            .post-content h3 {
+                font-size: 1.25rem;
+                margin: 0.75rem 0;
+            }
+            .post-content ul,
+            .post-content ol {
+                margin: 1rem 0;
+                padding-left: 2rem;
+            }
+            .post-content li {
+                margin: 0.5rem 0;
+            }
+            .post-content p {
+                margin: 0.75rem 0;
+            }
+            .post-media {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .post-media img,
+            .post-media video {
+                width: 100%;
+                border-radius: 10px;
+                max-height: 400px;
+                object-fit: cover;
+                cursor: pointer;
+                transition: transform 0.3s ease;
+            }
+            .post-media img:hover {
+                transform: scale(1.02);
+            }
 
-        /* ── Comments ── */
-        .comments-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid var(--light-blue); }
-        .comment {
-            padding: 1rem; background: var(--lighter-blue); border-radius: 10px;
-            margin-bottom: 1rem; border: 1px solid var(--border-color);
-        }
-        .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .comment-author { font-weight: 600; color: var(--primary-blue); }
-        .comment-date { color: var(--text-light); font-size: 0.85rem; }
-        .comment-content { color: var(--text-dark); line-height: 1.6; }
-        .comment-form { display: flex; gap: 1rem; margin-top: 1rem; }
-        .comment-input { flex: 1; padding: 0.875rem; border: 2px solid var(--border-color); border-radius: 10px; font-family: 'DM Sans', sans-serif; background: var(--white); }
+            /* ── Likes/Dislikes bar ── */
+            .reactions-bar {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.75rem 0;
+                border-top: 1px solid var(--border-color);
+                margin-bottom: 0.75rem;
+            }
+            .reaction-btn {
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.45rem 1rem;
+                border-radius: 25px;
+                border: 2px solid var(--border-color);
+                background: var(--lighter-blue);
+                cursor: pointer;
+                font-size: 0.95rem;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                font-family: "DM Sans", sans-serif;
+                color: var(--text-medium);
+            }
+            .reaction-btn:hover {
+                transform: translateY(-2px);
+            }
+            .reaction-btn.liked {
+                background: #e8f4fd;
+                border-color: var(--primary-blue);
+                color: var(--primary-blue);
+            }
+            .reaction-btn.disliked {
+                background: #fde8e8;
+                border-color: var(--error);
+                color: var(--error);
+            }
+            .reaction-count {
+                font-weight: 700;
+                min-width: 1.2ch;
+            }
 
-        .post-actions-bar { display: flex; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
-        .posts-feed { display: flex; flex-direction: column; gap: 1.5rem; }
+            /* ── Comments ── */
+            .comments-section {
+                margin-top: 1.5rem;
+                padding-top: 1.5rem;
+                border-top: 2px solid var(--light-blue);
+            }
+            .comment {
+                padding: 1rem;
+                background: var(--lighter-blue);
+                border-radius: 10px;
+                margin-bottom: 1rem;
+                border: 1px solid var(--border-color);
+            }
+            .comment-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.5rem;
+            }
+            .comment-author {
+                font-weight: 600;
+                color: var(--primary-blue);
+            }
+            .comment-date {
+                color: var(--text-light);
+                font-size: 0.85rem;
+            }
+            .comment-content {
+                color: var(--text-dark);
+                line-height: 1.6;
+            }
+            .comment-form {
+                display: flex;
+                gap: 1rem;
+                margin-top: 1rem;
+            }
+            .comment-input {
+                flex: 1;
+                padding: 0.875rem;
+                border: 2px solid var(--border-color);
+                border-radius: 10px;
+                font-family: "DM Sans", sans-serif;
+                background: var(--white);
+            }
 
-        /* Spinner */
-        .spinner { border: 3px solid var(--light-blue); border-top: 3px solid var(--primary-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 2rem auto; }
-        @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+            .post-actions-bar {
+                display: flex;
+                gap: 1rem;
+                padding-top: 1rem;
+                border-top: 1px solid var(--border-color);
+            }
+            .posts-feed {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
 
-        /* Lightbox */
-        .lightbox { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.95); z-index:2000; align-items:center; justify-content:center; }
-        .lightbox.active { display: flex; }
-        .lightbox-content { max-width:90%; max-height:90%; }
-        .lightbox-close { position:absolute; top:2rem; right:2rem; background:var(--white); color:var(--text-dark); border:none; border-radius:50%; width:50px; height:50px; font-size:1.5rem; cursor:pointer; }
+            /* Spinner */
+            .spinner {
+                border: 3px solid var(--light-blue);
+                border-top: 3px solid var(--primary-blue);
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 2rem auto;
+            }
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
 
-        /* Responsive */
-        @media (max-width:1200px) { .container { grid-template-columns: 1fr 2fr; } .sidebar:last-child { display:none; } }
-        @media (max-width:768px) { .container { grid-template-columns: 1fr; } .sidebar { display:none; } }
-    </style>
-</head>
-<body>
+            /* Lightbox */
+            .lightbox {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.95);
+                z-index: 2000;
+                align-items: center;
+                justify-content: center;
+            }
+            .lightbox.active {
+                display: flex;
+            }
+            .lightbox-content {
+                max-width: 90%;
+                max-height: 90%;
+            }
+            .lightbox-close {
+                position: absolute;
+                top: 2rem;
+                right: 2rem;
+                background: var(--white);
+                color: var(--text-dark);
+                border: none;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+                cursor: pointer;
+            }
 
-<!-- =====================================================================
+            /* Responsive */
+            @media (max-width: 1200px) {
+                .container {
+                    grid-template-columns: 1fr 2fr;
+                }
+                .sidebar:last-child {
+                    display: none;
+                }
+            }
+            @media (max-width: 768px) {
+                .container {
+                    grid-template-columns: 1fr;
+                }
+                .sidebar {
+                    display: none;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- =====================================================================
      AllForOne SMP — Navbar Embed Snippet
      ===================================================================== -->
 
-<!-- 1. Push page content below the navbar -->
-<style>
-  body { margin-top: 64px !important; }
+        <!-- 1. Push page content below the navbar — increased to 80px to prevent overlap -->
+        <style>
+            body {
+                margin-top: 80px !important;
+            }
 
-  #afo-navbar-frame {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 64px;
-    border: none;
-    z-index: 9000;
-    display: block;
-  }
+            #afo-navbar-frame {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 64px;
+                border: none;
+                z-index: 9000;
+                display: block;
+            }
 
-  #afo-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(26, 35, 50, 0.45);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    z-index: 9100;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  #afo-overlay.afo-visible { display: block; opacity: 1; }
+            #afo-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(26, 35, 50, 0.45);
+                backdrop-filter: blur(3px);
+                -webkit-backdrop-filter: blur(3px);
+                z-index: 9100;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            #afo-overlay.afo-visible {
+                display: block;
+                opacity: 1;
+            }
 
-  #afo-drawer {
-    position: fixed;
-    top: 0; right: 0;
-    width: min(300px, 85vw);
-    height: 100vh;
-    background: #ffffff;
-    box-shadow: -4px 0 40px rgba(74, 144, 226, 0.18);
-    z-index: 9200;
-    transform: translateX(100%);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
-    font-family: "DM Sans", sans-serif;
-  }
-  #afo-drawer.afo-open { transform: translateX(0); }
+            #afo-drawer {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: min(300px, 85vw);
+                height: 100vh;
+                background: #ffffff;
+                box-shadow: -4px 0 40px rgba(74, 144, 226, 0.18);
+                z-index: 9200;
+                transform: translateX(100%);
+                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                flex-direction: column;
+                font-family: "DM Sans", sans-serif;
+            }
+            #afo-drawer.afo-open {
+                transform: translateX(0);
+            }
 
-  #afo-drawer-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1.5px solid #d4e8f0;
-    background: #f5fbfd;
-    flex-shrink: 0;
-  }
-  #afo-drawer-header a {
-    font-family: "Spectral", serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #4a90e2;
-    text-decoration: none;
-  }
-  #afo-drawer-close {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #718096;
-    font-size: 1.4rem;
-    line-height: 1;
-    padding: 0.3rem 0.6rem;
-    border-radius: 6px;
-    transition: color 0.18s, background 0.18s;
-  }
-  #afo-drawer-close:hover { color: #1a2332; background: #e8f4f8; }
+            #afo-drawer-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 1.25rem 1.5rem;
+                border-bottom: 1.5px solid #d4e8f0;
+                background: #f5fbfd;
+                flex-shrink: 0;
+            }
+            #afo-drawer-header a {
+                font-family: "Spectral", serif;
+                font-size: 1.3rem;
+                font-weight: 700;
+                color: #4a90e2;
+                text-decoration: none;
+            }
+            #afo-drawer-close {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: #718096;
+                font-size: 1.4rem;
+                line-height: 1;
+                padding: 0.3rem 0.6rem;
+                border-radius: 6px;
+                transition:
+                    color 0.18s,
+                    background 0.18s;
+            }
+            #afo-drawer-close:hover {
+                color: #1a2332;
+                background: #e8f4f8;
+            }
 
-  #afo-drawer-links {
-    list-style: none;
-    padding: 1rem 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    flex: 1;
-  }
-  #afo-drawer-links li a {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: #4a5568;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 1.05rem;
-    padding: 0.8rem 1rem;
-    border-radius: 10px;
-    transition: color 0.18s, background 0.18s;
-  }
-  #afo-drawer-links li a:hover { color: #4a90e2; background: #f5fbfd; }
-  #afo-drawer-links li a.afo-active { color: #4a90e2; background: #e8f4f8; font-weight: 600; }
-  #afo-drawer-links .afo-icon { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+            #afo-drawer-links {
+                list-style: none;
+                padding: 1rem 0.75rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+                flex: 1;
+            }
+            #afo-drawer-links li a {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                color: #4a5568;
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 1.05rem;
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+                transition:
+                    color 0.18s,
+                    background 0.18s;
+            }
+            #afo-drawer-links li a:hover {
+                color: #4a90e2;
+                background: #f5fbfd;
+            }
+            #afo-drawer-links li a.afo-active {
+                color: #4a90e2;
+                background: #e8f4f8;
+                font-weight: 600;
+            }
+            #afo-drawer-links .afo-icon {
+                font-size: 1.1rem;
+                width: 24px;
+                text-align: center;
+                flex-shrink: 0;
+            }
 
-  #afo-drawer-footer {
-    padding: 1.25rem 1.5rem;
-    border-top: 1.5px solid #d4e8f0;
-    color: #718096;
-    font-size: 0.82rem;
-    text-align: center;
-    flex-shrink: 0;
-  }
+            #afo-drawer-footer {
+                padding: 1.25rem 1.5rem;
+                border-top: 1.5px solid #d4e8f0;
+                color: #718096;
+                font-size: 0.82rem;
+                text-align: center;
+                flex-shrink: 0;
+            }
 
-  @import url('https://fonts.googleapis.com/css2?family=Spectral:wght@700&family=DM+Sans:wght@500;600&display=swap');
-</style>
+            @import url("https://fonts.googleapis.com/css2?family=Spectral:wght@700&family=DM+Sans:wght@500;600&display=swap");
+        </style>
 
-<!-- 2. The sticky navbar iframe -->
-<iframe
-  id="afo-navbar-frame"
-  src="https://allforonesmp.github.io/navbar.html"
-  title="AllForOne SMP Navigation"
-  scrolling="no"
-  allowtransparency="true"
-></iframe>
+        <!-- 2. The sticky navbar iframe -->
+        <iframe
+            id="afo-navbar-frame"
+            src="https://allforonesmp.github.io/navbar.html"
+            title="AllForOne SMP Navigation"
+            scrolling="no"
+            allowtransparency="true"></iframe>
 
-<!-- 3. Full-screen overlay -->
-<div id="afo-overlay" onclick="afoCloseDrawer()"></div>
+        <!-- 3. Full-screen overlay -->
+        <div id="afo-overlay" onclick="afoCloseDrawer()"></div>
 
-<!-- 4. Slide-in mobile drawer -->
-<div id="afo-drawer" role="dialog" aria-label="Navigation menu">
-  <div id="afo-drawer-header">
-    <a href="https://allforonesmp.github.io">AllForOne SMP</a>
-    <button id="afo-drawer-close" onclick="afoCloseDrawer()" aria-label="Close menu">✕</button>
-  </div>
-  <ul id="afo-drawer-links">
-    <li><a href="https://allforonesmp.github.io"         data-path="/"><span class="afo-icon">🏠</span> Home</a></li>
-    <li><a href="https://allforonesmp.github.io/rules"   data-path="/rules"><span class="afo-icon">📜</span> Rules</a></li>
-    <li><a href="https://allforonesmp.github.io/profile" data-path="/profile"><span class="afo-icon">👤</span> Profile</a></li>
-    <li><a href="https://allforonesmp.github.io/post"    data-path="/post"><span class="afo-icon">📝</span> Post</a></li>
-  </ul>
-  <div id="afo-drawer-footer">AllForOne SMP &copy; 2026</div>
-</div>
-
-<!-- 5. Navbar glue script -->
-<script>
-(function () {
-  var frame    = document.getElementById('afo-navbar-frame');
-  var overlay  = document.getElementById('afo-overlay');
-  var drawer   = document.getElementById('afo-drawer');
-  var drawerOpen = false;
-
-  window.afoOpenDrawer = function () {
-    drawerOpen = true;
-    overlay.classList.add('afo-visible');
-    drawer.classList.add('afo-open');
-    document.body.style.overflow = 'hidden';
-    frame.contentWindow.postMessage({ type: 'afo-drawer-state', open: true }, '*');
-  };
-
-  window.afoCloseDrawer = function () {
-    drawerOpen = false;
-    overlay.classList.remove('afo-visible');
-    drawer.classList.remove('afo-open');
-    document.body.style.overflow = '';
-    frame.contentWindow.postMessage({ type: 'afo-drawer-state', open: false }, '*');
-  };
-
-  function highlightActive() {
-    var pathname = window.location.pathname;
-    document.querySelectorAll('#afo-drawer-links [data-path]').forEach(function (a) {
-      var path = a.getAttribute('data-path');
-      var match = pathname === path ||
-        (path === '/' && (pathname === '' || pathname === '/' || pathname === '/index.html'));
-      a.classList.toggle('afo-active', match);
-    });
-  }
-  highlightActive();
-
-  function sendPathname() {
-    if (frame && frame.contentWindow) {
-      frame.contentWindow.postMessage(
-        { type: 'afo-pathname', pathname: window.location.pathname },
-        'https://allforonesmp.github.io'
-      );
-    }
-  }
-  frame.addEventListener('load', sendPathname);
-
-  window.addEventListener('message', function (e) {
-    if (e.origin !== 'https://allforonesmp.github.io') return;
-    if (e.data && e.data.type === 'afo-toggle-drawer') {
-      drawerOpen ? afoCloseDrawer() : afoOpenDrawer();
-    }
-    if (e.data && e.data.type === 'afo-navbar-ready') {
-      sendPathname();
-    }
-  });
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && drawerOpen) afoCloseDrawer();
-  });
-})();
-</script>
-
-<!-- Auth Modal -->
-<div id="authModal" class="modal active">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Welcome</h2>
-            <p style="color:var(--text-medium);">Join our community</p>
-        </div>
-        <div class="auth-tabs">
-            <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
-            <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
-        </div>
-        <div id="loginForm" class="auth-form active">
-            <button class="btn btn-google" onclick="signInWithGoogle()">
-                <svg width="20" height="20" viewBox="0 0 20 20"><path fill="#4285F4" d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z"/><path fill="#34A853" d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z"/><path fill="#FBBC05" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07C.38 6.88 0 8.39 0 10c0 1.61.38 3.12 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z"/><path fill="#EA4335" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z"/></svg>
-                Continue with Google
-            </button>
-            <div class="divider">or</div>
-            <form onsubmit="loginWithEmail(event)">
-                <div class="form-group"><label>Email</label><input type="email" id="loginEmail" required></div>
-                <div class="form-group"><label>Password</label><input type="password" id="loginPassword" required></div>
-                <button type="submit" class="btn btn-primary" style="width:100%;">Login</button>
-            </form>
-        </div>
-        <div id="signupForm" class="auth-form">
-            <button class="btn btn-google" onclick="signInWithGoogle()">
-                <svg width="20" height="20" viewBox="0 0 20 20"><path fill="#4285F4" d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z"/><path fill="#34A853" d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z"/><path fill="#FBBC05" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07C.38 6.88 0 8.39 0 10c0 1.61.38 3.12 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z"/><path fill="#EA4335" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z"/></svg>
-                Sign up with Google
-            </button>
-            <div class="divider">or</div>
-            <form onsubmit="signupWithEmail(event)">
-                <div class="form-group"><label>Username</label><input type="text" id="signupUsername" required></div>
-                <div class="form-group"><label>Email</label><input type="email" id="signupEmail" required></div>
-                <div class="form-group"><label>Password</label><input type="password" id="signupPassword" required minlength="6"></div>
-                <button type="submit" class="btn btn-primary" style="width:100%;">Create Account</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Pending Message -->
-<div id="pendingMessage" style="display:none; padding:2rem;">
-    <div class="pending-message">
-        <h2>Account Pending Approval</h2>
-        <p>Your account is currently being reviewed by our administrators. You'll get access once approved.</p>
-        <button class="btn btn-primary" onclick="logout()" style="margin-top:1.5rem;max-width:200px;">Logout</button>
-    </div>
-</div>
-
-<!-- Main -->
-<div id="mainContainer" class="container" style="display:none;">
-    <!-- Left Sidebar -->
-    <aside class="sidebar">
-        
-        <div class="sidebar-card" id="adminPanel" style="display:none;">
-            <h3>⚡ Admin Panel</h3>
-            <a href="#" class="nav-link" onclick="showSection('announcements')">📢 Announcements</a>
-            <a href="#" class="nav-link" onclick="showSection('pending-users')">🕐 Pending Users</a>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content" id="mainContent">
-
-        <!-- Admin: Create Announcement -->
-        <div id="announcementsSection" style="display:none;">
-            <div class="card" style="border:2px solid var(--admin-gold); background:linear-gradient(135deg,#fffbe6,#fff3cd);">
-                <h2 style="color:var(--admin-gold-dark);margin-bottom:1.5rem;">📢 Create Announcement</h2>
-                <div class="form-group">
-                    <label>Title</label>
-                    <input type="text" id="announcementTitle" placeholder="Announcement title">
-                </div>
-                <div class="form-group">
-                    <label>Message</label>
-                    <textarea id="announcementMessage" rows="4" style="width:100%;padding:0.875rem;border:2px solid var(--border-color);border-radius:10px;font-family:'DM Sans',sans-serif;background:var(--lighter-blue);"></textarea>
-                </div>
-                <button class="btn" style="background:var(--admin-gradient);color:#1a1a1a;font-weight:700;" onclick="createAnnouncement()">Post Announcement</button>
+        <!-- 4. Slide-in mobile drawer -->
+        <div id="afo-drawer" role="dialog" aria-label="Navigation menu">
+            <div id="afo-drawer-header">
+                <a href="https://allforonesmp.github.io">AllForOne SMP</a>
+                <button id="afo-drawer-close" onclick="afoCloseDrawer()" aria-label="Close menu">✕</button>
             </div>
-            <div id="announcementsList"></div>
+            <ul id="afo-drawer-links">
+                <li>
+                    <a href="https://allforonesmp.github.io" data-path="/"><span class="afo-icon">🏠</span> Home</a>
+                </li>
+                <li>
+                    <a href="https://allforonesmp.github.io/rules" data-path="/rules"
+                        ><span class="afo-icon">📜</span> Rules</a
+                    >
+                </li>
+                <li>
+                    <a href="https://allforonesmp.github.io/profile" data-path="/profile"
+                        ><span class="afo-icon">👤</span> Profile</a
+                    >
+                </li>
+                <li>
+                    <a href="https://allforonesmp.github.io/post" data-path="/post"
+                        ><span class="afo-icon">📝</span> Post</a
+                    >
+                </li>
+            </ul>
+            <div id="afo-drawer-footer">AllForOne SMP &copy; 2026</div>
         </div>
 
-        <!-- Admin: Pending Users -->
-        <div id="pendingUsersSection" style="display:none;">
-            <div class="card">
-                <h2 style="color:var(--primary-blue);margin-bottom:1.5rem;">Pending User Approvals</h2>
-                <div id="pendingUsersList"></div>
+        <!-- 5. Navbar glue script -->
+        <script>
+            (function () {
+                var frame = document.getElementById("afo-navbar-frame");
+                var overlay = document.getElementById("afo-overlay");
+                var drawer = document.getElementById("afo-drawer");
+                var drawerOpen = false;
+
+                window.afoOpenDrawer = function () {
+                    drawerOpen = true;
+                    overlay.classList.add("afo-visible");
+                    drawer.classList.add("afo-open");
+                    document.body.style.overflow = "hidden";
+                    frame.contentWindow.postMessage({ type: "afo-drawer-state", open: true }, "*");
+                };
+
+                window.afoCloseDrawer = function () {
+                    drawerOpen = false;
+                    overlay.classList.remove("afo-visible");
+                    drawer.classList.remove("afo-open");
+                    document.body.style.overflow = "";
+                    frame.contentWindow.postMessage({ type: "afo-drawer-state", open: false }, "*");
+                };
+
+                function highlightActive() {
+                    var pathname = window.location.pathname;
+                    document.querySelectorAll("#afo-drawer-links [data-path]").forEach(function (a) {
+                        var path = a.getAttribute("data-path");
+                        var match =
+                            pathname === path ||
+                            (path === "/" && (pathname === "" || pathname === "/" || pathname === "/index.html"));
+                        a.classList.toggle("afo-active", match);
+                    });
+                }
+                highlightActive();
+
+                function sendPathname() {
+                    if (frame && frame.contentWindow) {
+                        frame.contentWindow.postMessage(
+                            { type: "afo-pathname", pathname: window.location.pathname },
+                            "https://allforonesmp.github.io"
+                        );
+                    }
+                }
+                frame.addEventListener("load", sendPathname);
+
+                window.addEventListener("message", function (e) {
+                    if (e.origin !== "https://allforonesmp.github.io") return;
+                    if (e.data && e.data.type === "afo-toggle-drawer") {
+                        drawerOpen ? afoCloseDrawer() : afoOpenDrawer();
+                    }
+                    if (e.data && e.data.type === "afo-navbar-ready") {
+                        sendPathname();
+                    }
+                });
+
+                document.addEventListener("keydown", function (e) {
+                    if (e.key === "Escape" && drawerOpen) afoCloseDrawer();
+                });
+            })();
+        </script>
+
+        <!-- Auth Modal -->
+        <div id="authModal" class="modal active">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Welcome</h2>
+                    <p style="color: var(--text-medium)">Join our community</p>
+                </div>
+                <div class="auth-tabs">
+                    <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+                    <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+                </div>
+                <div id="loginForm" class="auth-form active">
+                    <button class="btn btn-google" onclick="signInWithGoogle()">
+                        <svg width="20" height="20" viewBox="0 0 20 20">
+                            <path
+                                fill="#4285F4"
+                                d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z" />
+                            <path
+                                fill="#34A853"
+                                d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z" />
+                            <path
+                                fill="#FBBC05"
+                                d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07C.38 6.88 0 8.39 0 10c0 1.61.38 3.12 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" />
+                            <path
+                                fill="#EA4335"
+                                d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" />
+                        </svg>
+                        Continue with Google
+                    </button>
+                    <div class="divider">or</div>
+                    <form onsubmit="loginWithEmail(event)">
+                        <div class="form-group">
+                            <label>Email</label><input type="email" id="loginEmail" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label><input type="password" id="loginPassword" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%">Login</button>
+                    </form>
+                </div>
+                <div id="signupForm" class="auth-form">
+                    <button class="btn btn-google" onclick="signInWithGoogle()">
+                        <svg width="20" height="20" viewBox="0 0 20 20">
+                            <path
+                                fill="#4285F4"
+                                d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z" />
+                            <path
+                                fill="#34A853"
+                                d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z" />
+                            <path
+                                fill="#FBBC05"
+                                d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07C.38 6.88 0 8.39 0 10c0 1.61.38 3.12 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" />
+                            <path
+                                fill="#EA4335"
+                                d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" />
+                        </svg>
+                        Sign up with Google
+                    </button>
+                    <div class="divider">or</div>
+                    <form onsubmit="signupWithEmail(event)">
+                        <div class="form-group">
+                            <label>Username</label><input type="text" id="signupUsername" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label><input type="email" id="signupEmail" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label><input type="password" id="signupPassword" required minlength="6" />
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%">Create Account</button>
+                    </form>
+                </div>
             </div>
         </div>
 
-        <!-- Feed -->
-        <div id="feedSection">
-            <!-- Pinned announcements go here -->
-            <div id="announcementsDisplay"></div>
+        <!-- Pending Message -->
+        <div id="pendingMessage" style="display: none; padding: 2rem">
+            <div class="pending-message">
+                <h2>Account Pending Approval</h2>
+                <p>Your account is currently being reviewed by our administrators. You'll get access once approved.</p>
+                <button class="btn btn-primary" onclick="logout()" style="margin-top: 1.5rem; max-width: 200px">
+                    Logout
+                </button>
+            </div>
+        </div>
 
-            <!-- Create Post -->
-            <div class="card create-post">
-                <h2 style="color:var(--primary-blue);margin-bottom:1rem;">Create Post</h2>
-                <div class="post-editor">
-                    <div class="editor-toolbar" id="editorToolbar">
-                        <button class="toolbar-btn" onclick="formatText('bold')"><strong>B</strong></button>
-                        <button class="toolbar-btn" onclick="formatText('italic')"><em>I</em></button>
-                        <button class="toolbar-btn" onclick="formatText('underline')"><u>U</u></button>
-                        <button class="toolbar-btn" onclick="formatText('formatBlock','h1')">H1</button>
-                        <button class="toolbar-btn" onclick="formatText('formatBlock','h2')">H2</button>
-                        <button class="toolbar-btn" onclick="formatText('formatBlock','h3')">H3</button>
-                        <button class="toolbar-btn" onclick="formatText('insertUnorderedList')">• List</button>
-                        <button class="toolbar-btn" onclick="formatText('insertOrderedList')">1. List</button>
-                        <!-- Admin-only color swatches injected by JS -->
-                        <span id="adminColorTools" style="display:none;display:flex;gap:0.4rem;align-items:center;margin-left:0.5rem;">
-                            <span style="font-size:0.8rem;color:var(--admin-gold-dark);font-weight:600;">Color:</span>
-                            <div class="color-swatch" style="background:#E74C3C;" title="Red" onclick="formatText('foreColor','#E74C3C')"></div>
-                            <div class="color-swatch" style="background:#F6C90E;" title="Gold" onclick="formatText('foreColor','#F6C90E')"></div>
-                            <div class="color-swatch" style="background:#27AE60;" title="Green" onclick="formatText('foreColor','#27AE60')"></div>
-                            <div class="color-swatch" style="background:#4A90E2;" title="Blue" onclick="formatText('foreColor','#4A90E2')"></div>
-                            <div class="color-swatch" style="background:#9B59B6;" title="Purple" onclick="formatText('foreColor','#9B59B6')"></div>
-                            <div class="color-swatch" style="background:#1a2332;" title="Dark" onclick="formatText('foreColor','#1a2332')"></div>
-                        </span>
+        <!-- Main -->
+        <div id="mainContainer" class="container" style="display: none">
+            <!-- Left Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-card" id="adminPanel" style="display: none">
+                    <h3>⚡ Admin Panel</h3>
+                    <a href="#" class="nav-link" onclick="showSection('announcements')">📢 Announcements</a>
+                    <a href="#" class="nav-link" onclick="showSection('pending-users')">🕐 Pending Users</a>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content" id="mainContent">
+                <!-- Admin: Create Announcement -->
+                <div id="announcementsSection" style="display: none">
+                    <div
+                        class="card"
+                        style="
+                            border: 2px solid var(--admin-gold);
+                            background: linear-gradient(135deg, #fffbe6, #fff3cd);
+                        ">
+                        <h2 style="color: var(--admin-gold-dark); margin-bottom: 1.5rem">📢 Create Announcement</h2>
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" id="announcementTitle" placeholder="Announcement title" />
+                        </div>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea
+                                id="announcementMessage"
+                                rows="4"
+                                style="
+                                    width: 100%;
+                                    padding: 0.875rem;
+                                    border: 2px solid var(--border-color);
+                                    border-radius: 10px;
+                                    font-family: &quot;DM Sans&quot;, sans-serif;
+                                    background: var(--lighter-blue);
+                                "></textarea>
+                        </div>
+                        <button
+                            class="btn"
+                            style="background: var(--admin-gradient); color: #1a1a1a; font-weight: 700"
+                            onclick="createAnnouncement()">
+                            Post Announcement
+                        </button>
                     </div>
-                    <div class="editor-content" contenteditable="true" id="postEditor"></div>
+                    <div id="announcementsList"></div>
                 </div>
-                <div class="media-upload">
-                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('mediaInput').click()">
-                        <p style="color:var(--text-medium);font-size:1.1rem;">📸 Click or drag media here</p>
-                        <p style="color:var(--text-light);font-size:0.9rem;margin-top:0.5rem;">Images and videos • Max 500MB</p>
+
+                <!-- Admin: Pending Users -->
+                <div id="pendingUsersSection" style="display: none">
+                    <div class="card">
+                        <h2 style="color: var(--primary-blue); margin-bottom: 1.5rem">Pending User Approvals</h2>
+                        <div id="pendingUsersList"></div>
                     </div>
-                    <input type="file" id="mediaInput" multiple accept="image/*,video/*" style="display:none;" onchange="handleMediaSelect(event)">
-                    <div class="media-preview" id="mediaPreview"></div>
                 </div>
-                <div class="post-actions">
-                    <button class="btn btn-post" onclick="createPost()">Post</button>
-                    <button class="btn btn-cancel" onclick="clearPost()">Clear</button>
+
+                <!-- Feed -->
+                <div id="feedSection">
+                    <!-- Pinned announcements go here -->
+                    <div id="announcementsDisplay"></div>
+
+                    <!-- Create Post -->
+                    <div class="card create-post">
+                        <h2 style="color: var(--primary-blue); margin-bottom: 1rem">Create Post</h2>
+                        <div class="post-editor">
+                            <div class="editor-toolbar" id="editorToolbar">
+                                <button class="toolbar-btn" onclick="formatText('bold')"><strong>B</strong></button>
+                                <button class="toolbar-btn" onclick="formatText('italic')"><em>I</em></button>
+                                <button class="toolbar-btn" onclick="formatText('underline')"><u>U</u></button>
+                                <button class="toolbar-btn" onclick="formatText('formatBlock','h1')">H1</button>
+                                <button class="toolbar-btn" onclick="formatText('formatBlock','h2')">H2</button>
+                                <button class="toolbar-btn" onclick="formatText('formatBlock','h3')">H3</button>
+                                <button class="toolbar-btn" onclick="formatText('insertUnorderedList')">• List</button>
+                                <button class="toolbar-btn" onclick="formatText('insertOrderedList')">1. List</button>
+                                <!-- Admin-only color swatches injected by JS -->
+                                <span
+                                    id="adminColorTools"
+                                    style="
+                                        display: none;
+                                        display: flex;
+                                        gap: 0.4rem;
+                                        align-items: center;
+                                        margin-left: 0.5rem;
+                                    ">
+                                    <span style="font-size: 0.8rem; color: var(--admin-gold-dark); font-weight: 600"
+                                        >Color:</span
+                                    >
+                                    <div
+                                        class="color-swatch"
+                                        style="background: #e74c3c"
+                                        title="Red"
+                                        onclick="formatText('foreColor','#E74C3C')"></div>
+                                    <div
+                                        class="color-swatch"
+                                        style="background: #f6c90e"
+                                        title="Gold"
+                                        onclick="formatText('foreColor','#F6C90E')"></div>
+                                    <div
+                                        class="color-swatch"
+                                        style="background: #27ae60"
+                                        title="Green"
+                                        onclick="formatText('foreColor','#27AE60')"></div>
+                                    <div
+                                        class="color-swatch"
+                                        style="background: #4a90e2"
+                                        title="Blue"
+                                        onclick="formatText('foreColor','#4A90E2')"></div>
+                                    <div
+                                        class="color-swatch"
+                                        style="background: #9b59b6"
+                                        title="Purple"
+                                        onclick="formatText('foreColor','#9B59B6')"></div>
+                                    <div
+                                        class="color-swatch"
+                                        style="background: #1a2332"
+                                        title="Dark"
+                                        onclick="formatText('foreColor','#1a2332')"></div>
+                                </span>
+                            </div>
+                            <div
+                                class="editor-content"
+                                contenteditable="true"
+                                id="postEditor"
+                                placeholder="What's on your mind?"></div>
+                        </div>
+                        <div class="media-upload">
+                            <div
+                                class="upload-area"
+                                id="uploadArea"
+                                onclick="document.getElementById('mediaInput').click()">
+                                <p style="color: var(--text-medium); font-size: 1.1rem">📸 Click or drag media here</p>
+                                <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 0.5rem">
+                                    Images and videos • Max 500MB
+                                </p>
+                            </div>
+                            <input
+                                type="file"
+                                id="mediaInput"
+                                multiple
+                                accept="image/*,video/*"
+                                style="display: none"
+                                onchange="handleMediaSelect(event)" />
+                            <div class="paste-hint">
+                                <span>💡 Tip: Press</span>
+                                <kbd>Ctrl+V</kbd>
+                                <span>/</span>
+                                <kbd>⌘V</kbd>
+                                <span>anywhere on the page to paste images or videos directly</span>
+                            </div>
+                            <div class="media-preview" id="mediaPreview"></div>
+                        </div>
+                        <div class="post-actions">
+                            <button class="btn btn-post" onclick="createPost()">Post</button>
+                            <button class="btn btn-cancel" onclick="clearPost()">Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- Posts Feed -->
+                    <div class="posts-feed" id="postsFeed"><div class="spinner"></div></div>
                 </div>
-            </div>
+            </main>
 
-            <!-- Posts Feed -->
-            <div class="posts-feed" id="postsFeed"><div class="spinner"></div></div>
+            <!-- Right Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-card">
+                    <h3>About</h3>
+                    <p style="color: var(--text-medium); line-height: 1.7">
+                        Welcome to our community! Share your thoughts, connect with others, and stay updated.
+                    </p>
+                </div>
+                <div class="sidebar-card">
+                    <h3>Quick Stats</h3>
+                    <p style="color: var(--text-medium); margin-bottom: 0.5rem">
+                        <strong id="totalPosts">0</strong> Total Posts
+                    </p>
+                    <p style="color: var(--text-medium)"><strong id="totalUsers">0</strong> Active Users</p>
+                </div>
+            </aside>
         </div>
 
-    </main>
-
-    <!-- Right Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-card">
-            <h3>About</h3>
-            <p style="color:var(--text-medium);line-height:1.7;">Welcome to our community! Share your thoughts, connect with others, and stay updated.</p>
+        <!-- Lightbox -->
+        <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+            <button class="lightbox-close">×</button>
+            <img class="lightbox-content" id="lightboxContent" />
         </div>
-        <div class="sidebar-card">
-            <h3>Quick Stats</h3>
-            <p style="color:var(--text-medium);margin-bottom:0.5rem;"><strong id="totalPosts">0</strong> Total Posts</p>
-            <p style="color:var(--text-medium);"><strong id="totalUsers">0</strong> Active Users</p>
-        </div>
-    </aside>
-</div>
 
-<!-- Lightbox -->
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <button class="lightbox-close">×</button>
-    <img class="lightbox-content" id="lightboxContent">
-</div>
+        <!-- Firebase -->
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+            import {
+                getAuth,
+                signInWithPopup,
+                GoogleAuthProvider,
+                createUserWithEmailAndPassword,
+                signInWithEmailAndPassword,
+                onAuthStateChanged,
+                signOut
+            } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+            import {
+                getFirestore,
+                collection,
+                addDoc,
+                query,
+                where,
+                getDocs,
+                doc,
+                getDoc,
+                setDoc,
+                updateDoc,
+                deleteDoc,
+                orderBy,
+                onSnapshot,
+                serverTimestamp,
+                arrayUnion,
+                arrayRemove
+            } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<!-- Firebase -->
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, query, where, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, orderBy, onSnapshot, serverTimestamp, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+            const firebaseConfig = {
+                apiKey: "AIzaSyDzQlAqhCeytCLEYafboYGpFu6pY3Kv9WE",
+                authDomain: "allforonemedia-9a7d8.firebaseapp.com",
+                databaseURL: "https://allforonemedia-9a7d8-default-rtdb.firebaseio.com",
+                projectId: "allforonemedia-9a7d8",
+                storageBucket: "allforonemedia-9a7d8.firebasestorage.app",
+                messagingSenderId: "892787060584",
+                appId: "1:892787060584:web:e65609062592f9ba96f0dd",
+                measurementId: "G-JSXKLMBRLC"
+            };
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDzQlAqhCeytCLEYafboYGpFu6pY3Kv9WE",
-    authDomain: "allforonemedia-9a7d8.firebaseapp.com",
-    databaseURL: "https://allforonemedia-9a7d8-default-rtdb.firebaseio.com",
-    projectId: "allforonemedia-9a7d8",
-    storageBucket: "allforonemedia-9a7d8.firebasestorage.app",
-    messagingSenderId: "892787060584",
-    appId: "1:892787060584:web:e65609062592f9ba96f0dd",
-    measurementId: "G-JSXKLMBRLC"
-};
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+            const CLOUDINARY_CLOUD_NAME = "dgrmpcha9";
+            const CLOUDINARY_UPLOAD_PRESET = "AllForOne Posts";
+            const MAX_FILE_SIZE = 500 * 1024 * 1024;
 
-const CLOUDINARY_CLOUD_NAME   = 'dgrmpcha9';
-const CLOUDINARY_UPLOAD_PRESET = 'AllForOne Posts';
-const MAX_FILE_SIZE = 500 * 1024 * 1024;
+            window.currentUser = null;
+            window.selectedMedia = [];
 
-window.currentUser   = null;
-window.selectedMedia = [];
+            // ── Auth state ──────────────────────────────────────────────────
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists()) {
+                        const data = userDoc.data();
+                        window.currentUser = { ...user, ...data };
+                        if (data.approved) {
+                            showMainApp();
+                            loadPosts();
+                            loadAnnouncements();
+                        } else {
+                            showPendingMessage();
+                        }
+                    } else {
+                        await createUserDocument(user);
+                        showPendingMessage();
+                    }
+                } else {
+                    showAuthModal();
+                }
+            });
 
-// ── Auth state ──────────────────────────────────────────────────
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-            const data = userDoc.data();
-            window.currentUser = { ...user, ...data };
-            if (data.approved) { showMainApp(); loadPosts(); loadAnnouncements(); }
-            else { showPendingMessage(); }
-        } else {
-            await createUserDocument(user);
-            showPendingMessage();
-        }
-    } else { showAuthModal(); }
-});
+            async function createUserDocument(user) {
+                const userData = {
+                    uid: user.uid,
+                    email: user.email,
+                    username: user.displayName || user.email.split("@")[0],
+                    profilePicture: user.photoURL || "https://via.placeholder.com/100",
+                    approved: false,
+                    isAdmin: false,
+                    createdAt: serverTimestamp()
+                };
+                await setDoc(doc(db, "users", user.uid), userData);
+                window.currentUser = { ...user, ...userData };
+            }
 
-async function createUserDocument(user) {
-    const userData = {
-        uid: user.uid, email: user.email,
-        username: user.displayName || user.email.split('@')[0],
-        profilePicture: user.photoURL || 'https://via.placeholder.com/100',
-        approved: false, isAdmin: false, createdAt: serverTimestamp()
-    };
-    await setDoc(doc(db, 'users', user.uid), userData);
-    window.currentUser = { ...user, ...userData };
-}
+            // ── Auth functions ──────────────────────────────────────────────
+            window.switchAuthTab = (tab) => {
+                document.querySelectorAll(".auth-tab").forEach((t) => t.classList.remove("active"));
+                document.querySelectorAll(".auth-form").forEach((f) => f.classList.remove("active"));
+                if (tab === "login") {
+                    document.querySelectorAll(".auth-tab")[0].classList.add("active");
+                    document.getElementById("loginForm").classList.add("active");
+                } else {
+                    document.querySelectorAll(".auth-tab")[1].classList.add("active");
+                    document.getElementById("signupForm").classList.add("active");
+                }
+            };
 
-// ── Auth functions ──────────────────────────────────────────────
-window.switchAuthTab = (tab) => {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-    if (tab === 'login') {
-        document.querySelectorAll('.auth-tab')[0].classList.add('active');
-        document.getElementById('loginForm').classList.add('active');
-    } else {
-        document.querySelectorAll('.auth-tab')[1].classList.add('active');
-        document.getElementById('signupForm').classList.add('active');
-    }
-};
+            window.signInWithGoogle = async () => {
+                try {
+                    const result = await signInWithPopup(auth, new GoogleAuthProvider());
+                    const userDoc = await getDoc(doc(db, "users", result.user.uid));
+                    if (!userDoc.exists()) await createUserDocument(result.user);
+                } catch (e) {
+                    alert("Google sign-in error: " + e.message);
+                }
+            };
 
-window.signInWithGoogle = async () => {
-    try {
-        const result = await signInWithPopup(auth, new GoogleAuthProvider());
-        const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-        if (!userDoc.exists()) await createUserDocument(result.user);
-    } catch (e) { alert('Google sign-in error: ' + e.message); }
-};
+            window.loginWithEmail = async (e) => {
+                e.preventDefault();
+                try {
+                    await signInWithEmailAndPassword(
+                        auth,
+                        document.getElementById("loginEmail").value,
+                        document.getElementById("loginPassword").value
+                    );
+                } catch (err) {
+                    alert("Login error: " + err.message);
+                }
+            };
 
-window.loginWithEmail = async (e) => {
-    e.preventDefault();
-    try { await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value); }
-    catch (err) { alert('Login error: ' + err.message); }
-};
+            window.signupWithEmail = async (e) => {
+                e.preventDefault();
+                const username = document.getElementById("signupUsername").value;
+                const email = document.getElementById("signupEmail").value;
+                const password = document.getElementById("signupPassword").value;
+                try {
+                    const cred = await createUserWithEmailAndPassword(auth, email, password);
+                    await createUserDocument({ ...cred.user, displayName: username });
+                } catch (err) {
+                    alert("Signup error: " + err.message);
+                }
+            };
 
-window.signupWithEmail = async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('signupUsername').value;
-    const email    = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
-    try {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await createUserDocument({ ...cred.user, displayName: username });
-    } catch (err) { alert('Signup error: ' + err.message); }
-};
+            window.logout = async () => {
+                await signOut(auth);
+            };
 
-window.logout = async () => { await signOut(auth); };
+            // ── UI helpers ──────────────────────────────────────────────────
+            function showAuthModal() {
+                document.getElementById("authModal").classList.add("active");
+                document.getElementById("mainContainer").style.display = "none";
+                document.getElementById("pendingMessage").style.display = "none";
+            }
+            function showPendingMessage() {
+                document.getElementById("authModal").classList.remove("active");
+                document.getElementById("mainContainer").style.display = "none";
+                document.getElementById("pendingMessage").style.display = "block";
+            }
+            function showMainApp() {
+                document.getElementById("authModal").classList.remove("active");
+                document.getElementById("pendingMessage").style.display = "none";
+                document.getElementById("mainContainer").style.display = "grid";
 
-// ── UI helpers ──────────────────────────────────────────────────
-function showAuthModal() {
-    document.getElementById('authModal').classList.add('active');
-    document.getElementById('mainContainer').style.display = 'none';
-    document.getElementById('pendingMessage').style.display = 'none';
-}
-function showPendingMessage() {
-    document.getElementById('authModal').classList.remove('active');
-    document.getElementById('mainContainer').style.display = 'none';
-    document.getElementById('pendingMessage').style.display = 'block';
-}
-function showMainApp() {
-    document.getElementById('authModal').classList.remove('active');
-    document.getElementById('pendingMessage').style.display = 'none';
-    document.getElementById('mainContainer').style.display = 'grid';
+                if (window.currentUser.isAdmin) {
+                    document.getElementById("adminPanel").style.display = "block";
+                    document.getElementById("adminColorTools").style.display = "flex";
+                    document.getElementById("editorToolbar").classList.add("admin-toolbar");
+                }
+                showSection("feed");
+                setupPasteHandler();
+            }
 
-    if (window.currentUser.isAdmin) {
-        document.getElementById('adminPanel').style.display = 'block';
-        document.getElementById('adminColorTools').style.display = 'flex';
-        document.getElementById('editorToolbar').classList.add('admin-toolbar');
-    }
-    showSection('feed');
-}
+            window.showSection = (section) => {
+                ["feedSection", "announcementsSection", "pendingUsersSection"].forEach((id) => {
+                    document.getElementById(id).style.display = "none";
+                });
+                if (section === "feed") {
+                    document.getElementById("feedSection").style.display = "block";
+                    loadPosts();
+                    loadAnnouncements();
+                } else if (section === "announcements" && window.currentUser.isAdmin) {
+                    document.getElementById("announcementsSection").style.display = "block";
+                    loadAnnouncementsAdmin();
+                } else if (section === "pending-users" && window.currentUser.isAdmin) {
+                    document.getElementById("pendingUsersSection").style.display = "block";
+                    loadPendingUsers();
+                }
+            };
 
-window.showSection = (section) => {
-    ['feedSection','announcementsSection','pendingUsersSection'].forEach(id => {
-        document.getElementById(id).style.display = 'none';
-    });
-    if (section === 'feed') {
-        document.getElementById('feedSection').style.display = 'block';
-        loadPosts(); loadAnnouncements();
-    } else if (section === 'announcements' && window.currentUser.isAdmin) {
-        document.getElementById('announcementsSection').style.display = 'block';
-        loadAnnouncementsAdmin();
-    } else if (section === 'pending-users' && window.currentUser.isAdmin) {
-        document.getElementById('pendingUsersSection').style.display = 'block';
-        loadPendingUsers();
-    }
-};
+            // ── Rich text editor ────────────────────────────────────────────
+            window.formatText = (cmd, val = null) => {
+                document.execCommand(cmd, false, val);
+                document.getElementById("postEditor").focus();
+            };
 
-// ── Rich text editor ────────────────────────────────────────────
-window.formatText = (cmd, val = null) => {
-    document.execCommand(cmd, false, val);
-    document.getElementById('postEditor').focus();
-};
+            // ── Paste handler (images & videos pasted anywhere on page) ─────
+            function setupPasteHandler() {
+                document.addEventListener("paste", (e) => {
+                    const items = e.clipboardData && e.clipboardData.items;
+                    if (!items) return;
 
-// ── Media ───────────────────────────────────────────────────────
-window.handleMediaSelect = (event) => {
-    Array.from(event.target.files).forEach(file => {
-        if (file.size > MAX_FILE_SIZE) { alert(`${file.name} exceeds 500MB`); return; }
-        window.selectedMedia.push(file);
-        displayMediaPreview(file);
-    });
-};
+                    const mediaItems = Array.from(items).filter(
+                        (item) => item.type.startsWith("image/") || item.type.startsWith("video/")
+                    );
+                    if (mediaItems.length === 0) return;
 
-function displayMediaPreview(file) {
-    const preview = document.getElementById('mediaPreview');
-    const item = document.createElement('div');
-    item.className = 'media-item';
-    const r = new FileReader();
-    r.onload = (e) => {
-        item.innerHTML = file.type.startsWith('image/')
-            ? `<img src="${e.target.result}"><button class="remove-media" onclick="removeMedia('${file.name}')">×</button>`
-            : `<video src="${e.target.result}"></video><button class="remove-media" onclick="removeMedia('${file.name}')">×</button>`;
-    };
-    r.readAsDataURL(file);
-    preview.appendChild(item);
-}
+                    // Only intercept if we're not inside a plain text input / textarea
+                    const tag = document.activeElement && document.activeElement.tagName;
+                    if (tag === "INPUT" || tag === "TEXTAREA") return;
 
-window.removeMedia = (name) => {
-    window.selectedMedia = window.selectedMedia.filter(f => f.name !== name);
-    document.getElementById('mediaPreview').innerHTML = '';
-    window.selectedMedia.forEach(f => displayMediaPreview(f));
-};
+                    e.preventDefault();
 
-const uploadArea = document.getElementById('uploadArea');
-uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragging'); });
-uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragging'));
-uploadArea.addEventListener('drop', e => {
-    e.preventDefault(); uploadArea.classList.remove('dragging');
-    handleMediaSelect({ target: { files: e.dataTransfer.files } });
-});
+                    mediaItems.forEach((item) => {
+                        const file = item.getAsFile();
+                        if (!file) return;
+                        if (file.size > MAX_FILE_SIZE) {
+                            alert(`Pasted file exceeds 500MB`);
+                            return;
+                        }
 
-async function uploadToCloudinary(file) {
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method:'POST', body:fd });
-    return (await res.json()).secure_url;
-}
+                        // Give it a name if it doesn't have one
+                        const ext = file.type.split("/")[1] || "bin";
+                        const namedFile = new File([file], `pasted-${Date.now()}.${ext}`, { type: file.type });
 
-// ── Create post ─────────────────────────────────────────────────
-window.createPost = async () => {
-    const content = document.getElementById('postEditor').innerHTML;
-    if (!content.trim() && window.selectedMedia.length === 0) { alert('Add content or media'); return; }
-    try {
-        const mediaUrls = [];
-        for (const file of window.selectedMedia) {
-            const url = await uploadToCloudinary(file);
-            mediaUrls.push({ url, type: file.type.startsWith('image/') ? 'image' : 'video' });
-        }
-        await addDoc(collection(db, 'posts'), {
-            content, media: mediaUrls,
-            authorId: window.currentUser.uid,
-            authorName: window.currentUser.username,
-            authorPic: window.currentUser.profilePicture,
-            isAdmin: window.currentUser.isAdmin || false,
-            createdAt: serverTimestamp(),
-            comments: [], likes: [], dislikes: []
-        });
-        clearPost(); loadPosts();
-    } catch (err) { alert('Error: ' + err.message); }
-};
+                        window.selectedMedia.push(namedFile);
+                        displayMediaPreview(namedFile);
+                    });
 
-window.clearPost = () => {
-    document.getElementById('postEditor').innerHTML = '';
-    document.getElementById('mediaPreview').innerHTML = '';
-    window.selectedMedia = [];
-};
+                    // Flash the editor border green as visual feedback
+                    const editor = document.getElementById("postEditor");
+                    if (editor) {
+                        editor.classList.add("paste-flash");
+                        setTimeout(() => editor.classList.remove("paste-flash"), 600);
+                    }
 
-// ── Load posts ──────────────────────────────────────────────────
-function loadPosts() {
-    const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
-    onSnapshot(q, (snapshot) => {
-        const feed = document.getElementById('postsFeed');
-        feed.innerHTML = '';
-        snapshot.forEach(d => feed.appendChild(createPostElement({ id: d.id, ...d.data() })));
-        document.getElementById('totalPosts').textContent = snapshot.size;
-    });
-}
+                    // Scroll into view so user sees the preview
+                    document.getElementById("mediaPreview").scrollIntoView({ behavior: "smooth", block: "nearest" });
+                });
+            }
 
-function createPostElement(post) {
-    const div = document.createElement('div');
-    div.className = 'post';
-    const date = post.createdAt ? new Date(post.createdAt.toDate()).toLocaleDateString() : 'Just now';
+            // ── Media ───────────────────────────────────────────────────────
+            window.handleMediaSelect = (event) => {
+                Array.from(event.target.files).forEach((file) => {
+                    if (file.size > MAX_FILE_SIZE) {
+                        alert(`${file.name} exceeds 500MB`);
+                        return;
+                    }
+                    window.selectedMedia.push(file);
+                    displayMediaPreview(file);
+                });
+            };
 
-    const likes    = post.likes    || [];
-    const dislikes = post.dislikes || [];
-    const uid      = window.currentUser.uid;
-    const hasLiked    = likes.includes(uid);
-    const hasDisliked = dislikes.includes(uid);
+            function displayMediaPreview(file) {
+                const preview = document.getElementById("mediaPreview");
+                const item = document.createElement("div");
+                item.className = "media-item";
+                const r = new FileReader();
+                r.onload = (e) => {
+                    item.innerHTML = file.type.startsWith("image/")
+                        ? `<img src="${e.target.result}"><button class="remove-media" onclick="removeMedia('${file.name}')">×</button>`
+                        : `<video src="${e.target.result}"></video><button class="remove-media" onclick="removeMedia('${file.name}')">×</button>`;
+                };
+                r.readAsDataURL(file);
+                preview.appendChild(item);
+            }
 
-    const isAdmin = post.isAdmin;
-    const picClass = isAdmin ? 'post-author-pic admin-pic' : 'post-author-pic';
-    const badge    = isAdmin ? '<span class="admin-badge">⚡ ADMIN</span>' : '';
+            window.removeMedia = (name) => {
+                window.selectedMedia = window.selectedMedia.filter((f) => f.name !== name);
+                document.getElementById("mediaPreview").innerHTML = "";
+                window.selectedMedia.forEach((f) => displayMediaPreview(f));
+            };
 
-    let mediaHTML = '';
-    if (post.media && post.media.length > 0) {
-        mediaHTML = '<div class="post-media">';
-        post.media.forEach(m => {
-            mediaHTML += m.type === 'image'
-                ? `<img src="${m.url}" alt="Post media" onclick="openLightbox('${m.url}')">`
-                : `<video src="${m.url}" controls></video>`;
-        });
-        mediaHTML += '</div>';
-    }
+            const uploadArea = document.getElementById("uploadArea");
+            uploadArea.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                uploadArea.classList.add("dragging");
+            });
+            uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("dragging"));
+            uploadArea.addEventListener("drop", (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove("dragging");
+                handleMediaSelect({ target: { files: e.dataTransfer.files } });
+            });
 
-    let commentsHTML = '';
-    if (post.comments && post.comments.length > 0) {
-        commentsHTML = '<div class="comments-section"><h4 style="margin-bottom:1rem;">Comments</h4>';
-        post.comments.forEach((c, i) => {
-            const del = (window.currentUser.isAdmin || c.authorId === uid)
-                ? `<button class="btn btn-delete" style="padding:0.25rem 0.5rem;font-size:0.8rem;" onclick="deleteComment('${post.id}',${i})">Delete</button>` : '';
-            commentsHTML += `
+            async function uploadToCloudinary(file) {
+                const fd = new FormData();
+                fd.append("file", file);
+                fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+                    method: "POST",
+                    body: fd
+                });
+                return (await res.json()).secure_url;
+            }
+
+            // ── Create post ─────────────────────────────────────────────────
+            window.createPost = async () => {
+                const content = document.getElementById("postEditor").innerHTML;
+                if (!content.trim() && window.selectedMedia.length === 0) {
+                    alert("Add content or media");
+                    return;
+                }
+                try {
+                    const mediaUrls = [];
+                    for (const file of window.selectedMedia) {
+                        const url = await uploadToCloudinary(file);
+                        mediaUrls.push({ url, type: file.type.startsWith("image/") ? "image" : "video" });
+                    }
+                    await addDoc(collection(db, "posts"), {
+                        content,
+                        media: mediaUrls,
+                        authorId: window.currentUser.uid,
+                        authorName: window.currentUser.username,
+                        authorPic: window.currentUser.profilePicture,
+                        isAdmin: window.currentUser.isAdmin || false,
+                        createdAt: serverTimestamp(),
+                        comments: [],
+                        likes: [],
+                        dislikes: []
+                    });
+                    clearPost();
+                    loadPosts();
+                } catch (err) {
+                    alert("Error: " + err.message);
+                }
+            };
+
+            window.clearPost = () => {
+                document.getElementById("postEditor").innerHTML = "";
+                document.getElementById("mediaPreview").innerHTML = "";
+                window.selectedMedia = [];
+            };
+
+            // ── Load posts ──────────────────────────────────────────────────
+            function loadPosts() {
+                const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+                onSnapshot(q, (snapshot) => {
+                    const feed = document.getElementById("postsFeed");
+                    feed.innerHTML = "";
+                    snapshot.forEach((d) => feed.appendChild(createPostElement({ id: d.id, ...d.data() })));
+                    document.getElementById("totalPosts").textContent = snapshot.size;
+                });
+            }
+
+            function createPostElement(post) {
+                const div = document.createElement("div");
+                div.className = "post";
+                const date = post.createdAt ? new Date(post.createdAt.toDate()).toLocaleDateString() : "Just now";
+
+                const likes = post.likes || [];
+                const dislikes = post.dislikes || [];
+                const uid = window.currentUser.uid;
+                const hasLiked = likes.includes(uid);
+                const hasDisliked = dislikes.includes(uid);
+
+                const isAdmin = post.isAdmin;
+                const picClass = isAdmin ? "post-author-pic admin-pic" : "post-author-pic";
+                const badge = isAdmin ? '<span class="admin-badge">⚡ ADMIN</span>' : "";
+
+                let mediaHTML = "";
+                if (post.media && post.media.length > 0) {
+                    mediaHTML = '<div class="post-media">';
+                    post.media.forEach((m) => {
+                        mediaHTML +=
+                            m.type === "image"
+                                ? `<img src="${m.url}" alt="Post media" onclick="openLightbox('${m.url}')">`
+                                : `<video src="${m.url}" controls></video>`;
+                    });
+                    mediaHTML += "</div>";
+                }
+
+                let commentsHTML = "";
+                if (post.comments && post.comments.length > 0) {
+                    commentsHTML = '<div class="comments-section"><h4 style="margin-bottom:1rem;">Comments</h4>';
+                    post.comments.forEach((c, i) => {
+                        const del =
+                            window.currentUser.isAdmin || c.authorId === uid
+                                ? `<button class="btn btn-delete" style="padding:0.25rem 0.5rem;font-size:0.8rem;" onclick="deleteComment('${post.id}',${i})">Delete</button>`
+                                : "";
+                        commentsHTML += `
                 <div class="comment">
                     <div class="comment-header">
                         <span class="comment-author">${c.authorName}</span>
@@ -944,14 +1732,16 @@ function createPostElement(post) {
                     </div>
                     <div class="comment-content">${c.content}</div>
                 </div>`;
-        });
-        commentsHTML += '</div>';
-    }
+                    });
+                    commentsHTML += "</div>";
+                }
 
-    const canDelete = window.currentUser.isAdmin || post.authorId === uid;
-    const deleteBtn = canDelete ? `<button class="btn btn-delete" onclick="deletePost('${post.id}')">Delete Post</button>` : '';
+                const canDelete = window.currentUser.isAdmin || post.authorId === uid;
+                const deleteBtn = canDelete
+                    ? `<button class="btn btn-delete" onclick="deletePost('${post.id}')">Delete Post</button>`
+                    : "";
 
-    div.innerHTML = `
+                div.innerHTML = `
         <div class="post-header">
             <img src="${post.authorPic}" class="${picClass}" alt="${post.authorName}">
             <div class="post-author-info">
@@ -962,10 +1752,10 @@ function createPostElement(post) {
         <div class="post-content">${post.content}</div>
         ${mediaHTML}
         <div class="reactions-bar">
-            <button class="reaction-btn ${hasLiked ? 'liked' : ''}" id="like-${post.id}" onclick="toggleLike('${post.id}')">
+            <button class="reaction-btn ${hasLiked ? "liked" : ""}" id="like-${post.id}" onclick="toggleLike('${post.id}')">
                 👍 <span class="reaction-count">${likes.length}</span>
             </button>
-            <button class="reaction-btn ${hasDisliked ? 'disliked' : ''}" id="dislike-${post.id}" onclick="toggleDislike('${post.id}')">
+            <button class="reaction-btn ${hasDisliked ? "disliked" : ""}" id="dislike-${post.id}" onclick="toggleDislike('${post.id}')">
                 👎 <span class="reaction-count">${dislikes.length}</span>
             </button>
         </div>
@@ -975,76 +1765,83 @@ function createPostElement(post) {
             <button class="btn btn-comment" onclick="addComment('${post.id}')">Comment</button>
         </div>
         <div class="post-actions-bar">${deleteBtn}</div>`;
-    return div;
-}
+                return div;
+            }
 
-// ── Reactions ───────────────────────────────────────────────────
-window.toggleLike = async (postId) => {
-    const uid = window.currentUser.uid;
-    const ref = doc(db, 'posts', postId);
-    const d   = await getDoc(ref);
-    const likes    = d.data().likes    || [];
-    const dislikes = d.data().dislikes || [];
-    if (likes.includes(uid)) {
-        await updateDoc(ref, { likes: arrayRemove(uid) });
-    } else {
-        await updateDoc(ref, { likes: arrayUnion(uid), dislikes: arrayRemove(uid) });
-    }
-};
+            // ── Reactions ───────────────────────────────────────────────────
+            window.toggleLike = async (postId) => {
+                const uid = window.currentUser.uid;
+                const ref = doc(db, "posts", postId);
+                const d = await getDoc(ref);
+                const likes = d.data().likes || [];
+                const dislikes = d.data().dislikes || [];
+                if (likes.includes(uid)) {
+                    await updateDoc(ref, { likes: arrayRemove(uid) });
+                } else {
+                    await updateDoc(ref, { likes: arrayUnion(uid), dislikes: arrayRemove(uid) });
+                }
+            };
 
-window.toggleDislike = async (postId) => {
-    const uid = window.currentUser.uid;
-    const ref = doc(db, 'posts', postId);
-    const d   = await getDoc(ref);
-    const dislikes = d.data().dislikes || [];
-    if (dislikes.includes(uid)) {
-        await updateDoc(ref, { dislikes: arrayRemove(uid) });
-    } else {
-        await updateDoc(ref, { dislikes: arrayUnion(uid), likes: arrayRemove(uid) });
-    }
-};
+            window.toggleDislike = async (postId) => {
+                const uid = window.currentUser.uid;
+                const ref = doc(db, "posts", postId);
+                const d = await getDoc(ref);
+                const dislikes = d.data().dislikes || [];
+                if (dislikes.includes(uid)) {
+                    await updateDoc(ref, { dislikes: arrayRemove(uid) });
+                } else {
+                    await updateDoc(ref, { dislikes: arrayUnion(uid), likes: arrayRemove(uid) });
+                }
+            };
 
-// ── Comments ────────────────────────────────────────────────────
-window.addComment = async (postId) => {
-    const input = document.getElementById(`comment-${postId}`);
-    const content = input.value.trim();
-    if (!content) return;
-    try {
-        const ref = doc(db, 'posts', postId);
-        const d   = await getDoc(ref);
-        const comments = d.data().comments || [];
-        comments.push({ content, authorName: window.currentUser.username, authorId: window.currentUser.uid, timestamp: new Date().toISOString() });
-        await updateDoc(ref, { comments });
-        input.value = '';
-    } catch (e) { alert('Error: ' + e.message); }
-};
+            // ── Comments ────────────────────────────────────────────────────
+            window.addComment = async (postId) => {
+                const input = document.getElementById(`comment-${postId}`);
+                const content = input.value.trim();
+                if (!content) return;
+                try {
+                    const ref = doc(db, "posts", postId);
+                    const d = await getDoc(ref);
+                    const comments = d.data().comments || [];
+                    comments.push({
+                        content,
+                        authorName: window.currentUser.username,
+                        authorId: window.currentUser.uid,
+                        timestamp: new Date().toISOString()
+                    });
+                    await updateDoc(ref, { comments });
+                    input.value = "";
+                } catch (e) {
+                    alert("Error: " + e.message);
+                }
+            };
 
-window.deleteComment = async (postId, idx) => {
-    if (!confirm('Delete comment?')) return;
-    const ref = doc(db, 'posts', postId);
-    const d   = await getDoc(ref);
-    const comments = d.data().comments || [];
-    comments.splice(idx, 1);
-    await updateDoc(ref, { comments });
-};
+            window.deleteComment = async (postId, idx) => {
+                if (!confirm("Delete comment?")) return;
+                const ref = doc(db, "posts", postId);
+                const d = await getDoc(ref);
+                const comments = d.data().comments || [];
+                comments.splice(idx, 1);
+                await updateDoc(ref, { comments });
+            };
 
-window.deletePost = async (postId) => {
-    if (!confirm('Delete this post?')) return;
-    await deleteDoc(doc(db, 'posts', postId));
-};
+            window.deletePost = async (postId) => {
+                if (!confirm("Delete this post?")) return;
+                await deleteDoc(doc(db, "posts", postId));
+            };
 
-// ── Announcements (pinned, yellow) ─────────────────────────────
-function loadAnnouncements() {
-    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
-    onSnapshot(q, (snapshot) => {
-        const display = document.getElementById('announcementsDisplay');
-        display.innerHTML = '';
-        snapshot.forEach(d => {
-            const a = d.data();
-            const date = a.createdAt ? new Date(a.createdAt.toDate()).toLocaleDateString() : 'Just now';
-            const el = document.createElement('div');
-            el.className = 'post-announcement';
-            el.innerHTML = `
+            // ── Announcements (pinned, yellow) ─────────────────────────────
+            function loadAnnouncements() {
+                const q = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
+                onSnapshot(q, (snapshot) => {
+                    const display = document.getElementById("announcementsDisplay");
+                    display.innerHTML = "";
+                    snapshot.forEach((d) => {
+                        const a = d.data();
+                        const date = a.createdAt ? new Date(a.createdAt.toDate()).toLocaleDateString() : "Just now";
+                        const el = document.createElement("div");
+                        el.className = "post-announcement";
+                        el.innerHTML = `
                 <div class="pin-label">📌 PINNED ANNOUNCEMENT</div>
                 <div class="post-header" style="margin-bottom:1rem;">
                     <div class="post-author-info">
@@ -1053,59 +1850,67 @@ function loadAnnouncements() {
                     </div>
                 </div>
                 <div class="post-content">${a.message}</div>`;
-            display.appendChild(el);
-        });
-    });
-}
+                        display.appendChild(el);
+                    });
+                });
+            }
 
-function loadAnnouncementsAdmin() {
-    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
-    onSnapshot(q, (snapshot) => {
-        const list = document.getElementById('announcementsList');
-        list.innerHTML = '';
-        snapshot.forEach(d => {
-            const a = { id: d.id, ...d.data() };
-            const date = a.createdAt ? new Date(a.createdAt.toDate()).toLocaleDateString() : 'Just now';
-            const el = document.createElement('div');
-            el.className = 'card';
-            el.style.marginTop = '1.5rem';
-            el.innerHTML = `
+            function loadAnnouncementsAdmin() {
+                const q = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
+                onSnapshot(q, (snapshot) => {
+                    const list = document.getElementById("announcementsList");
+                    list.innerHTML = "";
+                    snapshot.forEach((d) => {
+                        const a = { id: d.id, ...d.data() };
+                        const date = a.createdAt ? new Date(a.createdAt.toDate()).toLocaleDateString() : "Just now";
+                        const el = document.createElement("div");
+                        el.className = "card";
+                        el.style.marginTop = "1.5rem";
+                        el.innerHTML = `
                 <h3 style="color:var(--admin-gold-dark);">${a.title}</h3>
                 <div class="announcement-date" style="color:var(--text-light);font-size:0.85rem;margin:0.5rem 0;">${date}</div>
                 <p style="margin:1rem 0;">${a.message}</p>
                 <button class="btn btn-delete" onclick="deleteAnnouncement('${a.id}')">Delete</button>`;
-            list.appendChild(el);
-        });
-    });
-}
+                        list.appendChild(el);
+                    });
+                });
+            }
 
-window.createAnnouncement = async () => {
-    const title   = document.getElementById('announcementTitle').value;
-    const message = document.getElementById('announcementMessage').value;
-    if (!title || !message) { alert('Fill in all fields'); return; }
-    await addDoc(collection(db, 'announcements'), { title, message, createdAt: serverTimestamp() });
-    document.getElementById('announcementTitle').value = '';
-    document.getElementById('announcementMessage').value = '';
-};
+            window.createAnnouncement = async () => {
+                const title = document.getElementById("announcementTitle").value;
+                const message = document.getElementById("announcementMessage").value;
+                if (!title || !message) {
+                    alert("Fill in all fields");
+                    return;
+                }
+                await addDoc(collection(db, "announcements"), { title, message, createdAt: serverTimestamp() });
+                document.getElementById("announcementTitle").value = "";
+                document.getElementById("announcementMessage").value = "";
+            };
 
-window.deleteAnnouncement = async (id) => {
-    if (!confirm('Delete announcement?')) return;
-    await deleteDoc(doc(db, 'announcements', id));
-};
+            window.deleteAnnouncement = async (id) => {
+                if (!confirm("Delete announcement?")) return;
+                await deleteDoc(doc(db, "announcements", id));
+            };
 
-// ── Pending users ───────────────────────────────────────────────
-async function loadPendingUsers() {
-    const q = query(collection(db, 'users'), where('approved','==',false));
-    const snap = await getDocs(q);
-    const list = document.getElementById('pendingUsersList');
-    list.innerHTML = '';
-    if (snap.empty) { list.innerHTML = '<p style="text-align:center;padding:2rem;color:var(--text-medium);">No pending approvals</p>'; return; }
-    snap.forEach(d => {
-        const u = { id: d.id, ...d.data() };
-        const date = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString() : 'Just now';
-        const el = document.createElement('div');
-        el.style.cssText = 'padding:1.5rem;background:var(--lighter-blue);border-radius:10px;margin-bottom:1rem;border:1px solid var(--border-color);';
-        el.innerHTML = `
+            // ── Pending users ───────────────────────────────────────────────
+            async function loadPendingUsers() {
+                const q = query(collection(db, "users"), where("approved", "==", false));
+                const snap = await getDocs(q);
+                const list = document.getElementById("pendingUsersList");
+                list.innerHTML = "";
+                if (snap.empty) {
+                    list.innerHTML =
+                        '<p style="text-align:center;padding:2rem;color:var(--text-medium);">No pending approvals</p>';
+                    return;
+                }
+                snap.forEach((d) => {
+                    const u = { id: d.id, ...d.data() };
+                    const date = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString() : "Just now";
+                    const el = document.createElement("div");
+                    el.style.cssText =
+                        "padding:1.5rem;background:var(--lighter-blue);border-radius:10px;margin-bottom:1rem;border:1px solid var(--border-color);";
+                    el.innerHTML = `
             <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
                 <img src="${u.profilePicture}" style="width:60px;height:60px;border-radius:50%;border:2px solid var(--primary-blue);">
                 <div>
@@ -1118,30 +1923,33 @@ async function loadPendingUsers() {
                 <button class="btn btn-primary" onclick="approveUser('${u.id}')" style="flex:1;">Approve</button>
                 <button class="btn btn-delete" onclick="rejectUser('${u.id}')" style="flex:1;">Reject</button>
             </div>`;
-        list.appendChild(el);
-    });
-}
+                    list.appendChild(el);
+                });
+            }
 
-window.approveUser = async (uid) => {
-    await updateDoc(doc(db, 'users', uid), { approved: true });
-    loadPendingUsers();
-};
-window.rejectUser = async (uid) => {
-    if (!confirm('Reject this user?')) return;
-    await deleteDoc(doc(db, 'users', uid));
-    loadPendingUsers();
-};
+            window.approveUser = async (uid) => {
+                await updateDoc(doc(db, "users", uid), { approved: true });
+                loadPendingUsers();
+            };
+            window.rejectUser = async (uid) => {
+                if (!confirm("Reject this user?")) return;
+                await deleteDoc(doc(db, "users", uid));
+                loadPendingUsers();
+            };
 
-// ── Stats ───────────────────────────────────────────────────────
-async function loadUserCount() {
-    const snap = await getDocs(query(collection(db, 'users'), where('approved','==',true)));
-    document.getElementById('totalUsers').textContent = snap.size;
-}
-setInterval(loadUserCount, 5000);
+            // ── Stats ───────────────────────────────────────────────────────
+            async function loadUserCount() {
+                const snap = await getDocs(query(collection(db, "users"), where("approved", "==", true)));
+                document.getElementById("totalUsers").textContent = snap.size;
+            }
+            setInterval(loadUserCount, 5000);
 
-// ── Lightbox ────────────────────────────────────────────────────
-window.openLightbox = (url) => { document.getElementById('lightboxContent').src = url; document.getElementById('lightbox').classList.add('active'); };
-window.closeLightbox = () => document.getElementById('lightbox').classList.remove('active');
-</script>
-</body>
+            // ── Lightbox ────────────────────────────────────────────────────
+            window.openLightbox = (url) => {
+                document.getElementById("lightboxContent").src = url;
+                document.getElementById("lightbox").classList.add("active");
+            };
+            window.closeLightbox = () => document.getElementById("lightbox").classList.remove("active");
+        </script>
+    </body>
 </html>
