@@ -120,22 +120,6 @@
                 border-color: rgba(255, 255, 255, 0.8);
                 transform: translateY(-1px);
             }
-            .notif-banner-close {
-                background: none;
-                border: none;
-                cursor: pointer;
-                font-size: 1.1rem;
-                line-height: 1;
-                padding: 0.3rem 0.5rem;
-                border-radius: 6px;
-                opacity: 0.7;
-                transition: opacity 0.18s;
-                color: inherit;
-                flex-shrink: 0;
-            }
-            .notif-banner-close:hover {
-                opacity: 1;
-            }
 
             /* ── NAVBAR IFRAME ── */
             #afo-navbar-frame {
@@ -1010,7 +994,12 @@
         <script type="module">
             import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
             import {
-                getFirestore, doc, onSnapshot, collection, orderBy, query
+                getFirestore,
+                doc,
+                onSnapshot,
+                collection,
+                orderBy,
+                query
             } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
             import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -1025,8 +1014,8 @@
                 measurementId: "G-JSXKLMBRLC"
             };
 
-            const app  = initializeApp(firebaseConfig);
-            const db   = getFirestore(app);
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
             const rtdb = getDatabase(app);
 
             // ─── NEWS CAROUSEL ──────────────────────────────────────────
@@ -1049,10 +1038,10 @@
 
             function renderCarousel() {
                 const spinner = document.getElementById("newsLoadingSpinner");
-                const inner   = document.getElementById("newsCarouselInner");
-                const empty   = document.getElementById("newsEmpty");
-                const track   = document.getElementById("carouselTrack");
-                const dots    = document.getElementById("carouselDots");
+                const inner = document.getElementById("newsCarouselInner");
+                const empty = document.getElementById("newsEmpty");
+                const track = document.getElementById("carouselTrack");
+                const dots = document.getElementById("carouselDots");
 
                 spinner.style.display = "none";
 
@@ -1064,7 +1053,7 @@
                 inner.style.display = "block";
                 empty.style.display = "none";
                 track.innerHTML = "";
-                dots.innerHTML  = "";
+                dots.innerHTML = "";
 
                 newsItems.forEach((item, i) => {
                     const slide = document.createElement("div");
@@ -1089,31 +1078,31 @@
             function goToSlide(idx) {
                 carouselIndex = (idx + newsItems.length) % newsItems.length;
                 document.getElementById("carouselTrack").style.transform = `translateX(-${carouselIndex * 100}%)`;
-                document.querySelectorAll(".carousel-dot").forEach((d, i) => d.classList.toggle("active", i === carouselIndex));
+                document
+                    .querySelectorAll(".carousel-dot")
+                    .forEach((d, i) => d.classList.toggle("active", i === carouselIndex));
             }
 
             window.carouselPrev = () => goToSlide(carouselIndex - 1);
             window.carouselNext = () => goToSlide(carouselIndex + 1);
-            setInterval(() => { if (newsItems.length > 1) window.carouselNext(); }, 7000);
+            setInterval(() => {
+                if (newsItems.length > 1) window.carouselNext();
+            }, 7000);
 
             // ─── SERVER STATE ───────────────────────────────────────────
-            let serverData   = {};
-            let codeLoaded   = false;
-            let serverOnline = true; // tracks whether server is currently online
+            let serverData = {};
+            let codeLoaded = false;
+            let serverOnline = true;
             let countdownInterval = null;
 
             function checkServerOnlineStatus(downtimes) {
                 const now = new Date();
                 if (!downtimes || downtimes.length === 0) return null;
 
-                // Find any downtime that is currently active (started but end time hasn't passed)
                 for (const dt of downtimes) {
                     if (!dt.timestamp) continue;
                     const start = new Date(dt.timestamp);
-                    // If durationMinutes is set, calculate end time; otherwise treat as no end
-                    const end = dt.durationMinutes
-                        ? new Date(start.getTime() + dt.durationMinutes * 60000)
-                        : null;
+                    const end = dt.durationMinutes ? new Date(start.getTime() + dt.durationMinutes * 60000) : null;
 
                     const started = now >= start;
                     const finished = end ? now >= end : false;
@@ -1128,17 +1117,18 @@
             function startCountdown(endTime) {
                 if (countdownInterval) clearInterval(countdownInterval);
                 const el = document.getElementById("offlineCountdown");
-                if (!endTime) { el.style.display = "none"; return; }
+                if (!endTime) {
+                    el.style.display = "none";
+                    return;
+                }
 
                 el.style.display = "inline-block";
                 function tick() {
                     const diff = Math.max(0, endTime - new Date());
-                    const hrs  = Math.floor(diff / 3600000);
+                    const hrs = Math.floor(diff / 3600000);
                     const mins = Math.floor((diff % 3600000) / 60000);
                     const secs = Math.floor((diff % 60000) / 1000);
-                    el.textContent = hrs > 0
-                        ? `Back in ${hrs}h ${mins}m`
-                        : `Back in ${mins}m ${secs}s`;
+                    el.textContent = hrs > 0 ? `Back in ${hrs}h ${mins}m` : `Back in ${mins}m ${secs}s`;
                     if (diff <= 0) {
                         clearInterval(countdownInterval);
                         el.textContent = "Should be back online now — refresh the page!";
@@ -1150,7 +1140,7 @@
 
             function applyServerOnlineState(activeDowntime) {
                 const offlineBlock = document.getElementById("serverOfflineBlock");
-                const agreeGate    = document.getElementById("agreeGate");
+                const agreeGate = document.getElementById("agreeGate");
 
                 if (activeDowntime) {
                     serverOnline = false;
@@ -1207,37 +1197,34 @@
 
             // ─── NOTIFICATION BANNER ────────────────────────────────────
             function renderNotifBanner(banner) {
-                const el      = document.getElementById("notifBanner");
-                const inner   = document.getElementById("notifBannerInner");
-                const textEl  = document.getElementById("notifBannerText");
-                const btnEl   = document.getElementById("notifBannerBtn");
+                const el = document.getElementById("notifBanner");
+                const inner = document.getElementById("notifBannerInner");
+                const textEl = document.getElementById("notifBannerText");
+                const btnEl = document.getElementById("notifBannerBtn");
 
                 if (!banner || !banner.enabled || !banner.text) {
                     el.classList.remove("visible");
                     return;
                 }
 
-
-
                 el.classList.add("visible");
                 inner.style.background = banner.bgColor || "#4a90e2";
-                inner.style.color      = banner.textColor || "#ffffff";
-                textEl.textContent     = banner.text;
+                inner.style.color = banner.textColor || "#ffffff";
+                textEl.textContent = banner.text;
 
                 if (banner.btnText && banner.btnLink) {
                     btnEl.textContent = banner.btnText;
-                    btnEl.href        = banner.btnLink;
+                    btnEl.href = banner.btnLink;
                     btnEl.style.display = "inline-flex";
                 } else {
                     btnEl.style.display = "none";
                 }
-
-
+            }
 
             // ─── DOWNTIMES ──────────────────────────────────────────────
             function renderDowntimes(downtimes) {
-                const list      = document.getElementById("downtimeList");
-                const alert     = document.getElementById("downtimeAlert");
+                const list = document.getElementById("downtimeList");
+                const alert = document.getElementById("downtimeAlert");
                 const alertText = document.getElementById("downtimeAlertText");
 
                 list.innerHTML = "";
@@ -1255,9 +1242,13 @@
                     const item = document.createElement("div");
                     item.className = "downtime-item";
                     const durationText = dt.durationMinutes
-                        ? ` · ${dt.durationMinutes >= 60
-                            ? Math.floor(dt.durationMinutes / 60) + "h" + (dt.durationMinutes % 60 ? " " + (dt.durationMinutes % 60) + "m" : "")
-                            : dt.durationMinutes + "m"}`
+                        ? ` · ${
+                              dt.durationMinutes >= 60
+                                  ? Math.floor(dt.durationMinutes / 60) +
+                                    "h" +
+                                    (dt.durationMinutes % 60 ? " " + (dt.durationMinutes % 60) + "m" : "")
+                                  : dt.durationMinutes + "m"
+                          }`
                         : "";
                     item.innerHTML = `
                         <span style="font-weight:600;color:var(--text-dark);">${dt.label || "Maintenance"}</span>
@@ -1265,7 +1256,7 @@
                     list.appendChild(item);
 
                     if (dt.timestamp) {
-                        const dtDate  = new Date(dt.timestamp);
+                        const dtDate = new Date(dt.timestamp);
                         const diffHrs = (dtDate - now) / 36e5;
                         if (diffHrs >= 0 && diffHrs <= 24) upcomingAlert = dt;
                     }
@@ -1273,9 +1264,15 @@
 
                 if (upcomingAlert) {
                     const dur = upcomingAlert.durationMinutes
-                        ? ` (estimated duration: ${upcomingAlert.durationMinutes >= 60
-                            ? Math.floor(upcomingAlert.durationMinutes / 60) + "h" + (upcomingAlert.durationMinutes % 60 ? " " + (upcomingAlert.durationMinutes % 60) + "m" : "")
-                            : upcomingAlert.durationMinutes + "m"})`
+                        ? ` (estimated duration: ${
+                              upcomingAlert.durationMinutes >= 60
+                                  ? Math.floor(upcomingAlert.durationMinutes / 60) +
+                                    "h" +
+                                    (upcomingAlert.durationMinutes % 60
+                                        ? " " + (upcomingAlert.durationMinutes % 60) + "m"
+                                        : "")
+                                  : upcomingAlert.durationMinutes + "m"
+                          })`
                         : "";
                     alertText.textContent = `"${upcomingAlert.label || "Maintenance"}" scheduled at ${upcomingAlert.time}${dur}. Please make sure you finish what you're doing!`;
                     alert.classList.add("visible");
@@ -1287,7 +1284,7 @@
 
             window.toggleCodeReveal = function () {
                 const checked = document.getElementById("agreeCheck").checked;
-                const reveal  = document.getElementById("codeReveal");
+                const reveal = document.getElementById("codeReveal");
                 if (checked && serverOnline) {
                     reveal.classList.add("visible");
                     if (codeLoaded) renderCode();
@@ -1298,9 +1295,9 @@
 
             function renderCode() {
                 const loadingMsg = document.getElementById("codeLoadingMsg");
-                const img        = document.getElementById("joinCodeImage");
-                const idBox      = document.getElementById("connectionIdBox");
-                const idValue    = document.getElementById("connectionIdValue");
+                const img = document.getElementById("joinCodeImage");
+                const idBox = document.getElementById("connectionIdBox");
+                const idValue = document.getElementById("connectionIdValue");
 
                 loadingMsg.style.display = "none";
 
