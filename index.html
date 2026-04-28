@@ -1160,6 +1160,11 @@
                 }
             }
 
+            // ─── HELPER: format a Date as a readable time string ────────
+            function formatTime(date) {
+                return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            }
+
             // ─── JOIN CODE & SERVER INFO ────────────────────────────────
             async function loadServerInfo() {
                 onSnapshot(doc(db, "serverInfo", "main"), (snap) => {
@@ -1241,40 +1246,36 @@
                 downtimes.forEach((dt) => {
                     const item = document.createElement("div");
                     item.className = "downtime-item";
-                    const durationText = dt.durationMinutes
-                        ? ` · ${
-                              dt.durationMinutes >= 60
-                                  ? Math.floor(dt.durationMinutes / 60) +
-                                    "h" +
-                                    (dt.durationMinutes % 60 ? " " + (dt.durationMinutes % 60) + "m" : "")
-                                  : dt.durationMinutes + "m"
-                          }`
-                        : "";
+
+                    // Build "until HH:MM" text if duration is known
+                    let untilText = "";
+                    if (dt.timestamp && dt.durationMinutes) {
+                        const endTime = new Date(new Date(dt.timestamp).getTime() + dt.durationMinutes * 60000);
+                        untilText = ` · until ${formatTime(endTime)}`;
+                    }
+
                     item.innerHTML = `
                         <span style="font-weight:600;color:var(--text-dark);">${dt.label || "Maintenance"}</span>
-                        <span style="color:var(--text-medium);">${dt.time || ""}${durationText}</span>`;
+                        <span style="color:var(--text-medium);">${dt.time || ""}${untilText}</span>`;
                     list.appendChild(item);
 
+                    // Only flag as upcoming alert if within 10 hours
                     if (dt.timestamp) {
                         const dtDate = new Date(dt.timestamp);
                         const diffHrs = (dtDate - now) / 36e5;
-                        if (diffHrs >= 0 && diffHrs <= 24) upcomingAlert = dt;
+                        if (diffHrs >= 0 && diffHrs <= 10) upcomingAlert = dt;
                     }
                 });
 
                 if (upcomingAlert) {
-                    const dur = upcomingAlert.durationMinutes
-                        ? ` (estimated duration: ${
-                              upcomingAlert.durationMinutes >= 60
-                                  ? Math.floor(upcomingAlert.durationMinutes / 60) +
-                                    "h" +
-                                    (upcomingAlert.durationMinutes % 60
-                                        ? " " + (upcomingAlert.durationMinutes % 60) + "m"
-                                        : "")
-                                  : upcomingAlert.durationMinutes + "m"
-                          })`
-                        : "";
-                    alertText.textContent = `"${upcomingAlert.label || "Maintenance"}" scheduled at ${upcomingAlert.time}${dur}. Please make sure you finish what you're doing!`;
+                    let untilStr = "";
+                    if (upcomingAlert.timestamp && upcomingAlert.durationMinutes) {
+                        const endTime = new Date(
+                            new Date(upcomingAlert.timestamp).getTime() + upcomingAlert.durationMinutes * 60000
+                        );
+                        untilStr = ` until ${formatTime(endTime)}`;
+                    }
+                    alertText.textContent = `"${upcomingAlert.label || "Maintenance"}" scheduled at ${upcomingAlert.time}${untilStr}. Please make sure you finish what you're doing!`;
                     alert.classList.add("visible");
                     document.getElementById("downtimeContainer").classList.add("open");
                 } else {
