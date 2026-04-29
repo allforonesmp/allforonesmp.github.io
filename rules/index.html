@@ -161,26 +161,11 @@
 
     <body>
 
-<!--
-  =====================================================================
-  AllForOne SMP — Navbar Embed Snippet
-  =====================================================================
-  Paste this block anywhere inside <body> on any page.
 
-  What it does:
-    • Injects a sticky navbar iframe fixed to the top of the screen
-    • Renders the mobile drawer + overlay IN the parent page
-      (so it can cover the full screen, not just the iframe)
-    • Hamburger button animates to X when drawer is open
-    • Clicking the overlay or pressing Escape closes the drawer
-    • Locks page scroll while the drawer is open
-    • Highlights the correct nav link automatically
-  =====================================================================
--->
 
-<!-- 1. Push page content below the navbar -->
+
 <style>
-  body { margin-top: 64px !important; }
+
 
   /* Navbar iframe — fixed, full width, sits on top of everything */
   #afo-navbar-frame {
@@ -289,100 +274,7 @@
   @import url('https://fonts.googleapis.com/css2?family=Spectral:wght@700&family=DM+Sans:wght@500;600&display=swap');
 </style>
 
-<!-- 2. The sticky navbar iframe -->
-<iframe
-  id="afo-navbar-frame"
-  src="https://allforonesmp.github.io/navbar.html"
-  title="AllForOne SMP Navigation"
-  scrolling="no"
-  allowtransparency="true"
-></iframe>
 
-<!-- 3. Full-screen overlay (rendered in the parent, not the iframe) -->
-<div id="afo-overlay" onclick="afoCloseDrawer()"></div>
-
-<!-- 4. Slide-in mobile drawer (rendered in the parent, not the iframe) -->
-<div id="afo-drawer" role="dialog" aria-label="Navigation menu">
-  <div id="afo-drawer-header">
-    <a href="https://allforonesmp.github.io">AllForOne SMP</a>
-    <button id="afo-drawer-close" onclick="afoCloseDrawer()" aria-label="Close menu">✕</button>
-  </div>
-  <ul id="afo-drawer-links">
-    <li><a href="https://allforonesmp.github.io"         data-path="/">Home</a></li>
-    <li><a href="https://allforonesmp.github.io/rules"   data-path="/rules">Rules</a></li>
-    <li><a href="https://allforonesmp.github.io/profile" data-path="/profile">Profile</a></li>
-    <li><a href="https://allforonesmp.github.io/post"    data-path="/post">Post</a></li>
-  </ul>
-  <div id="afo-drawer-footer">AllForOne SMP &copy; 2026</div>
-</div>
-
-<!-- 5. Glue script -->
-<script>
-(function () {
-  var frame    = document.getElementById('afo-navbar-frame');
-  var overlay  = document.getElementById('afo-overlay');
-  var drawer   = document.getElementById('afo-drawer');
-  var drawerOpen = false;
-
-  /* ── Drawer open / close ── */
-  window.afoOpenDrawer = function () {
-    drawerOpen = true;
-    overlay.classList.add('afo-visible');
-    drawer.classList.add('afo-open');
-    document.body.style.overflow = 'hidden';
-    // Tell navbar iframe to animate hamburger → X
-    frame.contentWindow.postMessage({ type: 'afo-drawer-state', open: true }, '*');
-  };
-
-  window.afoCloseDrawer = function () {
-    drawerOpen = false;
-    overlay.classList.remove('afo-visible');
-    drawer.classList.remove('afo-open');
-    document.body.style.overflow = '';
-    // Tell navbar iframe to animate X → hamburger
-    frame.contentWindow.postMessage({ type: 'afo-drawer-state', open: false }, '*');
-  };
-
-  /* ── Active link highlight (drawer) ── */
-  function highlightActive() {
-    var pathname = window.location.pathname;
-    document.querySelectorAll('#afo-drawer-links [data-path]').forEach(function (a) {
-      var path = a.getAttribute('data-path');
-      var match = pathname === path ||
-        (path === '/' && (pathname === '' || pathname === '/' || pathname === '/index.html'));
-      a.classList.toggle('afo-active', match);
-    });
-  }
-  highlightActive();
-
-  /* ── Send pathname to navbar iframe ── */
-  function sendPathname() {
-    if (frame && frame.contentWindow) {
-      frame.contentWindow.postMessage(
-        { type: 'afo-pathname', pathname: window.location.pathname },
-        'https://allforonesmp.github.io'
-      );
-    }
-  }
-  frame.addEventListener('load', sendPathname);
-
-  /* ── Listen for messages from the navbar iframe ── */
-  window.addEventListener('message', function (e) {
-    if (e.origin !== 'https://allforonesmp.github.io') return;
-    if (e.data && e.data.type === 'afo-toggle-drawer') {
-      drawerOpen ? afoCloseDrawer() : afoOpenDrawer();
-    }
-    if (e.data && e.data.type === 'afo-navbar-ready') {
-      sendPathname();
-    }
-  });
-
-  /* ── Close on Escape ── */
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && drawerOpen) afoCloseDrawer();
-  });
-})();
-</script>
 
         <header>
             <h1>SMP Rules</h1>
