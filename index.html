@@ -348,6 +348,7 @@
                     <li><button data-path="/rules" onclick="navigate('/rules', event)">Rules</button></li>
                     <li><button data-path="/profile" onclick="navigate('/profile', event)">Profile</button></li>
                     <li><button data-path="/post" onclick="navigate('/post', event)">Post</button></li>
+                    <li><button data-path="/messages" onclick="navigate('/messages', event)">Message</button></li>
                 </ul>
 
                 <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" onclick="toggleDrawer()">
@@ -365,6 +366,9 @@
                     <button data-path="/profile" onclick="navigate('/profile', event); closeDrawer()">Profile</button>
                 </li>
                 <li><button data-path="/post" onclick="navigate('/post', event); closeDrawer()">Post</button></li>
+                <li>
+                    <button data-path="/messages" onclick="navigate('/messages', event); closeDrawer()">Message</button>
+                </li>
             </ul>
         </div>
 
@@ -380,7 +384,8 @@
                 "/": BASE + "/main.html",
                 "/rules": BASE + "/rules",
                 "/profile": BASE + "/profile",
-                "/post": BASE + "/post"
+                "/post": BASE + "/post",
+                "/messages": BASE + "/messages"
             };
 
             const shell = document.getElementById("contentShell");
