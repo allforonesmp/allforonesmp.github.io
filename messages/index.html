@@ -60,6 +60,7 @@
                 font-weight: 700;
             }
 
+            /* ── Modal ── */
             .modal {
                 display: none;
                 position: fixed;
@@ -185,6 +186,14 @@
                 transform: translateY(-2px);
                 box-shadow: var(--shadow-md);
             }
+            .btn-danger {
+                background: var(--error);
+                color: var(--white);
+            }
+            .btn-danger:hover {
+                background: #c0392b;
+                transform: translateY(-2px);
+            }
             .btn-google {
                 background: var(--white);
                 color: var(--text-dark);
@@ -222,6 +231,7 @@
                 right: 0;
             }
 
+            /* ── Pending ── */
             .pending-message {
                 background: linear-gradient(135deg, #fff3cd 0%, #ffe5a1 100%);
                 padding: 2rem;
@@ -241,6 +251,7 @@
                 font-size: 1.1rem;
             }
 
+            /* ── Layout ── */
             .messages-layout {
                 display: grid;
                 grid-template-columns: 320px 1fr;
@@ -251,6 +262,7 @@
                 gap: 1.5rem;
             }
 
+            /* ── Conversations panel ── */
             .conversations-panel {
                 background: var(--white);
                 border-radius: 16px;
@@ -339,6 +351,8 @@
                 overflow-y: auto;
                 padding: 0.75rem;
             }
+
+            /* ── Conversation item ── */
             .conversation-item {
                 display: flex;
                 align-items: center;
@@ -352,6 +366,9 @@
             }
             .conversation-item:hover {
                 background: var(--lighter-blue);
+            }
+            .conversation-item:hover .conv-actions {
+                opacity: 1;
             }
             .conversation-item.active {
                 background: var(--light-blue);
@@ -372,7 +389,6 @@
             .conv-avatar.admin-av {
                 border-color: var(--admin-gold);
             }
-            /* Online presence dot on avatar */
             .presence-dot {
                 position: absolute;
                 bottom: 1px;
@@ -381,13 +397,12 @@
                 height: 12px;
                 border-radius: 50%;
                 border: 2px solid var(--white);
-                background: var(--text-light);
+                background: #ccc;
                 transition: background 0.4s ease;
             }
             .presence-dot.online {
                 background: var(--success);
             }
-
             .conv-info {
                 flex: 1;
                 min-width: 0;
@@ -441,6 +456,49 @@
                 }
             }
 
+            /* ── Conv action buttons (delete/block) ── */
+            .conv-actions {
+                position: absolute;
+                right: 0.5rem;
+                top: 50%;
+                transform: translateY(-50%);
+                display: flex;
+                gap: 0.25rem;
+                opacity: 0;
+                transition: opacity 0.2s;
+                z-index: 10;
+            }
+            .conv-action-btn {
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
+                border: none;
+                cursor: pointer;
+                font-size: 0.8rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+                background: var(--white);
+                box-shadow: var(--shadow-sm);
+            }
+            .conv-action-btn:hover {
+                transform: scale(1.1);
+            }
+            .conv-action-btn.delete-btn:hover {
+                background: #fff0f0;
+                color: var(--error);
+            }
+            .conv-action-btn.block-btn:hover {
+                background: #fff8e0;
+                color: #b7791f;
+            }
+            .conv-action-btn.unblock-btn:hover {
+                background: #f0fff4;
+                color: var(--success);
+            }
+
+            /* ── Chat panel ── */
             .chat-panel {
                 background: var(--white);
                 border-radius: 16px;
@@ -490,7 +548,6 @@
             .chat-header-avatar-wrap img.admin-hdr {
                 border-color: var(--admin-gold);
             }
-            /* Online dot in header */
             .header-presence-dot {
                 position: absolute;
                 bottom: 1px;
@@ -499,13 +556,15 @@
                 height: 12px;
                 border-radius: 50%;
                 border: 2px solid var(--white);
-                background: var(--text-light);
+                background: #ccc;
                 transition: background 0.4s ease;
             }
             .header-presence-dot.online {
                 background: var(--success);
             }
-
+            .chat-header-info {
+                flex: 1;
+            }
             .chat-header-info h3 {
                 font-size: 1.1rem;
                 color: var(--text-dark);
@@ -517,6 +576,55 @@
             }
             .chat-header-info p.is-online {
                 color: var(--success);
+            }
+
+            /* ── Header action buttons ── */
+            .chat-header-actions {
+                display: flex;
+                gap: 0.5rem;
+                margin-left: auto;
+            }
+            .header-action-btn {
+                padding: 0.4rem 0.8rem;
+                border-radius: 8px;
+                border: 2px solid var(--border-color);
+                background: var(--white);
+                font-size: 0.8rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+                font-family: "DM Sans", sans-serif;
+            }
+            .header-action-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: var(--shadow-sm);
+            }
+            .header-action-btn.delete {
+                color: var(--error);
+                border-color: #ffcdd2;
+            }
+            .header-action-btn.delete:hover {
+                background: #fff0f0;
+                border-color: var(--error);
+            }
+            .header-action-btn.block {
+                color: #b7791f;
+                border-color: #fde68a;
+            }
+            .header-action-btn.block:hover {
+                background: #fffbeb;
+                border-color: #f6ad55;
+            }
+            .header-action-btn.unblock {
+                color: var(--success);
+                border-color: #c6f6d5;
+            }
+            .header-action-btn.unblock:hover {
+                background: #f0fff4;
+                border-color: var(--success);
             }
 
             .admin-badge {
@@ -534,6 +642,7 @@
                 box-shadow: 0 2px 8px rgba(246, 201, 14, 0.4);
             }
 
+            /* ── Messages area ── */
             .messages-area {
                 flex: 1;
                 overflow-y: auto;
@@ -576,14 +685,12 @@
             .msg-group.theirs {
                 align-items: flex-start;
             }
-
             .msg-sender-label {
                 font-size: 0.75rem;
                 color: var(--text-light);
                 font-weight: 600;
                 padding: 0 0.25rem;
             }
-
             .msg-bubble {
                 max-width: 65%;
                 padding: 0.75rem 1rem;
@@ -609,7 +716,6 @@
                 color: var(--text-light);
                 padding: 0 0.25rem;
             }
-
             .msg-image {
                 max-width: 260px;
                 border-radius: 12px;
@@ -620,7 +726,6 @@
             .msg-image:hover {
                 transform: scale(1.03);
             }
-
             .date-sep {
                 display: flex;
                 align-items: center;
@@ -637,6 +742,18 @@
                 background: var(--border-color);
             }
 
+            /* ── Blocked banner ── */
+            .blocked-banner {
+                padding: 1rem;
+                text-align: center;
+                background: #fff8f0;
+                border-top: 2px solid #fde68a;
+                color: #92400e;
+                font-size: 0.9rem;
+                font-weight: 500;
+            }
+
+            /* ── Input area ── */
             .chat-input-area {
                 padding: 1rem 1.25rem;
                 border-top: 2px solid var(--light-blue);
@@ -713,7 +830,6 @@
                 cursor: default;
                 transform: none;
             }
-
             .img-preview-strip {
                 display: flex;
                 gap: 0.5rem;
@@ -750,6 +866,55 @@
                 justify-content: center;
             }
 
+            /* ── Confirm dialog ── */
+            .confirm-dialog {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(26, 35, 50, 0.7);
+                backdrop-filter: blur(6px);
+                z-index: 2000;
+                align-items: center;
+                justify-content: center;
+            }
+            .confirm-dialog.active {
+                display: flex;
+            }
+            .confirm-box {
+                background: var(--white);
+                border-radius: 16px;
+                padding: 2rem;
+                max-width: 380px;
+                width: 90%;
+                box-shadow: var(--shadow-lg);
+                animation: modalSlideIn 0.25s ease;
+                text-align: center;
+            }
+            .confirm-box h3 {
+                font-size: 1.3rem;
+                margin-bottom: 0.75rem;
+                color: var(--text-dark);
+            }
+            .confirm-box p {
+                color: var(--text-medium);
+                margin-bottom: 1.75rem;
+                font-size: 0.95rem;
+                line-height: 1.55;
+            }
+            .confirm-actions {
+                display: flex;
+                gap: 0.75rem;
+                justify-content: center;
+            }
+            .confirm-icon {
+                font-size: 2.5rem;
+                margin-bottom: 0.75rem;
+            }
+
+            /* ── Lightbox ── */
             .lightbox {
                 display: none;
                 position: fixed;
@@ -758,7 +923,7 @@
                 width: 100%;
                 height: 100%;
                 background: rgba(0, 0, 0, 0.95);
-                z-index: 2000;
+                z-index: 3000;
                 align-items: center;
                 justify-content: center;
             }
@@ -798,6 +963,7 @@
                 }
             }
 
+            /* ── Toast ── */
             .notif-toast {
                 position: fixed;
                 bottom: 2rem;
@@ -960,9 +1126,7 @@
                         <div class="search-results" id="searchResults"></div>
                     </div>
                 </div>
-                <div class="conversations-list" id="conversationsList">
-                    <div class="spinner"></div>
-                </div>
+                <div class="conversations-list" id="conversationsList"><div class="spinner"></div></div>
             </div>
 
             <div class="chat-panel" id="chatPanel">
@@ -973,7 +1137,8 @@
                 <div id="activeChat" style="display: none; flex-direction: column; height: 100%">
                     <div class="chat-header" id="chatHeader"></div>
                     <div class="messages-area" id="messagesArea"></div>
-                    <div class="chat-input-area">
+                    <div id="blockedBanner" class="blocked-banner" style="display: none"></div>
+                    <div class="chat-input-area" id="chatInputArea">
                         <div class="img-preview-strip" id="imgPreviewStrip"></div>
                         <div class="chat-input-row">
                             <div class="input-wrapper">
@@ -1000,6 +1165,24 @@
                             <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Dialog -->
+        <div class="confirm-dialog" id="confirmDialog">
+            <div class="confirm-box">
+                <div class="confirm-icon" id="confirmIcon"></div>
+                <h3 id="confirmTitle"></h3>
+                <p id="confirmMsg"></p>
+                <div class="confirm-actions">
+                    <button
+                        class="btn"
+                        style="background: var(--lighter-blue); color: var(--text-dark)"
+                        onclick="closeConfirm()">
+                        Cancel
+                    </button>
+                    <button class="btn" id="confirmOkBtn"></button>
                 </div>
             </div>
         </div>
@@ -1041,9 +1224,13 @@
                 getDoc,
                 setDoc,
                 updateDoc,
+                deleteDoc,
                 orderBy,
                 onSnapshot,
-                serverTimestamp
+                serverTimestamp,
+                arrayUnion,
+                arrayRemove,
+                writeBatch
             } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
             import {
                 getDatabase,
@@ -1078,13 +1265,14 @@
             let activePartner = null;
             let convUnsub = null;
             let msgUnsub = null;
-            let presenceUnsubs = {}; // uid -> unsubscribe fn for RTDB presence listeners
             let pendingImages = [];
             let toastConvId = null;
 
+            // presence: uid -> { listeners: Set of callbacks, rtdbUnsub, isOnline }
+            const presenceRegistry = new Map();
+
             // ── Tab notification ────────────────────────────────────────────────────────
             let unreadTotal = 0;
-            const originalTitle = "AllForOne | Messages";
             const originalFavicon = "https://allforonesmp.github.io/images/logo.png";
             let redDotFavicon = null;
 
@@ -1107,11 +1295,13 @@
             function setTabNotification(count) {
                 const favicon = document.getElementById("dynamicFavicon");
                 if (count > 0) {
-                    document.title = `(${count}) ${originalTitle}`;
+                    // FIX: "AllForOne | 5 unread" format
+                    document.title = `AllForOne | ${count} unread`;
                     if (!redDotFavicon) redDotFavicon = buildRedDotFavicon();
                     favicon.href = redDotFavicon;
                 } else {
-                    document.title = originalTitle;
+                    // FIX: "AllForOne | Messages" when no unread
+                    document.title = "AllForOne | Messages";
                     favicon.href = originalFavicon;
                 }
             }
@@ -1136,7 +1326,7 @@
                 } catch (e) {}
             }
 
-            // ── Presence system ─────────────────────────────────────────────────────────
+            // ── Presence system (FIX: shared registry, callbacks instead of DOM re-attach) ──
             function initPresence(uid) {
                 const presenceRef = ref(rtdb, `presence/${uid}`);
                 const connectedRef = ref(rtdb, ".info/connected");
@@ -1148,22 +1338,37 @@
                 });
             }
 
-            // Watch a user's presence and call back with true/false
-            function watchPresence(uid, callback) {
-                if (presenceUnsubs[uid]) return; // already watching
-                const presenceRef = ref(rtdb, `presence/${uid}`);
-                const unsub = onValue(presenceRef, (snap) => {
-                    const data = snap.val();
-                    callback(data && data.online === true);
-                });
-                presenceUnsubs[uid] = unsub;
+            // FIX: watchPresence now uses a callback registry.
+            // Multiple parts of the UI register callbacks; one RTDB listener services all of them.
+            function watchPresence(uid, callbackId, callback) {
+                if (!presenceRegistry.has(uid)) {
+                    presenceRegistry.set(uid, { callbacks: new Map(), rtdbUnsub: null, isOnline: false });
+                }
+                const entry = presenceRegistry.get(uid);
+                entry.callbacks.set(callbackId, callback);
+
+                // Fire immediately with current known state
+                callback(entry.isOnline);
+
+                // Only set up RTDB listener once per uid
+                if (!entry.rtdbUnsub) {
+                    const presenceRef = ref(rtdb, `presence/${uid}`);
+                    const unsub = onValue(presenceRef, (snap) => {
+                        const data = snap.val();
+                        const isOnline = !!(data && data.online === true);
+                        entry.isOnline = isOnline;
+                        // Notify all registered callbacks
+                        entry.callbacks.forEach((cb) => cb(isOnline));
+                    });
+                    entry.rtdbUnsub = unsub;
+                }
             }
 
-            function stopWatchingPresence(uid) {
-                if (presenceUnsubs[uid]) {
-                    presenceUnsubs[uid]();
-                    delete presenceUnsubs[uid];
-                }
+            function unwatchPresenceCallback(uid, callbackId) {
+                const entry = presenceRegistry.get(uid);
+                if (!entry) return;
+                entry.callbacks.delete(callbackId);
+                // Keep RTDB listener alive (sidebar still needs it)
             }
 
             // ── Auth state ──────────────────────────────────────────────────────────────
@@ -1197,6 +1402,7 @@
                     profilePicture: user.photoURL || "https://via.placeholder.com/100",
                     approved: false,
                     isAdmin: false,
+                    blockedUsers: [],
                     createdAt: serverTimestamp()
                 };
                 await setDoc(doc(db, "users", user.uid), d);
@@ -1215,7 +1421,6 @@
                     document.getElementById("signupForm").classList.add("active");
                 }
             };
-
             window.signInWithGoogle = async () => {
                 try {
                     const result = await signInWithPopup(auth, new GoogleAuthProvider());
@@ -1225,7 +1430,6 @@
                     alert("Google sign-in error: " + e.message);
                 }
             };
-
             window.loginWithEmail = async (e) => {
                 e.preventDefault();
                 try {
@@ -1238,7 +1442,6 @@
                     alert("Login error: " + err.message);
                 }
             };
-
             window.signupWithEmail = async (e) => {
                 e.preventDefault();
                 const username = document.getElementById("signupUsername").value;
@@ -1251,7 +1454,6 @@
                     alert("Signup error: " + err.message);
                 }
             };
-
             window.logout = async () => {
                 await signOut(auth);
             };
@@ -1277,33 +1479,35 @@
                 return [uid1, uid2].sort().join("_");
             }
 
-            // ── Load conversations ──────────────────────────────────────────────────────
-            // FIX: use a stable Map to track conversations and partners, avoiding duplicates
-            // caused by async getDocs racing with snapshot re-renders.
-            let convDataMap = new Map(); // convId -> { conv, partner, unread }
-            let partnerCache = new Map(); // uid -> partner data
+            // ── State maps ──────────────────────────────────────────────────────────────
+            let convDataMap = new Map();
+            let partnerCache = new Map();
             let lastUnreadMap = {};
 
+            // ── Load conversations ──────────────────────────────────────────────────────
             function loadConversations() {
                 const myUid = window.currentUser.uid;
                 const q = query(collection(db, "conversations"), where("participants", "array-contains", myUid));
-
                 if (convUnsub) convUnsub();
                 convUnsub = onSnapshot(q, async (snap) => {
                     const myUid = window.currentUser.uid;
                     let totalUnread = 0;
                     const pendingFetches = [];
 
-                    // Collect all convs, fetch missing partners
                     for (const d of snap.docs) {
                         const conv = { id: d.id, ...d.data() };
                         const partnerId = conv.participants.find((p) => p !== myUid);
                         if (!partnerId) continue;
 
+                        // Skip blocked conversations
+                        const blocked = window.currentUser.blockedUsers || [];
+                        if (blocked.includes(partnerId)) {
+                            // Still show it but mark as blocked
+                        }
+
                         const unread = (conv.unread && conv.unread[myUid]) || 0;
                         totalUnread += unread;
 
-                        // Toast logic
                         const prevUnread = lastUnreadMap[conv.id] || 0;
                         if (unread > prevUnread && conv.id !== activeConvId && partnerCache.has(partnerId)) {
                             showToast(partnerCache.get(partnerId), conv.lastMessage || "New message", conv.id);
@@ -1314,7 +1518,6 @@
                         if (partnerCache.has(partnerId)) {
                             convDataMap.set(conv.id, { conv, partner: partnerCache.get(partnerId), unread });
                         } else {
-                            // Fetch partner once, then store
                             pendingFetches.push(
                                 getDoc(doc(db, "users", partnerId)).then((partnerDoc) => {
                                     if (!partnerDoc.exists()) return;
@@ -1326,16 +1529,13 @@
                         }
                     }
 
-                    // Remove any convs that no longer exist in snapshot
                     const snapIds = new Set(snap.docs.map((d) => d.id));
                     for (const id of convDataMap.keys()) {
                         if (!snapIds.has(id)) convDataMap.delete(id);
                     }
 
-                    // Wait for all partner fetches
                     if (pendingFetches.length > 0) await Promise.all(pendingFetches);
 
-                    // Now render
                     renderConversationList();
 
                     if (totalUnread !== unreadTotal) {
@@ -1345,10 +1545,12 @@
                 });
             }
 
-            // FIX: render is now a separate, idempotent function that rebuilds DOM cleanly
+            // FIX: Rebuild list cleanly each time. Presence callbacks use stable callbackId per conv.
             function renderConversationList() {
                 const list = document.getElementById("conversationsList");
                 list.innerHTML = "";
+                const myUid = window.currentUser.uid;
+                const blocked = window.currentUser.blockedUsers || [];
 
                 const sorted = [...convDataMap.values()].sort((a, b) => {
                     const ta = a.conv.lastMessageAt ? a.conv.lastMessageAt.toMillis() : 0;
@@ -1363,45 +1565,64 @@
                 }
 
                 sorted.forEach(({ conv, partner, unread }) => {
-                    const item = buildConvItem(conv, partner, unread);
+                    const partnerId = partner.uid || partner.id;
+                    const isBlocked = blocked.includes(partnerId);
+                    const item = buildConvItem(conv, partner, unread, isBlocked);
                     list.appendChild(item);
 
-                    // Start watching presence for this partner
-                    watchPresence(partner.uid || partner.id, (isOnline) => {
-                        // Update dot in sidebar
+                    // FIX: Use conv.id as stable callbackId for sidebar dot
+                    const sidebarCallbackId = `sidebar_${conv.id}`;
+                    watchPresence(partnerId, sidebarCallbackId, (isOnline) => {
+                        // Update the dot in this specific item
                         const dot = item.querySelector(".presence-dot");
                         if (dot) dot.classList.toggle("online", isOnline);
-                        // If this is the active partner, update header too
+                        // Also update header if this is the active conversation
                         if (activeConvId === conv.id) updateHeaderPresence(isOnline);
                     });
                 });
             }
 
-            function buildConvItem(conv, partner, unread) {
+            function buildConvItem(conv, partner, unread, isBlocked) {
                 const div = document.createElement("div");
                 div.className = "conversation-item" + (conv.id === activeConvId ? " active" : "");
-                div.onclick = () => openConversation(conv.id, partner);
+                div.onclick = (e) => {
+                    // Don't open chat if clicking action buttons
+                    if (e.target.closest(".conv-actions")) return;
+                    openConversation(conv.id, partner);
+                };
 
+                const partnerId = partner.uid || partner.id;
                 const lastMsg = conv.lastMessage || "";
                 const lastTime = conv.lastMessageAt ? formatTime(conv.lastMessageAt.toDate()) : "";
                 const picClass = partner.isAdmin ? "conv-avatar admin-av" : "conv-avatar";
                 const badge = partner.isAdmin
                     ? '<span class="admin-badge" style="font-size:0.6rem;padding:0.1rem 0.45rem;">⚡</span>'
                     : "";
+                const blockedLabel = isBlocked
+                    ? ' <span style="font-size:0.7rem;color:#b7791f;font-weight:600;">(Blocked)</span>'
+                    : "";
 
                 div.innerHTML = `
-        <div class="conv-avatar-wrap">
-            <img src="${partner.profilePicture}" class="${picClass}" alt="${partner.username}">
-            <span class="presence-dot"></span>
-        </div>
-        <div class="conv-info">
-            <div class="conv-name">${partner.username}${badge}</div>
-            <div class="conv-preview">${lastMsg.startsWith("[image]") ? "📷 Image" : lastMsg.startsWith("[video]") ? "🎥 Video" : escHtml(lastMsg.slice(0, 45))}</div>
-        </div>
-        <div class="conv-meta">
-            <span class="conv-time">${lastTime}</span>
-            ${unread > 0 ? `<span class="unread-badge">${unread > 9 ? "9+" : unread}</span>` : ""}
-        </div>`;
+                    <div class="conv-avatar-wrap">
+                        <img src="${partner.profilePicture}" class="${picClass}" alt="${partner.username}">
+                        <span class="presence-dot"></span>
+                    </div>
+                    <div class="conv-info">
+                        <div class="conv-name">${partner.username}${badge}${blockedLabel}</div>
+                        <div class="conv-preview">${lastMsg.startsWith("[image]") ? "📷 Image" : lastMsg.startsWith("[video]") ? "🎥 Video" : escHtml(lastMsg.slice(0, 45))}</div>
+                    </div>
+                    <div class="conv-meta">
+                        <span class="conv-time">${lastTime}</span>
+                        ${unread > 0 ? `<span class="unread-badge">${unread > 9 ? "9+" : unread}</span>` : ""}
+                    </div>
+                    <div class="conv-actions">
+                        ${
+                            isBlocked
+                                ? `<button class="conv-action-btn unblock-btn" title="Unblock" onclick="confirmUnblock('${partnerId}','${partner.username}')">🔓</button>`
+                                : `<button class="conv-action-btn block-btn" title="Block" onclick="confirmBlock('${partnerId}','${partner.username}')">🚫</button>`
+                        }
+                        <button class="conv-action-btn delete-btn" title="Delete chat" onclick="confirmDeleteChat('${conv.id}','${partner.username}')">🗑️</button>
+                    </div>`;
                 return div;
             }
 
@@ -1429,44 +1650,60 @@
                 const activeChat = document.getElementById("activeChat");
                 activeChat.style.display = "flex";
 
+                const partnerId = partner.uid || partner.id;
+                const blocked = window.currentUser.blockedUsers || [];
+                const isBlocked = blocked.includes(partnerId);
+
                 const picClass = partner.isAdmin ? "admin-hdr" : "";
                 const badge = partner.isAdmin ? '<span class="admin-badge">⚡ ADMIN</span>' : "";
+
+                const blockBtnHtml = isBlocked
+                    ? `<button class="header-action-btn unblock" onclick="confirmUnblock('${partnerId}','${partner.username}')">🔓 Unblock</button>`
+                    : `<button class="header-action-btn block" onclick="confirmBlock('${partnerId}','${partner.username}')">🚫 Block</button>`;
+
                 document.getElementById("chatHeader").innerHTML = `
-        <div class="chat-header-avatar-wrap">
-            <img src="${partner.profilePicture}" class="${picClass}" alt="${partner.username}">
-            <span class="header-presence-dot"></span>
-        </div>
-        <div class="chat-header-info">
-            <h3>${partner.username}${badge}</h3>
-            <p id="partnerStatus"><span id="partnerStatusText">Offline</span></p>
-        </div>`;
+                    <div class="chat-header-avatar-wrap">
+                        <img src="${partner.profilePicture}" class="${picClass}" alt="${partner.username}">
+                        <span class="header-presence-dot"></span>
+                    </div>
+                    <div class="chat-header-info">
+                        <h3>${partner.username}${badge}</h3>
+                        <p id="partnerStatus"><span id="partnerStatusText">Offline</span></p>
+                    </div>
+                    <div class="chat-header-actions">
+                        ${blockBtnHtml}
+                        <button class="header-action-btn delete" onclick="confirmDeleteChat('${cid}','${partner.username}')">🗑️ Delete</button>
+                    </div>`;
 
-                // Start watching partner presence for header
-                const partnerId = partner.uid || partner.id;
-                watchPresence(partnerId, (isOnline) => updateHeaderPresence(isOnline));
+                // FIX: Use stable callbackId "header" for header presence
+                watchPresence(partnerId, "header", (isOnline) => updateHeaderPresence(isOnline));
 
-                // Highlight sidebar
-                document.querySelectorAll(".conversation-item").forEach((el) => {
-                    el.classList.remove("active");
-                });
-                // Re-render sidebar to pick up active state
+                // Blocked banner + input toggle
+                const banner = document.getElementById("blockedBanner");
+                const inputArea = document.getElementById("chatInputArea");
+                if (isBlocked) {
+                    banner.style.display = "block";
+                    banner.textContent = `You have blocked ${partner.username}. Unblock to send messages.`;
+                    inputArea.style.display = "none";
+                } else {
+                    banner.style.display = "none";
+                    inputArea.style.display = "block";
+                }
+
                 renderConversationList();
-
                 loadMessages(cid);
             }
 
-            // ── Load messages — FIX: diff-based rendering, no full redraws ──────────────
+            // ── Load messages ───────────────────────────────────────────────────────────
             let renderedMsgIds = new Set();
 
             function loadMessages(cid) {
                 if (msgUnsub) msgUnsub();
                 renderedMsgIds.clear();
-
                 const area = document.getElementById("messagesArea");
                 area.innerHTML = "";
 
                 const q = query(collection(db, "conversations", cid, "messages"), orderBy("createdAt", "asc"));
-
                 msgUnsub = onSnapshot(q, (snap) => {
                     const myUid = window.currentUser.uid;
                     let lastDate = area.dataset.lastDate || null;
@@ -1531,12 +1768,9 @@
                             area.appendChild(group);
                             shouldScroll = true;
                         }
-                        // Optionally handle "modified" or "removed" here if needed
                     });
 
-                    if (shouldScroll && wasNearBottom) {
-                        area.scrollTop = area.scrollHeight;
-                    }
+                    if (shouldScroll && wasNearBottom) area.scrollTop = area.scrollHeight;
                 });
             }
 
@@ -1546,10 +1780,12 @@
                 if (!text && pendingImages.length === 0) return;
                 if (!activeConvId || !activePartner) return;
 
-                const myUid = window.currentUser.uid;
+                // Don't send if blocked
+                const blocked = window.currentUser.blockedUsers || [];
                 const partnerId = activePartner.uid || activePartner.id;
+                if (blocked.includes(partnerId)) return;
 
-                // Clear input immediately (no flicker)
+                const myUid = window.currentUser.uid;
                 document.getElementById("msgInput").value = "";
                 autoResize(document.getElementById("msgInput"));
 
@@ -1595,7 +1831,6 @@
                     sendMessage();
                 }
             };
-
             window.autoResize = (el) => {
                 el.style.height = "auto";
                 el.style.height = Math.min(el.scrollHeight, 120) + "px";
@@ -1622,18 +1857,15 @@
                 });
                 e.target.value = "";
             };
-
             window.removeThumb = (name) => {
                 pendingImages = pendingImages.filter((f) => f.name !== name);
                 const thumb = document.querySelector(`.img-preview-thumb[data-name="${name}"]`);
                 if (thumb) thumb.remove();
             };
-
             function clearImagePreviews() {
                 pendingImages = [];
                 document.getElementById("imgPreviewStrip").innerHTML = "";
             }
-
             async function uploadToCloudinary(file) {
                 const fd = new FormData();
                 fd.append("file", file);
@@ -1645,6 +1877,134 @@
                 return (await res.json()).secure_url;
             }
 
+            // ── Confirm dialog ──────────────────────────────────────────────────────────
+            function showConfirm({ icon, title, msg, okLabel, okClass, onOk }) {
+                document.getElementById("confirmIcon").textContent = icon;
+                document.getElementById("confirmTitle").textContent = title;
+                document.getElementById("confirmMsg").textContent = msg;
+                const btn = document.getElementById("confirmOkBtn");
+                btn.textContent = okLabel;
+                btn.className = `btn ${okClass}`;
+                btn.onclick = () => {
+                    closeConfirm();
+                    onOk();
+                };
+                document.getElementById("confirmDialog").classList.add("active");
+            }
+            window.closeConfirm = () => document.getElementById("confirmDialog").classList.remove("active");
+
+            // ── Delete chat ─────────────────────────────────────────────────────────────
+            window.confirmDeleteChat = (cid, partnerName) => {
+                showConfirm({
+                    icon: "🗑️",
+                    title: "Delete Conversation",
+                    msg: `Delete your conversation with ${partnerName}? This removes it from your view but the other person's copy remains.`,
+                    okLabel: "Delete",
+                    okClass: "btn-danger",
+                    onOk: () => deleteChat(cid)
+                });
+            };
+
+            async function deleteChat(cid) {
+                try {
+                    const myUid = window.currentUser.uid;
+                    // Remove this conversation from the local map so it disappears from sidebar
+                    convDataMap.delete(cid);
+                    renderConversationList();
+
+                    // If this was the active chat, reset
+                    if (activeConvId === cid) {
+                        activeConvId = null;
+                        activePartner = null;
+                        document.getElementById("activeChat").style.display = "none";
+                        document.getElementById("chatEmpty").style.display = "flex";
+                        if (msgUnsub) {
+                            msgUnsub();
+                            msgUnsub = null;
+                        }
+                    }
+
+                    // Delete messages sub-collection (best-effort batch)
+                    const msgsSnap = await getDocs(collection(db, "conversations", cid, "messages"));
+                    const batch = writeBatch(db);
+                    msgsSnap.docs.forEach((d) => batch.delete(d.ref));
+                    // Remove participant from the conversation (or delete if last participant)
+                    const convRef = doc(db, "conversations", cid);
+                    const convSnap = await getDoc(convRef);
+                    if (convSnap.exists()) {
+                        const participants = convSnap.data().participants || [];
+                        const remaining = participants.filter((p) => p !== myUid);
+                        if (remaining.length === 0) {
+                            batch.delete(convRef);
+                        } else {
+                            batch.update(convRef, { participants: remaining });
+                        }
+                    }
+                    await batch.commit();
+                } catch (e) {
+                    console.error("Delete chat error:", e);
+                }
+            }
+
+            // ── Block / Unblock ──────────────────────────────────────────────────────────
+            window.confirmBlock = (partnerId, partnerName) => {
+                showConfirm({
+                    icon: "🚫",
+                    title: `Block ${partnerName}?`,
+                    msg: `${partnerName} won't be able to send you messages. You can unblock them at any time.`,
+                    okLabel: "Block",
+                    okClass: "btn-danger",
+                    onOk: () => blockUser(partnerId)
+                });
+            };
+
+            window.confirmUnblock = (partnerId, partnerName) => {
+                showConfirm({
+                    icon: "🔓",
+                    title: `Unblock ${partnerName}?`,
+                    msg: `${partnerName} will be able to send you messages again.`,
+                    okLabel: "Unblock",
+                    okClass: "btn-primary",
+                    onOk: () => unblockUser(partnerId)
+                });
+            };
+
+            async function blockUser(partnerId) {
+                try {
+                    const myUid = window.currentUser.uid;
+                    const userRef = doc(db, "users", myUid);
+                    await updateDoc(userRef, { blockedUsers: arrayUnion(partnerId) });
+                    // Update local state
+                    if (!window.currentUser.blockedUsers) window.currentUser.blockedUsers = [];
+                    if (!window.currentUser.blockedUsers.includes(partnerId))
+                        window.currentUser.blockedUsers.push(partnerId);
+                    // Refresh UI
+                    renderConversationList();
+                    if (activePartner && (activePartner.uid || activePartner.id) === partnerId) {
+                        openConversation(activeConvId, activePartner);
+                    }
+                } catch (e) {
+                    console.error("Block error:", e);
+                }
+            }
+
+            async function unblockUser(partnerId) {
+                try {
+                    const myUid = window.currentUser.uid;
+                    const userRef = doc(db, "users", myUid);
+                    await updateDoc(userRef, { blockedUsers: arrayRemove(partnerId) });
+                    window.currentUser.blockedUsers = (window.currentUser.blockedUsers || []).filter(
+                        (id) => id !== partnerId
+                    );
+                    renderConversationList();
+                    if (activePartner && (activePartner.uid || activePartner.id) === partnerId) {
+                        openConversation(activeConvId, activePartner);
+                    }
+                } catch (e) {
+                    console.error("Unblock error:", e);
+                }
+            }
+
             // ── Search users ─────────────────────────────────────────────────────────────
             window.searchUsers = async (val) => {
                 const results = document.getElementById("searchResults");
@@ -1652,7 +2012,6 @@
                     results.classList.remove("open");
                     return;
                 }
-
                 const snap = await getDocs(query(collection(db, "users"), where("approved", "==", true)));
                 const matches = [];
                 snap.forEach((d) => {
@@ -1661,7 +2020,6 @@
                     if (u.uid === window.currentUser.uid) return;
                     if (u.username.toLowerCase().includes(val.toLowerCase())) matches.push(u);
                 });
-
                 results.innerHTML = "";
                 if (matches.length === 0) {
                     results.innerHTML =
@@ -1679,15 +2037,13 @@
             };
 
             document.addEventListener("click", (e) => {
-                if (!document.getElementById("searchWrapper").contains(e.target)) {
+                if (!document.getElementById("searchWrapper").contains(e.target))
                     document.getElementById("searchResults").classList.remove("open");
-                }
             });
 
             async function startConversation(partner) {
                 document.getElementById("userSearch").value = "";
                 document.getElementById("searchResults").classList.remove("open");
-
                 const cid = convId(window.currentUser.uid, partner.uid || partner.id);
                 const convRef = doc(db, "conversations", cid);
                 const snap = await getDoc(convRef);
@@ -1745,7 +2101,6 @@
                 if (diff < 604800000) return date.toLocaleDateString([], { weekday: "short" });
                 return date.toLocaleDateString([], { month: "short", day: "numeric" });
             }
-
             function escHtml(str) {
                 return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             }
