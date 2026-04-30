@@ -1047,7 +1047,7 @@
 
                     const dt = activeDowntime.downtime;
                     document.getElementById("serverOfflineText").textContent =
-                        `"${dt.label || "Maintenance"}" is currently in progress. The join code is hidden until the server is back online.`;
+                        `${dt.label || "Maintenance"}. The join code is hidden until the server is back online.`;
 
                     startCountdown(activeDowntime.end);
                 } else {
