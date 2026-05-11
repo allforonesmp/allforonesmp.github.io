@@ -531,6 +531,17 @@
                 color: #856404;
                 margin-top: 0.25rem;
             }
+            /* ── NEW: back-at label under countdown ── */
+            .offline-back-at {
+                display: none;
+                margin-top: 0.5rem;
+                font-size: 0.88rem;
+                color: #856404;
+                opacity: 0.8;
+            }
+            .offline-back-at.visible {
+                display: block;
+            }
 
             .code-reveal {
                 display: none;
@@ -827,6 +838,8 @@
                             <h4>Server is Currently Offline</h4>
                             <p id="serverOfflineText">The server is undergoing scheduled maintenance.</p>
                             <div class="offline-countdown" id="offlineCountdown" style="display: none">Back in —</div>
+                            <!-- NEW: human-readable "back at HH:MM" label under the countdown -->
+                            <div class="offline-back-at" id="offlineBackAt"></div>
                         </div>
 
                         <div class="agree-gate" id="agreeGate">
@@ -917,8 +930,65 @@
             const rtdb = getDatabase(app);
 
             // ─── NEWS CAROUSEL ──────────────────────────────────────────
+            const NEWS_QUEUE_KEY = "afo_news_queue";
             let carouselIndex = 0;
             let newsItems = [];
+
+            /**
+             * Pick the starting slide index for this page load.
+             *
+             * Strategy: keep a shuffled queue of news IDs in localStorage.
+             * Each load pops the first ID from the queue and uses that slide.
+             * When the queue is empty (all news shown), refill with a fresh shuffle.
+             */
+            function pickStartIndex(items) {
+                if (items.length === 0) return 0;
+                if (items.length === 1) return 0;
+
+                const ids = items.map(i => i.id);
+
+                // Load existing queue, filtering out IDs that no longer exist
+                let queue = [];
+                try {
+                    const stored = localStorage.getItem(NEWS_QUEUE_KEY);
+                    if (stored) queue = JSON.parse(stored).filter(id => ids.includes(id));
+                } catch (_) {}
+
+                // If queue is empty, build a fresh shuffled queue
+                // Exclude the very last shown ID so we don't repeat immediately after a refill
+                if (queue.length === 0) {
+                    let lastShown = null;
+                    try {
+                        lastShown = localStorage.getItem(NEWS_QUEUE_KEY + "_last");
+                    } catch (_) {}
+
+                    // Fisher-Yates shuffle
+                    const shuffled = [...ids];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+
+                    // If the first item after shuffle is the same as last shown, rotate it to the end
+                    if (shuffled.length > 1 && shuffled[0] === lastShown) {
+                        shuffled.push(shuffled.shift());
+                    }
+
+                    queue = shuffled;
+                }
+
+                // Pop the first ID from the queue
+                const chosenId = queue.shift();
+                const chosenIndex = ids.indexOf(chosenId);
+
+                // Persist the updated queue and the last-shown ID
+                try {
+                    localStorage.setItem(NEWS_QUEUE_KEY, JSON.stringify(queue));
+                    localStorage.setItem(NEWS_QUEUE_KEY + "_last", chosenId);
+                } catch (_) {}
+
+                return chosenIndex >= 0 ? chosenIndex : 0;
+            }
 
             async function loadNews() {
                 try {
@@ -970,7 +1040,9 @@
                     dots.appendChild(dot);
                 });
 
-                goToSlide(0);
+                // Jump to the randomly chosen starting slide for this page load
+                const startIdx = pickStartIndex(newsItems);
+                goToSlide(startIdx);
             }
 
             function goToSlide(idx) {
@@ -983,9 +1055,7 @@
 
             window.carouselPrev = () => goToSlide(carouselIndex - 1);
             window.carouselNext = () => goToSlide(carouselIndex + 1);
-            setInterval(() => {
-                if (newsItems.length > 1) window.carouselNext();
-            }, 7000);
+            // ── Auto-scroll removed ──
 
             // ─── SERVER STATE ───────────────────────────────────────────
             let serverData = {};
@@ -1015,10 +1085,18 @@
             function startCountdown(endTime) {
                 if (countdownInterval) clearInterval(countdownInterval);
                 const el = document.getElementById("offlineCountdown");
+                const backAtEl = document.getElementById("offlineBackAt");
+
                 if (!endTime) {
                     el.style.display = "none";
+                    backAtEl.classList.remove("visible");
                     return;
                 }
+
+                // Show static "back at HH:MM" label
+                const backAtTime = endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                backAtEl.textContent = `Expected back at ${backAtTime}`;
+                backAtEl.classList.add("visible");
 
                 el.style.display = "inline-block";
                 function tick() {
@@ -1030,6 +1108,7 @@
                     if (diff <= 0) {
                         clearInterval(countdownInterval);
                         el.textContent = "Should be back online now — refresh the page!";
+                        backAtEl.classList.remove("visible");
                     }
                 }
                 tick();
@@ -1055,6 +1134,7 @@
                     offlineBlock.classList.remove("visible");
                     agreeGate.style.display = "block";
                     if (countdownInterval) clearInterval(countdownInterval);
+                    document.getElementById("offlineBackAt").classList.remove("visible");
                 }
             }
 
