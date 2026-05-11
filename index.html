@@ -21,18 +21,13 @@
                 --border-color: #d4e8f0;
                 --white: #ffffff;
                 --nav-height: 64px;
+                --banner-height: 0px; /* updated by JS */
             }
 
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
 
-            html,
-            body {
-                height: 100%;
-                width: 100%;
+            html, body {
+                height: 100%; width: 100%;
                 overflow: hidden;
                 background: var(--white);
                 font-family: "DM Sans", sans-serif;
@@ -41,300 +36,213 @@
             /* ─── NAV ─── */
             nav {
                 position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
+                top: 0; left: 0; right: 0;
                 height: var(--nav-height);
-                background: rgba(255, 255, 255, 0.92);
+                background: rgba(255,255,255,0.92);
                 backdrop-filter: blur(16px) saturate(180%);
                 -webkit-backdrop-filter: blur(16px) saturate(180%);
                 border-bottom: 1.5px solid var(--border-color);
-                box-shadow: 0 2px 24px rgba(74, 144, 226, 0.08);
+                box-shadow: 0 2px 24px rgba(74,144,226,0.08);
                 display: flex;
                 align-items: center;
                 padding: 0 2rem;
                 z-index: 100;
             }
-
             .nav-inner {
-                width: 100%;
-                max-width: 1400px;
+                width: 100%; max-width: 1400px;
                 margin: 0 auto;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
             }
-
             .logo {
                 font-family: "Spectral", serif;
-                font-size: 1.6rem;
-                font-weight: 700;
+                font-size: 1.6rem; font-weight: 700;
                 color: var(--primary-blue);
                 text-decoration: none;
                 letter-spacing: -0.01em;
-                white-space: nowrap;
-                flex-shrink: 0;
-                transition: color 0.2s;
-                cursor: pointer;
+                white-space: nowrap; flex-shrink: 0;
+                transition: color 0.2s; cursor: pointer;
             }
-            .logo:hover {
-                color: var(--dark-blue);
-            }
+            .logo:hover { color: var(--dark-blue); }
 
             .nav-links {
-                display: flex;
-                align-items: center;
-                gap: 0.2rem;
-                list-style: none;
+                display: flex; align-items: center;
+                gap: 0.2rem; list-style: none;
             }
-
             .nav-links button {
                 color: var(--text-medium);
-                background: none;
-                border: none;
+                background: none; border: none;
                 font-family: "DM Sans", sans-serif;
-                font-weight: 500;
-                font-size: 0.97rem;
+                font-weight: 500; font-size: 0.97rem;
                 padding: 0.45rem 0.9rem;
-                border-radius: 8px;
-                cursor: pointer;
-                transition:
-                    color 0.18s,
-                    background 0.18s;
-                white-space: nowrap;
-                position: relative;
+                border-radius: 8px; cursor: pointer;
+                transition: color 0.18s, background 0.18s;
+                white-space: nowrap; position: relative;
             }
-            .nav-links button:hover {
-                color: var(--primary-blue);
-                background: var(--lighter-blue);
-            }
-            .nav-links button.active {
-                color: var(--primary-blue);
-                background: var(--light-blue);
-                font-weight: 600;
-            }
-
-            /* animated underline for active */
+            .nav-links button:hover { color: var(--primary-blue); background: var(--lighter-blue); }
+            .nav-links button.active { color: var(--primary-blue); background: var(--light-blue); font-weight: 600; }
             .nav-links button::after {
-                content: "";
-                position: absolute;
-                bottom: 4px;
-                left: 50%;
-                right: 50%;
-                height: 2px;
-                background: var(--primary-blue);
+                content: ""; position: absolute;
+                bottom: 4px; left: 50%; right: 50%;
+                height: 2px; background: var(--primary-blue);
                 border-radius: 2px;
-                transition:
-                    left 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                    right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: left 0.25s cubic-bezier(0.4,0,0.2,1), right 0.25s cubic-bezier(0.4,0,0.2,1);
             }
-            .nav-links button.active::after {
-                left: 12px;
-                right: 12px;
-            }
+            .nav-links button.active::after { left: 12px; right: 12px; }
 
             /* ─── HAMBURGER ─── */
             .hamburger {
-                display: none;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                gap: 5px;
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 0.5rem;
-                border-radius: 8px;
-                transition: background 0.18s;
-                flex-shrink: 0;
+                display: none; flex-direction: column;
+                justify-content: center; align-items: center;
+                gap: 5px; background: none; border: none;
+                cursor: pointer; padding: 0.5rem;
+                border-radius: 8px; transition: background 0.18s; flex-shrink: 0;
             }
-            .hamburger:hover {
-                background: var(--lighter-blue);
-            }
+            .hamburger:hover { background: var(--lighter-blue); }
             .hamburger span {
-                display: block;
-                width: 24px;
-                height: 2.5px;
-                background: var(--text-medium);
-                border-radius: 2px;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: block; width: 24px; height: 2.5px;
+                background: var(--text-medium); border-radius: 2px;
+                transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
                 transform-origin: center;
             }
-            .hamburger.open span:nth-child(1) {
-                transform: translateY(7.5px) rotate(45deg);
-            }
-            .hamburger.open span:nth-child(2) {
+            .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+            .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+            .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+            /* ─── NOTIFICATION BANNER ─── */
+            #notifBanner {
+                position: fixed;
+                top: var(--nav-height);
+                left: 0; right: 0;
+                z-index: 98;
+                overflow: hidden;
+                max-height: 0;
+                transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
                 opacity: 0;
-                transform: scaleX(0);
             }
-            .hamburger.open span:nth-child(3) {
-                transform: translateY(-7.5px) rotate(-45deg);
+            #notifBanner.visible {
+                max-height: 80px;
+                opacity: 1;
             }
+            .banner-inner {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 1rem;
+                padding: 0.7rem 2rem;
+                font-size: 0.95rem;
+                font-weight: 500;
+                min-height: 44px;
+                position: relative;
+            }
+            .banner-text { flex: 1; text-align: center; }
+            .banner-btn {
+                display: inline-block;
+                padding: 0.35rem 1rem;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 700;
+                cursor: pointer;
+                border: none;
+                font-family: "DM Sans", sans-serif;
+                white-space: nowrap;
+                flex-shrink: 0;
+                transition: opacity 0.2s, transform 0.15s;
+                text-decoration: none;
+            }
+            .banner-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+            .banner-close {
+                position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+                background: none; border: none; cursor: pointer;
+                font-size: 1.1rem; opacity: 0.6; padding: 0.25rem;
+                transition: opacity 0.2s;
+            }
+            .banner-close:hover { opacity: 1; }
 
             /* ─── MOBILE DRAWER ─── */
             .drawer {
                 position: fixed;
                 top: var(--nav-height);
-                left: 0;
-                right: 0;
-                background: rgba(255, 255, 255, 0.97);
+                left: 0; right: 0;
+                background: rgba(255,255,255,0.97);
                 backdrop-filter: blur(20px);
                 border-bottom: 1.5px solid var(--border-color);
-                box-shadow: 0 8px 32px rgba(74, 144, 226, 0.12);
+                box-shadow: 0 8px 32px rgba(74,144,226,0.12);
                 z-index: 99;
                 overflow: hidden;
                 max-height: 0;
-                transition:
-                    max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1),
-                    opacity 0.28s ease;
+                transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease;
                 opacity: 0;
             }
-            .drawer.open {
-                max-height: 320px;
-                opacity: 1;
-            }
-            .drawer-links {
-                list-style: none;
-                padding: 0.75rem 1rem 1rem;
-                display: flex;
-                flex-direction: column;
-                gap: 0.25rem;
-            }
+            .drawer.open { max-height: 320px; opacity: 1; }
+            .drawer-links { list-style: none; padding: 0.75rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.25rem; }
             .drawer-links button {
-                width: 100%;
-                text-align: left;
-                background: none;
-                border: none;
+                width: 100%; text-align: left;
+                background: none; border: none;
                 font-family: "DM Sans", sans-serif;
-                font-weight: 500;
-                font-size: 1.05rem;
+                font-weight: 500; font-size: 1.05rem;
                 color: var(--text-medium);
                 padding: 0.7rem 1rem;
-                border-radius: 10px;
-                cursor: pointer;
-                transition:
-                    color 0.18s,
-                    background 0.18s;
+                border-radius: 10px; cursor: pointer;
+                transition: color 0.18s, background 0.18s;
             }
-            .drawer-links button:hover {
-                color: var(--primary-blue);
-                background: var(--lighter-blue);
-            }
-            .drawer-links button.active {
-                color: var(--primary-blue);
-                background: var(--light-blue);
-                font-weight: 600;
-            }
+            .drawer-links button:hover { color: var(--primary-blue); background: var(--lighter-blue); }
+            .drawer-links button.active { color: var(--primary-blue); background: var(--light-blue); font-weight: 600; }
 
             /* ─── CONTENT AREA ─── */
             .content-shell {
                 position: fixed;
-                top: var(--nav-height);
-                left: 0;
-                right: 0;
-                bottom: 0;
+                top: calc(var(--nav-height) + var(--banner-height));
+                left: 0; right: 0; bottom: 0;
                 overflow: hidden;
+                transition: top 0.4s cubic-bezier(0.4,0,0.2,1);
             }
 
-            /* iframe wrapper — we stack them and animate */
             .frame-slot {
-                position: absolute;
-                inset: 0;
+                position: absolute; inset: 0;
                 opacity: 0;
                 transform: translateY(18px) scale(0.985);
-                transition:
-                    opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1),
-                    transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: opacity 0.42s cubic-bezier(0.4,0,0.2,1), transform 0.42s cubic-bezier(0.4,0,0.2,1);
                 pointer-events: none;
             }
-            .frame-slot.visible {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-                pointer-events: auto;
-            }
-            .frame-slot.exit {
-                opacity: 0;
-                transform: translateY(-10px) scale(1.01);
-                pointer-events: none;
-            }
-
-            .frame-slot iframe {
-                width: 100%;
-                height: 100%;
-                border: none;
-                display: block;
-            }
+            .frame-slot.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+            .frame-slot.exit { opacity: 0; transform: translateY(-10px) scale(1.01); pointer-events: none; }
+            .frame-slot iframe { width: 100%; height: 100%; border: none; display: block; }
 
             /* ─── LOADING SHIMMER ─── */
             .frame-loader {
-                position: absolute;
-                inset: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
+                position: absolute; inset: 0;
+                display: flex; flex-direction: column;
+                align-items: center; justify-content: center;
                 background: var(--lighter-blue);
-                gap: 1rem;
-                transition: opacity 0.3s;
+                gap: 1rem; transition: opacity 0.3s;
             }
-            .frame-loader.hidden {
-                opacity: 0;
-                pointer-events: none;
-            }
-
+            .frame-loader.hidden { opacity: 0; pointer-events: none; }
             .loader-spinner {
-                width: 36px;
-                height: 36px;
+                width: 36px; height: 36px;
                 border: 3px solid var(--border-color);
                 border-top-color: var(--primary-blue);
                 border-radius: 50%;
                 animation: spin 0.8s linear infinite;
             }
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
+            @keyframes spin { to { transform: rotate(360deg); } }
+            .loader-text { font-family: "DM Sans", sans-serif; color: var(--text-medium); font-size: 0.88rem; letter-spacing: 0.02em; }
 
-            .loader-text {
-                font-family: "DM Sans", sans-serif;
-                color: var(--text-medium);
-                font-size: 0.88rem;
-                letter-spacing: 0.02em;
-            }
-
-            /* ─── PAGE TRANSITION RIPPLE ─── */
-            .ripple-overlay {
-                position: fixed;
-                inset: 0;
-                pointer-events: none;
-                z-index: 200;
-                overflow: hidden;
-            }
+            /* ─── RIPPLE ─── */
+            .ripple-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 200; overflow: hidden; }
             .ripple {
-                position: absolute;
-                border-radius: 50%;
-                background: rgba(74, 144, 226, 0.12);
+                position: absolute; border-radius: 50%;
+                background: rgba(74,144,226,0.12);
                 transform: scale(0);
-                animation: rippleOut 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+                animation: rippleOut 0.55s cubic-bezier(0.4,0,0.2,1) forwards;
             }
-            @keyframes rippleOut {
-                to {
-                    transform: scale(40);
-                    opacity: 0;
-                }
-            }
+            @keyframes rippleOut { to { transform: scale(40); opacity: 0; } }
 
             @media (max-width: 700px) {
-                nav {
-                    padding: 0 1rem;
-                }
-                .nav-links {
-                    display: none;
-                }
-                .hamburger {
-                    display: flex;
-                }
+                nav { padding: 0 1rem; }
+                .nav-links { display: none; }
+                .hamburger { display: flex; }
             }
         </style>
     </head>
@@ -342,7 +250,6 @@
         <nav>
             <div class="nav-inner">
                 <span class="logo" onclick="navigate('/', event)">AllForOne SMP</span>
-
                 <ul class="nav-links" id="navLinks">
                     <li><button data-path="/" onclick="navigate('/', event)">Home</button></li>
                     <li><button data-path="/rules" onclick="navigate('/rules', event)">Rules</button></li>
@@ -350,33 +257,60 @@
                     <li><button data-path="/post" onclick="navigate('/post', event)">Post</button></li>
                     <li><button data-path="/messages" onclick="navigate('/messages', event)">Message</button></li>
                 </ul>
-
                 <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" onclick="toggleDrawer()">
                     <span></span><span></span><span></span>
                 </button>
             </div>
         </nav>
 
+        <!-- Notification Banner -->
+        <div id="notifBanner">
+            <div class="banner-inner" id="bannerInner">
+                <span class="banner-text" id="bannerText"></span>
+                <a class="banner-btn" id="bannerBtn" href="#" target="_blank" style="display:none"></a>
+                <button class="banner-close" id="bannerClose" onclick="dismissBanner()" aria-label="Dismiss">✕</button>
+            </div>
+        </div>
+
         <!-- Mobile Drawer -->
         <div class="drawer" id="drawer">
             <ul class="drawer-links" id="drawerLinks">
                 <li><button data-path="/" onclick="navigate('/', event); closeDrawer()">Home</button></li>
                 <li><button data-path="/rules" onclick="navigate('/rules', event); closeDrawer()">Rules</button></li>
-                <li>
-                    <button data-path="/profile" onclick="navigate('/profile', event); closeDrawer()">Profile</button>
-                </li>
+                <li><button data-path="/profile" onclick="navigate('/profile', event); closeDrawer()">Profile</button></li>
                 <li><button data-path="/post" onclick="navigate('/post', event); closeDrawer()">Post</button></li>
-                <li>
-                    <button data-path="/messages" onclick="navigate('/messages', event); closeDrawer()">Message</button>
-                </li>
+                <li><button data-path="/messages" onclick="navigate('/messages', event); closeDrawer()">Message</button></li>
             </ul>
         </div>
 
-        <!-- Ripple overlay -->
         <div class="ripple-overlay" id="rippleOverlay"></div>
-
-        <!-- Iframe content area -->
         <div class="content-shell" id="contentShell"></div>
+
+        <!-- Firebase -->
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+            import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyDzQlAqhCeytCLEYafboYGpFu6pY3Kv9WE",
+                authDomain: "allforonemedia-9a7d8.firebaseapp.com",
+                databaseURL: "https://allforonemedia-9a7d8-default-rtdb.firebaseio.com",
+                projectId: "allforonemedia-9a7d8",
+                storageBucket: "allforonemedia-9a7d8.firebasestorage.app",
+                messagingSenderId: "892787060584",
+                appId: "1:892787060584:web:e65609062592f9ba96f0dd"
+            };
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+
+            // Listen for banner config from Firestore
+            onSnapshot(doc(db, "serverInfo", "main"), (snap) => {
+                if (!snap.exists()) return;
+                const data = snap.data();
+                window._bannerConfig = data.notificationBanner || null;
+                applyBanner(window._currentPath);
+            });
+        </script>
 
         <script>
             const BASE = "https://allforonesmp.github.io/";
@@ -387,6 +321,13 @@
                 "/post": BASE + "/post",
                 "/messages": BASE + "/messages"
             };
+            const PAGE_TITLES = {
+                "/": "AllForOne SMP",
+                "/rules": "Rules – AllForOne SMP",
+                "/profile": "Profile – AllForOne SMP",
+                "/post": "Post – AllForOne SMP",
+                "/messages": "Messages – AllForOne SMP"
+            };
 
             const shell = document.getElementById("contentShell");
             const overlay = document.getElementById("rippleOverlay");
@@ -394,10 +335,83 @@
             const hamburger = document.getElementById("hamburgerBtn");
 
             let currentPath = null;
-            let frames = {}; // path → { slot, iframe, loaded }
+            let frames = {};
             let activeSlot = null;
+            let refreshTimers = {};
+            let bannerDismissed = false;
 
-            // ── ripple animation ──
+            window._currentPath = "/";
+            window._bannerConfig = null;
+
+            // ── Banner ──────────────────────────────────────────────────
+            function applyBanner(path) {
+                const cfg = window._bannerConfig;
+                const banner = document.getElementById("notifBanner");
+                const bannerInner = document.getElementById("bannerInner");
+                const bannerText = document.getElementById("bannerText");
+                const bannerBtn = document.getElementById("bannerBtn");
+                const bannerClose = document.getElementById("bannerClose");
+
+                if (!cfg || !cfg.enabled || bannerDismissed) {
+                    banner.classList.remove("visible");
+                    updateBannerHeight(0);
+                    return;
+                }
+
+                // Check if this page should show the banner
+                const pages = cfg.pages || [];
+                if (pages.length > 0 && !pages.includes(path)) {
+                    banner.classList.remove("visible");
+                    updateBannerHeight(0);
+                    return;
+                }
+
+                // Apply colours
+                bannerInner.style.backgroundColor = cfg.bgColor || "#4a90e2";
+                bannerInner.style.color = cfg.textColor || "#ffffff";
+                bannerClose.style.color = cfg.textColor || "#ffffff";
+                bannerText.textContent = cfg.text || "";
+
+                // Button
+                if (cfg.btnLabel && cfg.btnLink) {
+                    bannerBtn.textContent = cfg.btnLabel;
+                    bannerBtn.href = cfg.btnLink;
+                    bannerBtn.style.backgroundColor = cfg.btnBgColor || "rgba(255,255,255,0.25)";
+                    bannerBtn.style.color = cfg.btnTextColor || "#ffffff";
+                    bannerBtn.style.display = "inline-block";
+                } else {
+                    bannerBtn.style.display = "none";
+                }
+
+                banner.classList.add("visible");
+                // Measure real height after layout
+                requestAnimationFrame(() => {
+                    updateBannerHeight(bannerInner.offsetHeight);
+                });
+            }
+
+            function updateBannerHeight(h) {
+                document.documentElement.style.setProperty("--banner-height", h + "px");
+            }
+
+            window.dismissBanner = function () {
+                bannerDismissed = true;
+                document.getElementById("notifBanner").classList.remove("visible");
+                updateBannerHeight(0);
+            };
+
+            // ── Page title ───────────────────────────────────────────────
+            function updateTitle(path) {
+                // Try reading iframe title; fallback to our map
+                const frame = frames[path];
+                let iframeTitle = null;
+                try {
+                    iframeTitle = frame?.iframe?.contentDocument?.title;
+                } catch (_) {}
+                document.title = (iframeTitle && iframeTitle.trim()) ? iframeTitle : (PAGE_TITLES[path] || "AllForOne SMP");
+            }
+
+            // ── Ripple ───────────────────────────────────────────────────
             function spawnRipple(e) {
                 const r = document.createElement("div");
                 r.className = "ripple";
@@ -409,7 +423,7 @@
                 r.addEventListener("animationend", () => r.remove());
             }
 
-            // ── create / show a frame ──
+            // ── Frame creation ───────────────────────────────────────────
             function getOrCreateFrame(path) {
                 if (frames[path]) return frames[path];
 
@@ -429,8 +443,7 @@
                 iframe.addEventListener("load", () => {
                     iframe.style.opacity = "1";
                     loader.classList.add("hidden");
-
-                    // tell the iframe its path (for active-link highlighting in embedded navbars)
+                    if (currentPath === path) updateTitle(path);
                     try {
                         iframe.contentWindow.postMessage({ type: "afo-pathname", pathname: path }, "*");
                     } catch (_) {}
@@ -439,21 +452,36 @@
                 slot.appendChild(iframe);
                 shell.appendChild(slot);
 
-                frames[path] = { slot, iframe, loaded: false };
+                frames[path] = { slot, iframe };
+                startRefreshTimer(path);
                 return frames[path];
             }
 
+            // ── Auto-refresh every 2 minutes ─────────────────────────────
+            function startRefreshTimer(path) {
+                if (refreshTimers[path]) clearInterval(refreshTimers[path]);
+                refreshTimers[path] = setInterval(() => {
+                    const frame = frames[path];
+                    if (!frame) return;
+                    const loader = frame.slot.querySelector(".frame-loader");
+                    frame.iframe.style.opacity = "0";
+                    if (loader) loader.classList.remove("hidden");
+                    // Force reload by resetting src
+                    frame.iframe.src = ROUTES[path];
+                }, 2 * 60 * 1000); // 2 minutes
+            }
+
             function setActiveButtons(path) {
-                document.querySelectorAll("[data-path]").forEach((btn) => {
+                document.querySelectorAll("[data-path]").forEach(btn => {
                     btn.classList.toggle("active", btn.getAttribute("data-path") === path);
                 });
             }
 
-            function navigate(path, e) {
+            window.navigate = function(path, e) {
                 if (path === currentPath) return;
                 spawnRipple(e);
+                bannerDismissed = false; // reset dismiss on navigation
 
-                // exit current
                 if (activeSlot) {
                     activeSlot.classList.remove("visible");
                     activeSlot.classList.add("exit");
@@ -462,34 +490,29 @@
                 }
 
                 const frame = getOrCreateFrame(path);
-                // slight delay so exit animation starts first
-                setTimeout(() => {
-                    frame.slot.classList.add("visible");
-                }, 60);
+                setTimeout(() => { frame.slot.classList.add("visible"); }, 60);
 
                 activeSlot = frame.slot;
                 currentPath = path;
+                window._currentPath = path;
                 setActiveButtons(path);
-            }
+                updateTitle(path);
+                applyBanner(path);
+            };
 
-            // ── drawer ──
-            function toggleDrawer() {
+            // ── Drawer ───────────────────────────────────────────────────
+            window.toggleDrawer = function() {
                 const open = drawer.classList.toggle("open");
                 hamburger.classList.toggle("open", open);
-            }
-            function closeDrawer() {
+            };
+            window.closeDrawer = function() {
                 drawer.classList.remove("open");
                 hamburger.classList.remove("open");
-            }
-
-            // close drawer on outside click
+            };
             document.addEventListener("click", (e) => {
-                if (!drawer.contains(e.target) && !hamburger.contains(e.target)) {
-                    closeDrawer();
-                }
+                if (!drawer.contains(e.target) && !hamburger.contains(e.target)) closeDrawer();
             });
 
-            // ── boot: load home ──
             navigate("/", null);
         </script>
     </body>
