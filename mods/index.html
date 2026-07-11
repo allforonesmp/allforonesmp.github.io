@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Server Mods — AllForOne SMP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Spectral:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary-blue: #4a90e2;
+        --light-blue: #e8f4f8;
+        --lighter-blue: #f5fbfd;
+        --dark-blue: #2c5f8d;
+        --accent-blue: #5ba3f5;
+        --text-dark: #1a2332;
+        --text-medium: #4a5568;
+        --text-light: #718096;
+        --border-color: #d4e8f0;
+        --white: #ffffff;
+        --error: #e74c3c;
+        --success: #27ae60;
+        --admin-gold: #f6c90e;
+        --admin-gold-dark: #c9a800;
+        --admin-gradient: linear-gradient(135deg, #f6c90e 0%, #ff8c00 100%);
+        --shadow-sm: 0 1px 3px rgba(74, 144, 226, 0.08);
+        --shadow-md: 0 4px 12px rgba(74, 144, 226, 0.12);
+        --shadow-lg: 0 10px 30px rgba(74, 144, 226, 0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: "DM Sans", sans-serif;
+        background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
+        color: var(--text-dark);
+        min-height: 100vh;
+        line-height: 1.6;
+    }
+
+    h1, h2, h3, h4, h5, h6 { font-family: "Spectral", serif; font-weight: 700; }
+
+    .hero-banner {
+        width: 100%;
+        display: block;
+        overflow: hidden;
+        position: relative;
+        max-height: 420px;
+    }
+    .hero-banner img {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: cover;
+        object-position: center;
+    }
+    .hero-overlay {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+        background: linear-gradient(to bottom, transparent, var(--lighter-blue));
+        pointer-events: none;
+    }
+
+    .page-title {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 2rem 0 2rem;
+    }
+    .page-title .hero-eyebrow {
+        font-family: "Bebas Neue", sans-serif;
+        letter-spacing: 0.18em;
+        font-size: 1rem;
+        color: var(--primary-blue);
+        margin-bottom: 0.5rem;
+    }
+    .page-title h1 { font-size: 2.4rem; margin-bottom: 0.6rem; color: var(--text-dark); }
+    .page-title p { color: var(--text-medium); font-size: 1.05rem; max-width: 700px; }
+
+    .page-content { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+    .section-title {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 2.4rem;
+        letter-spacing: 0.08em;
+        color: var(--primary-blue);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .section-title::after {
+        content: "";
+        flex: 1;
+        height: 2px;
+        background: linear-gradient(to right, var(--primary-blue), transparent);
+    }
+    .section-sub {
+        color: var(--text-medium);
+        margin: -0.75rem 0 1.75rem 0;
+        max-width: 760px;
+    }
+
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-bottom: 2rem;
+    }
+    .filter-chip {
+        border: 2px solid var(--border-color);
+        background: var(--white);
+        color: var(--text-medium);
+        font-family: "DM Sans", sans-serif;
+        font-weight: 600;
+        font-size: 0.88rem;
+        padding: 0.5rem 1.1rem;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.18s ease;
+    }
+    .filter-chip:hover { border-color: var(--primary-blue); color: var(--primary-blue); }
+    .filter-chip.active {
+        background: var(--primary-blue);
+        border-color: var(--primary-blue);
+        color: var(--white);
+    }
+
+    .mods-section { margin-bottom: 3rem; }
+    .mods-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .mod-card {
+        background: var(--white);
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .mod-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+
+    .mod-card-top {
+        padding: 1.5rem 1.5rem 1.1rem 1.5rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    .mod-icon {
+        flex-shrink: 0;
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        background: var(--light-blue);
+        overflow: hidden;
+    }
+    .mod-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .mod-icon img.icon-missing {
+        display: none;
+    }
+    .mod-icon.tag-core { background: var(--light-blue); }
+    .mod-icon.tag-player { background: #e6f7ec; }
+    .mod-icon.tag-staff { background: linear-gradient(135deg, #fff3cd, #ffe5a1); }
+    .mod-icon.tag-client { background: #eee6fb; }
+
+    .mod-heading { flex: 1; min-width: 0; }
+    .mod-heading h3 {
+        font-size: 1.15rem;
+        color: var(--text-dark);
+        margin-bottom: 0.3rem;
+        word-break: break-word;
+    }
+    .mod-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .mod-tag {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border-radius: 6px;
+        color: var(--dark-blue);
+        background: var(--light-blue);
+        border: 1px solid var(--border-color);
+    }
+    .mod-tag.staff-tag { color: #856404; background: #fff3cd; border-color: #ffd54f; }
+    .mod-tag.client-tag { color: #5b3fa8; background: #eee6fb; border-color: #d6c4f0; }
+
+    .mod-desc {
+        padding: 0 1.5rem;
+        color: var(--text-medium);
+        font-size: 0.94rem;
+        line-height: 1.65;
+        margin-bottom: 1.1rem;
+    }
+
+    .mod-filename {
+        margin: 0 1.5rem 1.1rem 1.5rem;
+        font-family: monospace;
+        font-size: 0.78rem;
+        color: var(--text-light);
+        background: var(--lighter-blue);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.4rem 0.6rem;
+        word-break: break-all;
+    }
+
+    .mod-usage-toggle {
+        margin-top: auto;
+        border-top: 1px solid var(--border-color);
+        background: var(--lighter-blue);
+        padding: 0.85rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--dark-blue);
+        transition: background 0.18s;
+    }
+    .mod-usage-toggle:hover { background: var(--light-blue); }
+    .mod-usage-arrow { transition: transform 0.3s; color: var(--text-medium); }
+    .mod-card.open .mod-usage-arrow { transform: rotate(180deg); }
+
+    .mod-usage-body {
+        display: none;
+        padding: 1.1rem 1.5rem 1.4rem 1.5rem;
+        background: var(--lighter-blue);
+        border-top: 1px solid var(--border-color);
+    }
+    .mod-card.open .mod-usage-body { display: block; }
+    .mod-usage-body ul { padding-left: 1.2rem; color: var(--text-medium); font-size: 0.92rem; }
+    .mod-usage-body li { margin-bottom: 0.5rem; }
+    .mod-usage-body code {
+        background: var(--white);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.1rem 0.4rem;
+        font-size: 0.85rem;
+        color: var(--dark-blue);
+    }
+
+    .legend-card {
+        background: var(--white);
+        border: 2px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.9rem; color: var(--text-medium); }
+    .legend-swatch {
+        width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+
+    footer {
+        background: var(--text-dark);
+        color: #a0aec0;
+        text-align: center;
+        padding: 2rem;
+        font-size: 0.9rem;
+        margin-top: 2rem;
+    }
+    footer a { color: var(--accent-blue); text-decoration: none; }
+
+    @media (max-width: 768px) {
+        .page-title h1 { font-size: 1.8rem; }
+        .mods-grid { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+<body>
+
+<div class="hero-banner">
+    <img src="https://allforonesmp.github.io/images/banner.png" alt="AllForOne SMP banner">
+    <div class="hero-overlay"></div>
+</div>
+
+<div class="page-title">
+    <div class="hero-eyebrow">SERVER GUIDE</div>
+    <h1>Mods on AllForOne SMP</h1>
+    <p>Everything currently installed on the server, what it does, and how to use it.</p>
+</div>
+
+<div class="page-content">
+
+    <div class="mods-section">
+        <div class="section-title">Filter</div>
+        <div class="filter-row">
+            <button class="filter-chip active" data-filter="all">All Mods</button>
+            <button class="filter-chip" data-filter="core">Backend</button>
+            <button class="filter-chip" data-filter="player">Player Commands</button>
+            <button class="filter-chip" data-filter="staff">Staff Only</button>
+            <button class="filter-chip" data-filter="client">Auto-Installed on Your Client</button>
+        </div>
+
+    </div>
+
+    <div class="mods-section">
+        <div class="section-title">Server Mods</div>
+        <p class="section-sub">Click any mod to see how to use it. All client-side mods below are pushed to your game automatically by AutoModpack the moment you connect — you don't need to install anything by hand.</p>
+
+        <div class="mods-grid" id="modsGrid">
+
+            <!-- AutoModpack -->
+            <div class="mod-card" data-tags="core">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-core"><img src="https://cdn.modrinth.com/data/k68glP2e/1cee94d3e17436d409839a79fa5d6bced5993023.png" alt="AutoModpack icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>AutoModpack</h3>
+                        <div class="mod-tags"><span class="mod-tag">Backend</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Automatically sends every required client-side mod (minimap, chat heads, etc.) to your game the moment you connect, so you never have to hunt down or install mods yourself.</p>
+                <div class="mod-filename">automodpack.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Just join with a vanilla Fabric install for Minecraft 26.2 — no mods needed beforehand.</li>
+                        <li>On first connect you'll get a prompt to download the modpack. Accept it and restart when asked.</li>
+                        <li>Whenever the server's mods update, you'll be prompted again automatically.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Fabric API -->
+            <div class="mod-card" data-tags="core">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-core"><img src="https://cdn.modrinth.com/data/P7dR8mSH/icon.png" alt="Fabric API icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>Fabric API</h3>
+                        <div class="mod-tags"><span class="mod-tag">Backend</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">The foundational library that almost every other mod on the server depends on. It doesn't add any features on its own.</p>
+                <div class="mod-filename">fabric-api-0.154.2+26.2.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Nothing to do — it just needs to be present for other mods to run.</li>
+                        <li>AutoModpack installs the matching client copy for you automatically.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Fabric Language Kotlin -->
+            <div class="mod-card" data-tags="core">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-core"><img src="https://cdn.modrinth.com/data/Ha28R6CL/72c3d74aeb665e45aea93a945a01474cbce3b7da_96.webp" alt="Fabric Language Kotlin icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>Fabric Language Kotlin</h3>
+                        <div class="mod-tags"><span class="mod-tag">Backend</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Adds Kotlin language support to Fabric so mods written in Kotlin (like EnderNexus) can run on the server.</p>
+                <div class="mod-filename">fabric-language-kotlin-1.13.12+kotlin.2.4.0.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Purely a background dependency — no player interaction at all.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Forge Config API Port -->
+            <div class="mod-card" data-tags="core">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-core"><img src="https://cdn.modrinth.com/data/ohNO6lps/cb3b942cc18a66a0f35f802e004713f134e46cc2_96.webp" alt="Forge Config API Port icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>Forge Config API Port</h3>
+                        <div class="mod-tags"><span class="mod-tag">Backend</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">A compatibility layer that lets mods built with Forge's config system (like Open Parties and Claims) run properly on Fabric.</p>
+                <div class="mod-filename">ForgeConfigAPIPort-v26.2.1-mc26.2.x-Fabric.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Nothing to do — required dependency, works silently in the background.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- EnderNexus -->
+            <div class="mod-card" data-tags="core">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-core"><img src="https://cdn.modrinth.com/data/QfXOzeIK/b35cbf33da842f170d0aa562033aaddc2a9ab653_96.webp" alt="EnderNexus icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>EnderNexus</h3>
+                        <div class="mod-tags"><span class="mod-tag">Backend</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">A shared utility library (part of the BorisLib ecosystem) that other mods on the server rely on for their internals.</p>
+                <div class="mod-filename">endernexus-2.1.1+26.2.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Background dependency only — nothing for players to do.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- FastServerPings -->
+            <div class="mod-card" data-tags="core">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-core"><img src="https://cdn.modrinth.com/data/5eVpQJSP/160b7a2f9e98b7790bdbb2c5181b28024e54694c_96.webp" alt="FastServerPings icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>FastServerPings</h3>
+                        <div class="mod-tags"><span class="mod-tag">Backend</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Speeds up how the server responds to the multiplayer server list ping, so the status and player count show up faster and more reliably.</p>
+                <div class="mod-filename">FastServerPings-1.1.1+26.2.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Nothing to do — you'll just notice the server entry in your multiplayer list loads quicker.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- EasyAuth -->
+            <div class="mod-card" data-tags="player">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-player"><img src="https://cdn.modrinth.com/data/aZj58GfX/6943fb21c56d19e5ce7e12ebdff6ec3e7f1e8e4b_96.webp" alt="EasyAuth icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>EasyAuth</h3>
+                        <div class="mod-tags"><span class="mod-tag">Player</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Handles login and registration since the server runs in offline mode. Protects your username from being impersonated by anyone else.</p>
+                <div class="mod-filename">easyauth-mc26.2-3.4.3-SNAPSHOT.49.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>First time joining: <code>/register &lt;password&gt; &lt;password&gt;</code></li>
+                        <li>Every time after that: <code>/login &lt;password&gt;</code></li>
+                        <li>You have a limited number of login tries and a short window to log in before being kicked — have your password ready.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- SkinRestorer -->
+            <div class="mod-card" data-tags="player">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-player"><img src="https://cdn.modrinth.com/data/TsLS8Py5/a23c71312561d40d0e182d88585b71be9b5e8d81.webp" alt="SkinRestorer icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>SkinRestorer</h3>
+                        <div class="mod-tags"><span class="mod-tag">Player</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Restores your real Minecraft skin even though the server runs offline mode, so everyone still looks like themselves.</p>
+                <div class="mod-filename">skinrestorer-2.9.0+26.1-fabric.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li><code>/skin set &lt;username&gt;</code> — pull in a specific skin.</li>
+                        <li><code>/skin clear</code> — reset back to default.</li>
+                        <li>Your own skin is applied automatically on join in most cases.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Open Parties and Claims -->
+            <div class="mod-card" data-tags="player">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-player"><img src="https://cdn.modrinth.com/data/gF3BGWvG/410c5443b268912b11709e7d03dd9ec3fda38ea5.png" alt="Open Parties and Claims icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>Open Parties and Claims</h3>
+                        <div class="mod-tags"><span class="mod-tag">Player</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Lets you protect your base by claiming land, and form parties with friends so they can build and interact inside your claim.</p>
+                <div class="mod-filename">open-parties-and-claims-fabric-26.2-0.27.7.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Open the claims map with the default keybind (configurable in Controls), or use <code>/claim</code>.</li>
+                        <li>Create a party: <code>/party create &lt;name&gt;</code></li>
+                        <li>Invite a friend: <code>/party invite &lt;player&gt;</code></li>
+                        <li>Give party members build/break access inside your claim from the claims menu.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Veinminer -->
+            <div class="mod-card" data-tags="player">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-player"><img src="https://media.forgecdn.net/avatars/thumbnails/1334/300/256/256/638867357474688921.png" alt="Veinminer icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>Veinminer</h3>
+                        <div class="mod-tags"><span class="mod-tag">Player</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Mine an entire connected ore vein in one go instead of block by block.</p>
+                <div class="mod-filename">Veinminer-fabric-3.1.3+mc26.2.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Hold the activation key (default is bound to sneak/toggle in your Controls menu, under "Veinminer") while breaking an ore block.</li>
+                        <li>The whole connected vein breaks at once, as long as you have enough durability/inventory space.</li>
+                        <li>Works only on configured "vein-mineable" blocks like ores, not general stone.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- MobFilter -->
+            <div class="mod-card" data-tags="core">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-core"><img src="https://cdn.modrinth.com/data/gRn1FzwR/icon.png" alt="MobFilter icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>MobFilter</h3>
+                        <div class="mod-tags"><span class="mod-tag">Backend</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Controls which mobs are allowed to spawn on the server, tuned by the admins for a smoother, less chaotic world.</p>
+                <div class="mod-filename">mobfilter-fabric-0.28.0+26.2.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Runs entirely server-side based on a config file — nothing for players to configure.</li>
+                        <li>You may simply notice certain mobs spawn less or not at all.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- EndLock -->
+            <div class="mod-card" data-tags="core">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-core"><img src="https://cdn.modrinth.com/data/seMaQ7F7/277d19d7cc6aca0737096d47f59b77dd5cffc20b_96.webp" alt="EndLock icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>EndLock</h3>
+                        <div class="mod-tags"><span class="mod-tag">Backend</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Controls when and how the End dimension can be accessed, keeping End-game progression paced for the whole server.</p>
+                <div class="mod-filename">endlock-1.0.3.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>No commands for players — if the End portal is locked, you'll see a message explaining why when you try to use it.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Vanish -->
+            <div class="mod-card" data-tags="staff">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-staff"><img src="https://cdn.modrinth.com/data/UL4bJFDY/9bba723ce1e83e7b388a3edc76d1d990d12e1531_96.webp" alt="Vanish icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>Vanish</h3>
+                        <div class="mod-tags"><span class="mod-tag staff-tag">Staff Only</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Lets staff go completely invisible to other players — useful for quietly checking in on the server without being seen.</p>
+                <div class="mod-filename">vanish-1.6.15+26.2.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li><code>/vanish</code> — toggle invisibility on/off.</li>
+                        <li>Requires staff/operator permission.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- ServerReplay -->
+            <div class="mod-card" data-tags="staff">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-staff"><img src="https://cdn.modrinth.com/data/qCvSZ8ra/21a7e7ce346bddc5c43890afc3649a60bf7d57fe_96.webp" alt="ServerReplay icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>ServerReplay</h3>
+                        <div class="mod-tags"><span class="mod-tag staff-tag">Staff Only</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Records replays directly on the server so events, builds, or moments can be captured and watched back later — no client-side recording mod needed.</p>
+                <div class="mod-filename">ServerReplay-3.5.0+26.2.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li><code>/replay start</code> — begin recording.</li>
+                        <li><code>/replay stop</code> — end and save the recording.</li>
+                        <li>Requires staff/operator permission; finished replays are saved on the server for later viewing.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Xaero's Minimap -->
+            <div class="mod-card" data-tags="client">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-client"><img src="https://cdn.modrinth.com/data/1bokaNcj/354080f65407e49f486fcf9c4580e82c45ae63b8_96.webp" alt="Xaero's Minimap icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>Xaero's Minimap</h3>
+                        <div class="mod-tags"><span class="mod-tag client-tag">Client</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Shows a live minimap in the corner of your screen with nearby terrain, players, and waypoints.</p>
+                <div class="mod-filename">xaerominimap-fabric-26.2-26.2.0.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Installed automatically by AutoModpack — appears in your corner once connected.</li>
+                        <li>Press the minimap settings key (default in Controls under "Xaero's Minimap") to resize or reposition it.</li>
+                        <li>Set a waypoint with <code>/way</code> or through the in-game waypoint menu.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Xaero's World Map -->
+            <div class="mod-card" data-tags="client">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-client"><img src="https://cdn.modrinth.com/data/NcUtCpym/354080f65407e49f486fcf9c4580e82c45ae63b8_96.webp" alt="Xaero's World Map icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>Xaero's World Map</h3>
+                        <div class="mod-tags"><span class="mod-tag client-tag">Client</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">A full-screen explorable map built from everywhere you and others have walked, paired with Xaero's Minimap.</p>
+                <div class="mod-filename">xaeroworldmap-fabric-26.2-1.42.0.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Installed automatically by AutoModpack.</li>
+                        <li>Default keybind is <code>M</code> to open the full map.</li>
+                        <li>Zoom, pan, and place waypoints directly from the map screen.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Chat Heads -->
+            <div class="mod-card" data-tags="client">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-client"><img src="https://cdn.modrinth.com/data/Wb5oqrBJ/icon.png" alt="Chat Heads icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>Chat Heads</h3>
+                        <div class="mod-tags"><span class="mod-tag client-tag">Client</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Shows each player's head next to their name in chat, making it easier to tell who's talking at a glance.</p>
+                <div class="mod-filename">chat_heads-1.2.4-fabric-26.1.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Installed automatically by AutoModpack — works as soon as you join, no setup required.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Force Tablist Heads -->
+            <div class="mod-card" data-tags="client">
+                <div class="mod-card-top">
+                    <div class="mod-icon tag-client"><img src="https://cdn.modrinth.com/data/nf3xQdhC/ab251eb2b219dd61f360f1459bf3176f1019ddb2.png" alt="Force Tablist Heads icon" onerror="this.classList.add('icon-missing')"></div>
+                    <div class="mod-heading">
+                        <h3>Force Tablist Heads</h3>
+                        <div class="mod-tags"><span class="mod-tag client-tag">Client</span></div>
+                    </div>
+                </div>
+                <p class="mod-desc">Makes sure player head icons always show up in the player list (Tab menu), even for players without a proper Mojang account.</p>
+                <div class="mod-filename">forcetablistheads-1.0.1-SNAPSHOT.jar</div>
+                <div class="mod-usage-toggle" onclick="toggleCard(this)">
+                    <span>How to use</span><span class="mod-usage-arrow">▾</span>
+                </div>
+                <div class="mod-usage-body">
+                    <ul>
+                        <li>Installed automatically by AutoModpack — just hold <code>Tab</code> to see the player list with heads.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    AllForOne SMP &middot; © 2026
+</footer>
+
+<script>
+    function toggleCard(el) {
+        el.parentElement.classList.toggle('open');
+    }
+
+    const chips = document.querySelectorAll('.filter-chip');
+    const cards = document.querySelectorAll('.mod-card');
+    chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            chips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            const filter = chip.dataset.filter;
+            cards.forEach(card => {
+                if (filter === 'all' || card.dataset.tags === filter) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
