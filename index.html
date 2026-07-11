@@ -409,6 +409,7 @@
                 <span class="logo" onclick="navigate('/', event)">AllForOne SMP</span>
                 <ul class="nav-links" id="navLinks">
                     <li><button data-path="/" onclick="navigate('/', event)">Home</button></li>
+                    <li><button data-path="/mods" onclick="navigate('/mods', event)">Mods</button></li>
                     <li><button data-path="/rules" onclick="navigate('/rules', event)">Rules</button></li>
                     <li><button data-path="/profile" onclick="navigate('/profile', event)">Profile</button></li>
                     <li><button data-path="/post" onclick="navigate('/post', event)">Post</button></li>
@@ -425,7 +426,7 @@
             <div class="banner-inner" id="bannerInner">
                 <span class="banner-text" id="bannerText"></span>
                 <a class="banner-btn" id="bannerBtn" href="#" target="_blank" style="display: none"></a>
-                <br>
+                <br />
                 <button class="banner-close" id="bannerClose" onclick="dismissBanner()" aria-label="Dismiss">✕</button>
             </div>
         </div>
@@ -482,6 +483,7 @@
             const BASE = "https://allforonesmp.github.io/";
             const ROUTES = {
                 "/": BASE + "/main.html",
+                "/mods": BASE + "/mods",
                 "/rules": BASE + "/rules",
                 "/profile": BASE + "/profile",
                 "/post": BASE + "/post",
@@ -489,6 +491,7 @@
             };
             const PAGE_TITLES = {
                 "/": "AllForOne SMP",
+                "/rules": "Mods – AllForOne SMP",
                 "/rules": "Rules – AllForOne SMP",
                 "/profile": "Profile – AllForOne SMP",
                 "/post": "Post – AllForOne SMP",
