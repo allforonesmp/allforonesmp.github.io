@@ -120,6 +120,135 @@
                 transform: translateY(-1px);
             }
 
+            /* ── NAVBAR IFRAME ── */
+            #afo-navbar-frame {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 64px;
+                border: none;
+                z-index: 9000;
+                display: block;
+            }
+
+            /* ── MOBILE OVERLAY ── */
+            #afo-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(26, 35, 50, 0.45);
+                backdrop-filter: blur(3px);
+                -webkit-backdrop-filter: blur(3px);
+                z-index: 9100;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            #afo-overlay.afo-visible {
+                display: block;
+                opacity: 1;
+            }
+
+            /* ── MOBILE DRAWER ── */
+            #afo-drawer {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: min(300px, 85vw);
+                height: 100vh;
+                background: var(--white);
+                box-shadow: -4px 0 40px rgba(74, 144, 226, 0.18);
+                z-index: 9200;
+                transform: translateX(100%);
+                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                flex-direction: column;
+            }
+            #afo-drawer.afo-open {
+                transform: translateX(0);
+            }
+
+            #afo-drawer-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 1.25rem 1.5rem;
+                border-bottom: 1.5px solid var(--border-color);
+                background: var(--lighter-blue);
+                flex-shrink: 0;
+            }
+            #afo-drawer-header a {
+                font-family: "Spectral", serif;
+                font-size: 1.3rem;
+                font-weight: 700;
+                color: var(--primary-blue);
+                text-decoration: none;
+            }
+            #afo-drawer-close {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: var(--text-light);
+                font-size: 1.4rem;
+                line-height: 1;
+                padding: 0.3rem 0.6rem;
+                border-radius: 6px;
+                transition:
+                    color 0.18s,
+                    background 0.18s;
+            }
+            #afo-drawer-close:hover {
+                color: var(--text-dark);
+                background: var(--light-blue);
+            }
+
+            #afo-drawer-links {
+                list-style: none;
+                padding: 1rem 0.75rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+                flex: 1;
+            }
+            #afo-drawer-links li a {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                color: var(--text-medium);
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 1.05rem;
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+                transition:
+                    color 0.18s,
+                    background 0.18s;
+            }
+            #afo-drawer-links li a:hover {
+                color: var(--primary-blue);
+                background: var(--lighter-blue);
+            }
+            #afo-drawer-links li a.afo-active {
+                color: var(--primary-blue);
+                background: var(--light-blue);
+                font-weight: 600;
+            }
+            #afo-drawer-links .afo-icon {
+                font-size: 1.1rem;
+                width: 24px;
+                text-align: center;
+                flex-shrink: 0;
+            }
+
+            #afo-drawer-footer {
+                padding: 1.25rem 1.5rem;
+                border-top: 1.5px solid var(--border-color);
+                color: var(--text-light);
+                font-size: 0.82rem;
+                text-align: center;
+                flex-shrink: 0;
+            }
+
             /* ── HERO BANNER ── */
             .hero-banner {
                 width: 100%;
@@ -402,6 +531,7 @@
                 color: #856404;
                 margin-top: 0.25rem;
             }
+            /* ── NEW: back-at label under countdown ── */
             .offline-back-at {
                 display: none;
                 margin-top: 0.5rem;
@@ -434,103 +564,14 @@
                 }
             }
 
-            /* ── SERVER IP DISPLAY ── */
-            .server-ip-box {
-                background: var(--lighter-blue);
-                border: 2px dashed var(--primary-blue);
+            .join-code-image {
+                width: 100%;
                 border-radius: 12px;
-                padding: 1.25rem;
-                text-align: center;
-                position: relative;
+                border: 2px solid var(--border-color);
+                box-shadow: var(--shadow-md);
+                object-fit: contain;
+                background: var(--lighter-blue);
             }
-            .server-ip-box .label {
-                font-size: 0.8rem;
-                font-weight: 700;
-                letter-spacing: 0.12em;
-                text-transform: uppercase;
-                color: var(--text-light);
-                margin-bottom: 0.5rem;
-            }
-            .server-ip-box .ip-row {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.75rem;
-                flex-wrap: wrap;
-            }
-            .server-ip-box .ip-value {
-                font-family: "Bebas Neue", sans-serif;
-                font-size: 1.7rem;
-                letter-spacing: 0.06em;
-                color: var(--primary-blue);
-                word-break: break-all;
-            }
-            .copy-ip-btn {
-                background: var(--primary-blue);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 0.5rem 1rem;
-                font-size: 0.85rem;
-                font-weight: 600;
-                font-family: "DM Sans", sans-serif;
-                cursor: pointer;
-                transition: background 0.18s, transform 0.15s;
-                white-space: nowrap;
-            }
-            .copy-ip-btn:hover {
-                background: var(--dark-blue);
-                transform: translateY(-1px);
-            }
-            .copy-ip-btn.copied {
-                background: var(--success);
-            }
-            .ip-placeholder {
-                color: var(--text-light);
-                font-style: italic;
-                font-size: 0.9rem;
-                text-align: center;
-                padding: 1rem;
-            }
-
-            /* ── LIVE SERVER STATUS PILL ── */
-            .status-pill-row {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.5rem;
-                margin-top: 0.9rem;
-                font-size: 0.85rem;
-                color: var(--text-medium);
-            }
-            .status-dot {
-                width: 9px;
-                height: 9px;
-                border-radius: 50%;
-                background: var(--text-light);
-                flex-shrink: 0;
-                transition: background 0.3s;
-            }
-            .status-dot.online {
-                background: var(--success);
-                box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.18);
-            }
-            .status-dot.offline {
-                background: var(--error);
-                box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.18);
-            }
-            .status-dot.checking {
-                background: var(--admin-gold);
-                animation: pulseDot 1.1s ease-in-out infinite;
-            }
-            @keyframes pulseDot {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.35; }
-            }
-            .status-pill-text strong {
-                color: var(--text-dark);
-            }
-
             .connection-id-box {
                 background: var(--lighter-blue);
                 border: 2px dashed var(--primary-blue);
@@ -551,6 +592,13 @@
                 font-size: 2rem;
                 letter-spacing: 0.12em;
                 color: var(--primary-blue);
+            }
+            .code-placeholder {
+                color: var(--text-light);
+                font-style: italic;
+                font-size: 0.9rem;
+                text-align: center;
+                padding: 1rem;
             }
 
             .join-right {
@@ -641,6 +689,46 @@
             .downtime-alert p {
                 color: #856404;
                 font-size: 0.95rem;
+            }
+
+            .status-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.6rem;
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 999px;
+                padding: 0.6rem 1.1rem;
+                box-shadow: var(--shadow-sm);
+                margin-bottom: 1rem;
+                font-size: 0.95rem;
+            }
+            .status-dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #aaa;
+                flex-shrink: 0;
+                transition: background 0.3s ease;
+            }
+            .status-dot.online {
+                background: var(--success);
+                box-shadow: 0 0 8px rgba(39, 174, 96, 0.5);
+            }
+            .status-dot.offline {
+                background: var(--error);
+            }
+            .status-dot.pending {
+                background: #f6c90e;
+                box-shadow: 0 0 8px rgba(246, 201, 14, 0.5);
+            }
+            .status-label {
+                font-weight: 700;
+                color: var(--text-dark);
+            }
+            .status-players {
+                color: var(--text-medium);
+                font-size: 0.88rem;
             }
 
             .voice-card {
@@ -772,6 +860,12 @@
             <section class="join-section">
                 <div class="section-title">🎮 Join the Server</div>
 
+                <div class="status-pill" id="statusPill">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span class="status-label" id="statusLabel">Checking…</span>
+                    <span class="status-players" id="playerCount"></span>
+                </div>
+
                 <div class="downtime-alert" id="downtimeAlert">
                     <h4>⚠️ Upcoming Server Downtime</h4>
                     <p id="downtimeAlertText">Scheduled maintenance approaching.</p>
@@ -784,17 +878,18 @@
                             📜 Read the Server Rules
                         </a>
 
-                        <!-- Shown when server is currently offline (per admin-scheduled downtime) -->
+                        <!-- Shown when server is currently offline -->
                         <div class="server-offline-block" id="serverOfflineBlock">
                             <div class="offline-icon">🔧</div>
                             <h4>Server is Currently Offline</h4>
                             <p id="serverOfflineText">The server is undergoing scheduled maintenance.</p>
                             <div class="offline-countdown" id="offlineCountdown" style="display: none">Back in —</div>
+                            <!-- NEW: human-readable "back at HH:MM" label under the countdown -->
                             <div class="offline-back-at" id="offlineBackAt"></div>
                         </div>
 
                         <div class="agree-gate" id="agreeGate">
-                            <h4>Access the Server IP</h4>
+                            <h4>Access the Join Code</h4>
                             <div class="agree-checkbox-row">
                                 <input type="checkbox" id="agreeCheck" onchange="toggleCodeReveal()" />
                                 <label for="agreeCheck">
@@ -803,16 +898,9 @@
                                 </label>
                             </div>
                             <div class="code-reveal" id="codeReveal">
-                                <div class="server-ip-box" id="serverIpBox">
+                                <div class="connection-id-box">
                                     <div class="label">Server IP</div>
-                                    <div class="ip-row">
-                                        <span class="ip-value" id="serverIpValue">Loading…</span>
-                                        <button class="copy-ip-btn" id="copyIpBtn" onclick="copyServerIp()" style="display:none">Copy</button>
-                                    </div>
-                                    <div class="status-pill-row">
-                                        <span class="status-dot checking" id="statusDot"></span>
-                                        <span class="status-pill-text" id="statusPillText">Checking status…</span>
-                                    </div>
+                                    <div class="code-value" id="serverIpValue">Loading…</div>
                                 </div>
                             </div>
                         </div>
@@ -829,16 +917,6 @@
                             </div>
                         </div>
 
-                        <div class="voice-card">
-                            <h4>🎙️ Proximity Voice Chat</h4>
-                            <p id="voiceChatDescription">
-                                Connect with other players using spatial proximity voice chat – hear players closer to
-                                you louder, and those far away fade into the distance.
-                            </p>
-                            <div id="voiceChatLinkArea">
-                                <div class="spinner" style="width: 24px; height: 24px; margin: 0"></div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -879,39 +957,47 @@
             const db = getFirestore(app);
             const rtdb = getDatabase(app);
 
-            // The server IP/address that players connect to. Update here if it ever changes,
-            // or wire it up to serverInfo.serverIp in Firestore via the admin panel.
-            const DEFAULT_SERVER_IP = "allforonesmp.duckdns.org";
-
             // ─── NEWS CAROUSEL ──────────────────────────────────────────
             const NEWS_QUEUE_KEY = "afo_news_queue";
             let carouselIndex = 0;
             let newsItems = [];
 
+            /**
+             * Pick the starting slide index for this page load.
+             *
+             * Strategy: keep a shuffled queue of news IDs in localStorage.
+             * Each load pops the first ID from the queue and uses that slide.
+             * When the queue is empty (all news shown), refill with a fresh shuffle.
+             */
             function pickStartIndex(items) {
                 if (items.length === 0) return 0;
                 if (items.length === 1) return 0;
 
-                const ids = items.map(i => i.id);
+                const ids = items.map((i) => i.id);
 
+                // Load existing queue, filtering out IDs that no longer exist
                 let queue = [];
                 try {
                     const stored = localStorage.getItem(NEWS_QUEUE_KEY);
-                    if (stored) queue = JSON.parse(stored).filter(id => ids.includes(id));
+                    if (stored) queue = JSON.parse(stored).filter((id) => ids.includes(id));
                 } catch (_) {}
 
+                // If queue is empty, build a fresh shuffled queue
+                // Exclude the very last shown ID so we don't repeat immediately after a refill
                 if (queue.length === 0) {
                     let lastShown = null;
                     try {
                         lastShown = localStorage.getItem(NEWS_QUEUE_KEY + "_last");
                     } catch (_) {}
 
+                    // Fisher-Yates shuffle
                     const shuffled = [...ids];
                     for (let i = shuffled.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                     }
 
+                    // If the first item after shuffle is the same as last shown, rotate it to the end
                     if (shuffled.length > 1 && shuffled[0] === lastShown) {
                         shuffled.push(shuffled.shift());
                     }
@@ -919,9 +1005,11 @@
                     queue = shuffled;
                 }
 
+                // Pop the first ID from the queue
                 const chosenId = queue.shift();
                 const chosenIndex = ids.indexOf(chosenId);
 
+                // Persist the updated queue and the last-shown ID
                 try {
                     localStorage.setItem(NEWS_QUEUE_KEY, JSON.stringify(queue));
                     localStorage.setItem(NEWS_QUEUE_KEY + "_last", chosenId);
@@ -980,6 +1068,7 @@
                     dots.appendChild(dot);
                 });
 
+                // Jump to the randomly chosen starting slide for this page load
                 const startIdx = pickStartIndex(newsItems);
                 goToSlide(startIdx);
             }
@@ -994,8 +1083,9 @@
 
             window.carouselPrev = () => goToSlide(carouselIndex - 1);
             window.carouselNext = () => goToSlide(carouselIndex + 1);
+            // ── Auto-scroll removed ──
 
-            // ─── SERVER STATE (downtime schedule / rules gate) ──────────
+            // ─── SERVER STATE ───────────────────────────────────────────
             let serverData = {};
             let codeLoaded = false;
             let serverOnline = true;
@@ -1031,6 +1121,7 @@
                     return;
                 }
 
+                // Show static "back at HH:MM" label
                 const backAtTime = endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
                 backAtEl.textContent = `Expected back at ${backAtTime}`;
                 backAtEl.classList.add("visible");
@@ -1063,7 +1154,7 @@
 
                     const dt = activeDowntime.downtime;
                     document.getElementById("serverOfflineText").textContent =
-                        `${dt.label || "Maintenance"}. The server IP is hidden until it's back online.`;
+                        `${dt.label || "Maintenance"}. The join code is hidden until the server is back online.`;
 
                     startCountdown(activeDowntime.end);
                 } else {
@@ -1075,37 +1166,36 @@
                 }
             }
 
+            // ─── HELPER: format a Date as a readable time string ────────
             function formatTime(date) {
                 return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
             }
 
-            // ─── SERVER INFO (Firestore) ────────────────────────────────
+            // ─── JOIN CODE & SERVER INFO ────────────────────────────────
             async function loadServerInfo() {
                 onSnapshot(doc(db, "serverInfo", "main"), (snap) => {
                     if (!snap.exists()) return;
                     serverData = snap.data();
 
-                    const vcArea = document.getElementById("voiceChatLinkArea");
-                    if (serverData.voiceChatDescription) {
-                        document.getElementById("voiceChatDescription").textContent = serverData.voiceChatDescription;
-                    }
-                    if (serverData.voiceChatLink) {
-                        vcArea.innerHTML = `<a href="${serverData.voiceChatLink}" target="_blank" class="voice-link">🎙️ Join Proximity Voice Chat</a>`;
-                    } else {
-                        vcArea.innerHTML = '<span class="voice-link-placeholder">Voice chat link not set yet.</span>';
+                    // Server IP
+                    const ipEl = document.getElementById("serverIpValue");
+                    if (ipEl) {
+                        ipEl.textContent = serverData.serverIp || "allforonesmp.duckdns.org";
                     }
 
+                    // Check and apply downtime / online state
                     const active = checkServerOnlineStatus(serverData.downtimes || []);
                     applyServerOnlineState(active);
                     renderDowntimes(serverData.downtimes || []);
 
+                    // Notification banner
                     renderNotifBanner(serverData.notifBanner || null);
 
                     codeLoaded = true;
-                    if (document.getElementById("agreeCheck").checked && serverOnline) renderCode();
                 });
             }
 
+            // ─── NOTIFICATION BANNER ────────────────────────────────────
             function renderNotifBanner(banner) {
                 const el = document.getElementById("notifBanner");
                 const inner = document.getElementById("notifBannerInner");
@@ -1131,6 +1221,7 @@
                 }
             }
 
+            // ─── DOWNTIMES ──────────────────────────────────────────────
             function renderDowntimes(downtimes) {
                 const list = document.getElementById("downtimeList");
                 const alert = document.getElementById("downtimeAlert");
@@ -1151,6 +1242,7 @@
                     const item = document.createElement("div");
                     item.className = "downtime-item";
 
+                    // Build "until HH:MM" text if duration is known
                     let untilText = "";
                     if (dt.timestamp && dt.durationMinutes) {
                         const endTime = new Date(new Date(dt.timestamp).getTime() + dt.durationMinutes * 60000);
@@ -1162,6 +1254,7 @@
                         <span style="color:var(--text-medium);">${dt.time || ""}${untilText}</span>`;
                     list.appendChild(item);
 
+                    // Only flag as upcoming alert if within 10 hours
                     if (dt.timestamp) {
                         const dtDate = new Date(dt.timestamp);
                         const diffHrs = (dtDate - now) / 36e5;
@@ -1190,93 +1283,84 @@
                 const reveal = document.getElementById("codeReveal");
                 if (checked && serverOnline) {
                     reveal.classList.add("visible");
-                    if (codeLoaded) renderCode();
                 } else {
                     reveal.classList.remove("visible");
                 }
-            };
-
-            function renderCode() {
-                const ipValueEl = document.getElementById("serverIpValue");
-                const copyBtn = document.getElementById("copyIpBtn");
-                const ip = serverData.serverIp || DEFAULT_SERVER_IP;
-
-                if (ip) {
-                    ipValueEl.textContent = ip;
-                    copyBtn.style.display = "inline-block";
-                } else {
-                    ipValueEl.textContent = "IP not set yet.";
-                    copyBtn.style.display = "none";
-                }
-
-                // Kick off (or resume) live status polling once the IP box is visible
-                startStatusPolling(ip);
-            }
-
-            window.copyServerIp = function () {
-                const ip = serverData.serverIp || DEFAULT_SERVER_IP;
-                const btn = document.getElementById("copyIpBtn");
-                navigator.clipboard.writeText(ip).then(() => {
-                    const original = btn.textContent;
-                    btn.textContent = "Copied!";
-                    btn.classList.add("copied");
-                    setTimeout(() => {
-                        btn.textContent = original;
-                        btn.classList.remove("copied");
-                    }, 1800);
-                }).catch(() => {});
             };
 
             window.toggleDowntime = function () {
                 document.getElementById("downtimeContainer").classList.toggle("open");
             };
 
-            // ─── LIVE SERVER STATUS (ping via mcsrvstat.us, every 2 min) ─
-            const STATUS_POLL_MS = 10 * 1000; // 10 seconds
-            let statusPollInterval = null;
-            let statusPollingStarted = false;
+            // ─── LIVE SERVER STATUS PILL ─────────────────────────────────
+            const STALE_THRESHOLD_MS = 50 * 1000; // 50 seconds
+            let liveStatusData = { state: "offline", lastHeartbeat: null, playersOnline: 0, playerList: [] };
+            let statusRecheckInterval = null;
 
-            async function fetchServerStatus(ip) {
-                const dot = document.getElementById("statusDot");
-                const text = document.getElementById("statusPillText");
-
-                dot.className = "status-dot checking";
-                text.textContent = "Checking status…";
-
-                try {
-                    const res = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(ip)}`, {
-                        headers: { "Accept": "application/json" }
-                    });
-                    if (!res.ok) throw new Error("Status check failed");
-                    const data = await res.json();
-
-                    if (data.online) {
-                        dot.className = "status-dot online";
-                        const online = data.players && typeof data.players.online === "number" ? data.players.online : null;
-                        const max = data.players && typeof data.players.max === "number" ? data.players.max : null;
-                        if (online !== null && max !== null) {
-                            text.innerHTML = `<strong>Online</strong> · ${online}/${max} players`;
-                        } else {
-                            text.innerHTML = `<strong>Online</strong>`;
-                        }
+            function loadLiveStatus() {
+                onSnapshot(doc(db, "serverStatus", "live"), (snap) => {
+                    if (snap.exists()) {
+                        liveStatusData = snap.data();
                     } else {
-                        dot.className = "status-dot offline";
-                        text.innerHTML = `<strong>Offline</strong>`;
+                        liveStatusData = { state: "offline", lastHeartbeat: null, playersOnline: 0, playerList: [] };
                     }
-                } catch (e) {
-                    dot.className = "status-dot offline";
-                    text.textContent = "Status unavailable";
+                    renderStatusPill();
+                });
+
+                // Re-check staleness every 5s even if Firestore hasn't pushed a new update,
+                // so a frozen Pi gets flagged as offline once the heartbeat goes stale.
+                if (statusRecheckInterval) clearInterval(statusRecheckInterval);
+                statusRecheckInterval = setInterval(renderStatusPill, 5000);
+            }
+
+            function renderStatusPill() {
+                const dot = document.getElementById("statusDot");
+                const label = document.getElementById("statusLabel");
+                const playersEl = document.getElementById("playerCount");
+                if (!dot || !label || !playersEl) return;
+
+                const rawState = liveStatusData.state || "offline";
+
+                let ageMs = Infinity;
+                const hb = liveStatusData.lastHeartbeat;
+                if (hb) {
+                    const hbMillis = typeof hb.toMillis === "function" ? hb.toMillis() : new Date(hb).getTime();
+                    ageMs = Date.now() - hbMillis;
+                }
+                const isStale = ageMs > STALE_THRESHOLD_MS;
+
+                // "stopping" and "restarting" are intentional states set directly by the
+                // control script, so they should show even if the heartbeat has gone stale
+                // (the Pi may not be heartbeating at all mid-restart).
+                let displayState = rawState;
+                if (isStale && rawState !== "stopping" && rawState !== "restarting") {
+                    displayState = "offline";
+                }
+
+                const stateMap = {
+                    online: { dotClass: "online", text: "Online" },
+                    restarting: { dotClass: "pending", text: "Restarting…" },
+                    stopping: { dotClass: "pending", text: "Stopping…" },
+                    offline: { dotClass: "offline", text: "Offline" }
+                };
+                const s = stateMap[displayState] || stateMap.offline;
+
+                dot.className = "status-dot " + s.dotClass;
+                label.textContent = s.text;
+
+                if (displayState === "online") {
+                    const count = liveStatusData.playersOnline || 0;
+                    const names = liveStatusData.playerList || [];
+                    playersEl.textContent =
+                        count > 0 ? `${count} online: ${names.join(", ")}` : "No players online";
+                } else {
+                    playersEl.textContent = "";
                 }
             }
 
-            function startStatusPolling(ip) {
-                if (!ip) return;
-                if (statusPollInterval) clearInterval(statusPollInterval);
-                fetchServerStatus(ip);
-                statusPollInterval = setInterval(() => fetchServerStatus(ip), STATUS_POLL_MS);
-                statusPollingStarted = true;
-            }
+            loadLiveStatus();
 
+            // ─── INIT ─────────────────────────────────────────────────
             loadNews();
             loadServerInfo();
         </script>
