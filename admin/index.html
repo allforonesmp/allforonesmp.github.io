@@ -304,31 +304,19 @@
                     </div>
                 </div>
 
-                <!-- JOIN CODE SECTION -->
+                <!-- SERVER IP & INFO SECTION -->
                 <div>
-                    <div class="section-title">🎮 Join Code & Server Info</div>
+                    <div class="section-title">🎮 Server IP & Info</div>
                     <div class="card gold-border">
                         <div class="two-col">
                             <div>
                                 <div class="form-group">
-                                    <label>📷 Join Code Image (Visual Code)</label>
-                                    <div class="upload-zone" onclick="document.getElementById('joinCodeInput').click()">
-                                        <p>Click to upload join code image</p>
-                                        <small>PNG/JPG recommended</small>
-                                    </div>
-                                    <input type="file" id="joinCodeInput" accept="image/*" style="display:none" onchange="previewJoinCode(event)" />
-                                    <img id="joinCodePreview" class="preview-img" style="display:none" alt="Join Code Preview" />
-                                </div>
-                                <div class="form-group">
-                                    <label>🔑 Connection ID</label>
-                                    <input type="text" id="connectionId" placeholder="e.g. abc123xyz" />
+                                    <label>🌐 Server IP / Address</label>
+                                    <input type="text" id="serverIp" placeholder="e.g. allforonesmp.duckdns.org" />
+                                    <p class="hint">This is what's shown to players after they agree to the rules. Also used to check live online/player-count status (via mcsrvstat.us) — include the port here too if it isn't the default 25565, e.g. myserver.com:25566.</p>
                                 </div>
                             </div>
                             <div>
-                                <div class="form-group">
-                                    <label>▶ Play Now! Button Link</label>
-                                    <input type="url" id="playNowLink" placeholder="https://..." />
-                                </div>
                                 <div class="form-group">
                                     <label>🎙️ Proximity Voice Chat Link</label>
                                     <input type="url" id="voiceChatLink" placeholder="https://..." />
@@ -553,32 +541,15 @@
                 } catch (_) {}
             }
 
-            // ─── JOIN CODE / SERVER INFO ──────────────────────────────
-            let joinCodeFile = null;
-            window.previewJoinCode = function (e) {
-                joinCodeFile = e.target.files[0];
-                if (!joinCodeFile) return;
-                const r = new FileReader();
-                r.onload = (ev) => {
-                    const img = document.getElementById("joinCodePreview");
-                    img.src = ev.target.result; img.style.display = "block";
-                };
-                r.readAsDataURL(joinCodeFile);
-            };
-
+            // ─── SERVER IP / SERVER INFO ──────────────────────────────
             async function loadCurrentServerInfo() {
                 try {
                     const snap = await getDoc(doc(db, "serverInfo", "main"));
                     if (!snap.exists()) return;
                     const d = snap.data();
-                    document.getElementById("connectionId").value = d.connectionId || "";
-                    document.getElementById("playNowLink").value = d.playNowLink || "";
+                    document.getElementById("serverIp").value = d.serverIp || "";
                     document.getElementById("voiceChatLink").value = d.voiceChatLink || "";
                     document.getElementById("voiceChatDescription").value = d.voiceChatDescription || "";
-                    if (d.joinCodeImageUrl) {
-                        const img = document.getElementById("joinCodePreview");
-                        img.src = d.joinCodeImageUrl; img.style.display = "block";
-                    }
                     await loadBannerConfig();
                 } catch (_) {}
             }
@@ -587,18 +558,11 @@
                 const btn = document.querySelector('[onclick="saveServerInfo()"]');
                 btn.textContent = "⏳ Saving…"; btn.disabled = true;
                 try {
-                    let joinCodeImageUrl = null;
-                    if (joinCodeFile) {
-                        showToast("Uploading image…", "success");
-                        joinCodeImageUrl = await uploadToCloudinary(joinCodeFile);
-                    }
                     const existing = (await getDoc(doc(db, "serverInfo", "main"))).data() || {};
                     await setDoc(doc(db, "serverInfo", "main"), {
-                        connectionId: document.getElementById("connectionId").value.trim(),
-                        playNowLink: document.getElementById("playNowLink").value.trim(),
+                        serverIp: document.getElementById("serverIp").value.trim(),
                         voiceChatLink: document.getElementById("voiceChatLink").value.trim(),
                         voiceChatDescription: document.getElementById("voiceChatDescription").value.trim(),
-                        joinCodeImageUrl: joinCodeImageUrl || existing.joinCodeImageUrl || null,
                         downtimes: existing.downtimes || [],
                         updatedAt: serverTimestamp()
                     }, { merge: true });
