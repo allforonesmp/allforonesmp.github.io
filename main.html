@@ -1232,7 +1232,7 @@
             };
 
             // ─── LIVE SERVER STATUS (ping via mcsrvstat.us, every 2 min) ─
-            const STATUS_POLL_MS = 2 * 60 * 1000; // 2 minutes
+            const STATUS_POLL_MS = 10 * 1000; // 10 seconds
             let statusPollInterval = null;
             let statusPollingStarted = false;
 
