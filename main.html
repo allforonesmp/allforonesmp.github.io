@@ -553,6 +553,67 @@
                 display: flex;
             }
 
+            .fingerprint-box {
+                background: var(--lighter-blue);
+                border: 2px dashed var(--primary-blue);
+                border-radius: 12px;
+                padding: 1rem 1.25rem;
+            }
+            .fingerprint-box h3 {
+                font-size: 0.8rem;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--text-light);
+                margin-bottom: 0.6rem;
+                font-family: "DM Sans", sans-serif;
+            }
+            .fingerprint-row {
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+            }
+            .fingerprint-value {
+                flex: 1;
+                min-width: 0;
+                font-family: monospace;
+                font-size: 0.85rem;
+                color: var(--text-dark);
+                background: var(--white);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                padding: 0.5rem 0.75rem;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .fingerprint-copy-btn {
+                flex-shrink: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.4rem;
+                background: var(--primary-blue);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 0.55rem 0.9rem;
+                font-size: 0.85rem;
+                font-weight: 600;
+                font-family: "DM Sans", sans-serif;
+                cursor: pointer;
+                transition:
+                    background 0.18s,
+                    transform 0.15s;
+                white-space: nowrap;
+            }
+            .fingerprint-copy-btn:hover {
+                background: var(--dark-blue);
+                transform: translateY(-1px);
+            }
+            .fingerprint-copy-btn.copied {
+                background: var(--success);
+            }
+
             @keyframes fadeUp {
                 from {
                     opacity: 0;
@@ -902,6 +963,20 @@
                                     <div class="label">Server IP</div>
                                     <div class="code-value" id="serverIpValue">Loading…</div>
                                 </div>
+                                <div class="fingerprint-box">
+                                    <h3>AutoModpack Server Fingerprint</h3>
+                                    <div class="fingerprint-row">
+                                        <div class="fingerprint-value" id="fingerprintValue">
+                                            aa8356134cab5699365a9d917d8ed6f9359e923e6d6027e6a092b938562e5572
+                                        </div>
+                                        <button
+                                            class="fingerprint-copy-btn"
+                                            id="fingerprintCopyBtn"
+                                            onclick="copyFingerprint()">
+                                            Copy
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -916,7 +991,6 @@
                                 <div id="downtimeList"><div class="downtime-empty">No scheduled downtimes.</div></div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </section>
@@ -1017,6 +1091,20 @@
 
                 return chosenIndex >= 0 ? chosenIndex : 0;
             }
+
+            window.copyFingerprint = function () {
+                const text = document.getElementById("fingerprintValue").textContent.trim();
+                const btn = document.getElementById("fingerprintCopyBtn");
+                navigator.clipboard.writeText(text).then(() => {
+                    const original = btn.textContent;
+                    btn.textContent = "Copied!";
+                    btn.classList.add("copied");
+                    setTimeout(() => {
+                        btn.textContent = original;
+                        btn.classList.remove("copied");
+                    }, 1500);
+                });
+            };
 
             async function loadNews() {
                 try {
@@ -1351,8 +1439,7 @@
                 if (displayState === "online") {
                     const count = liveStatusData.playersOnline || 0;
                     const names = liveStatusData.playerList || [];
-                    playersEl.textContent =
-                        count > 0 ? `${count} online: ${names.join(", ")}` : "No players online";
+                    playersEl.textContent = count > 0 ? `${count} online: ${names.join(", ")}` : "No players online";
                 } else {
                     playersEl.textContent = "";
                 }
