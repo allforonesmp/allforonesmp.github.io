@@ -2,14 +2,14 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>AllForOne SMP | Home</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta name="theme-color" content="#4a90e2" />
+        <title>AllForOne SMP</title>
         <link rel="icon" type="image/x-icon" href="https://allforonesmp.github.io/images/logo.png" />
-
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Spectral:wght@600;700&family=Bebas+Neue&display=swap"
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Spectral:wght@600;700&display=swap"
             rel="stylesheet" />
         <style>
             :root {
@@ -17,991 +17,530 @@
                 --light-blue: #e8f4f8;
                 --lighter-blue: #f5fbfd;
                 --dark-blue: #2c5f8d;
-                --accent-blue: #5ba3f5;
                 --text-dark: #1a2332;
                 --text-medium: #4a5568;
-                --text-light: #718096;
                 --border-color: #d4e8f0;
                 --white: #ffffff;
-                --error: #e74c3c;
-                --success: #27ae60;
-                --admin-gold: #f6c90e;
-                --admin-gold-dark: #c9a800;
-                --admin-gradient: linear-gradient(135deg, #f6c90e 0%, #ff8c00 100%);
-                --shadow-sm: 0 1px 3px rgba(74, 144, 226, 0.08);
-                --shadow-md: 0 4px 12px rgba(74, 144, 226, 0.12);
-                --shadow-lg: 0 10px 30px rgba(74, 144, 226, 0.15);
+                --nav-height: 64px;
+                --banner-height: 0px; /* updated by JS */
+                --safe-top: env(safe-area-inset-top, 0px);
+                --safe-bottom: env(safe-area-inset-bottom, 0px);
+                --safe-left: env(safe-area-inset-left, 0px);
+                --safe-right: env(safe-area-inset-right, 0px);
             }
 
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
+                -webkit-tap-highlight-color: transparent;
             }
 
+            html,
             body {
-                font-family: "DM Sans", sans-serif;
-                background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
-                color: var(--text-dark);
-                min-height: 100vh;
-                line-height: 1.6;
-            }
-
-            h1,
-            h2,
-            h3,
-            h4,
-            h5,
-            h6 {
-                font-family: "Spectral", serif;
-                font-weight: 700;
-            }
-
-            /* ── NOTIFICATION BANNER ── */
-            #notifBanner {
-                display: none;
+                height: 100%;
                 width: 100%;
-                position: relative;
-                z-index: 100;
-                animation: bannerSlideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            #notifBanner.visible {
-                display: block;
-            }
-            @keyframes bannerSlideDown {
-                from {
-                    opacity: 0;
-                    transform: translateY(-12px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            .notif-banner-inner {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 1rem;
-                padding: 0.85rem 2rem;
-                flex-wrap: wrap;
-                text-align: center;
-            }
-            .notif-banner-text {
-                font-weight: 600;
-                font-size: 0.97rem;
-                line-height: 1.4;
-                flex: 1;
-                min-width: 0;
-            }
-            .notif-banner-btn {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-                padding: 0.45rem 1.1rem;
-                border-radius: 8px;
-                font-weight: 700;
-                font-size: 0.88rem;
-                text-decoration: none;
-                white-space: nowrap;
-                border: 2px solid rgba(255, 255, 255, 0.5);
-                background: rgba(255, 255, 255, 0.18);
-                color: inherit;
-                transition:
-                    background 0.18s,
-                    border-color 0.18s,
-                    transform 0.15s;
-                cursor: pointer;
+                overflow: hidden;
+                background: var(--white);
                 font-family: "DM Sans", sans-serif;
-            }
-            .notif-banner-btn:hover {
-                background: rgba(255, 255, 255, 0.32);
-                border-color: rgba(255, 255, 255, 0.8);
-                transform: translateY(-1px);
+                overscroll-behavior: none;
             }
 
-            /* ── NAVBAR IFRAME ── */
-            #afo-navbar-frame {
+            button {
+                touch-action: manipulation;
+                font-size: 16px; /* prevents iOS zoom on focus */
+            }
+
+            /* ─── NAV ─── */
+            nav {
                 position: fixed;
                 top: 0;
                 left: 0;
-                width: 100%;
-                height: 64px;
-                border: none;
-                z-index: 9000;
-                display: block;
-            }
-
-            /* ── MOBILE OVERLAY ── */
-            #afo-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(26, 35, 50, 0.45);
-                backdrop-filter: blur(3px);
-                -webkit-backdrop-filter: blur(3px);
-                z-index: 9100;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            }
-            #afo-overlay.afo-visible {
-                display: block;
-                opacity: 1;
-            }
-
-            /* ── MOBILE DRAWER ── */
-            #afo-drawer {
-                position: fixed;
-                top: 0;
                 right: 0;
-                width: min(300px, 85vw);
-                height: 100vh;
-                background: var(--white);
-                box-shadow: -4px 0 40px rgba(74, 144, 226, 0.18);
-                z-index: 9200;
-                transform: translateX(100%);
-                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                height: calc(var(--nav-height) + var(--safe-top));
+                padding-top: var(--safe-top);
+                background: rgba(255, 255, 255, 0.92);
+                backdrop-filter: blur(16px) saturate(180%);
+                -webkit-backdrop-filter: blur(16px) saturate(180%);
+                border-bottom: 1.5px solid var(--border-color);
+                box-shadow: 0 2px 24px rgba(74, 144, 226, 0.08);
                 display: flex;
-                flex-direction: column;
+                align-items: center;
+                padding-left: max(1.25rem, var(--safe-left));
+                padding-right: max(1.25rem, var(--safe-right));
+                z-index: 100;
             }
-            #afo-drawer.afo-open {
-                transform: translateX(0);
-            }
-
-            #afo-drawer-header {
+            .nav-inner {
+                width: 100%;
+                max-width: 1400px;
+                margin: 0 auto;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 1.25rem 1.5rem;
-                border-bottom: 1.5px solid var(--border-color);
-                background: var(--lighter-blue);
-                flex-shrink: 0;
+                height: var(--nav-height);
+                min-width: 0;
             }
-            #afo-drawer-header a {
+            .logo {
                 font-family: "Spectral", serif;
-                font-size: 1.3rem;
+                font-size: 1.6rem;
                 font-weight: 700;
                 color: var(--primary-blue);
                 text-decoration: none;
+                letter-spacing: -0.01em;
+                white-space: nowrap;
+                flex-shrink: 0;
+                transition: color 0.2s;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
             }
-            #afo-drawer-close {
+            .logo img {
+                height: 40px;
+                max-width: 100%;
+                display: block;
+            }
+            .logo:hover {
+                color: var(--dark-blue);
+            }
+
+            .nav-links {
+                display: flex;
+                align-items: center;
+                gap: 0.2rem;
+                list-style: none;
+                min-width: 0;
+                flex-wrap: nowrap;
+            }
+            .nav-links button {
+                color: var(--text-medium);
+                background: none;
+                border: none;
+                font-family: "DM Sans", sans-serif;
+                font-weight: 500;
+                font-size: 0.97rem;
+                padding: 0.45rem 0.9rem;
+                border-radius: 8px;
+                cursor: pointer;
+                transition:
+                    color 0.18s,
+                    background 0.18s;
+                white-space: nowrap;
+                position: relative;
+            }
+            .nav-links button:hover {
+                color: var(--primary-blue);
+                background: var(--lighter-blue);
+            }
+            .nav-links button.active {
+                color: var(--primary-blue);
+                background: var(--light-blue);
+                font-weight: 600;
+            }
+            .nav-links button::after {
+                content: "";
+                position: absolute;
+                bottom: 4px;
+                left: 50%;
+                right: 50%;
+                height: 2px;
+                background: var(--primary-blue);
+                border-radius: 2px;
+                transition:
+                    left 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                    right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .nav-links button.active::after {
+                left: 12px;
+                right: 12px;
+            }
+
+            /* ─── HAMBURGER ─── */
+            .hamburger {
+                display: none;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 5px;
                 background: none;
                 border: none;
                 cursor: pointer;
-                color: var(--text-light);
-                font-size: 1.4rem;
-                line-height: 1;
-                padding: 0.3rem 0.6rem;
-                border-radius: 6px;
-                transition:
-                    color 0.18s,
-                    background 0.18s;
+                padding: 0.6rem;
+                border-radius: 8px;
+                transition: background 0.18s;
+                flex-shrink: 0;
+                min-width: 44px;
+                min-height: 44px;
             }
-            #afo-drawer-close:hover {
-                color: var(--text-dark);
-                background: var(--light-blue);
+            .hamburger:hover {
+                background: var(--lighter-blue);
+            }
+            .hamburger span {
+                display: block;
+                width: 22px;
+                height: 2.5px;
+                background: var(--text-medium);
+                border-radius: 2px;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transform-origin: center;
+            }
+            .hamburger.open span:nth-child(1) {
+                transform: translateY(7.5px) rotate(45deg);
+            }
+            .hamburger.open span:nth-child(2) {
+                opacity: 0;
+                transform: scaleX(0);
+            }
+            .hamburger.open span:nth-child(3) {
+                transform: translateY(-7.5px) rotate(-45deg);
             }
 
-            #afo-drawer-links {
+            /* ─── NOTIFICATION BANNER ─── */
+            #notifBanner {
+                position: fixed;
+                top: calc(var(--nav-height) + var(--safe-top));
+                left: 0;
+                right: 0;
+                z-index: 98;
+                overflow: hidden;
+                max-height: 0;
+                transition:
+                    max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.3s ease;
+                opacity: 0;
+            }
+            #notifBanner.visible {
+                max-height: 160px;
+                opacity: 1;
+            }
+            .banner-inner {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 0.5rem 1rem;
+                padding: 0.7rem 3rem;
+                padding-left: max(3rem, calc(var(--safe-left) + 1rem));
+                padding-right: max(3rem, calc(var(--safe-right) + 1rem));
+                font-size: 0.95rem;
+                font-weight: 500;
+                min-height: 44px;
+                position: relative;
+            }
+            .banner-text {
+                flex: 1 1 auto;
+                text-align: center;
+                min-width: 120px;
+                word-break: break-word;
+            }
+            .banner-btn {
+                display: inline-block;
+                padding: 0.35rem 1rem;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 700;
+                cursor: pointer;
+                border: none;
+                font-family: "DM Sans", sans-serif;
+                white-space: nowrap;
+                flex-shrink: 0;
+                transition:
+                    opacity 0.2s,
+                    transform 0.15s;
+                text-decoration: none;
+            }
+            .banner-btn:hover {
+                opacity: 0.85;
+                transform: translateY(-1px);
+            }
+            .banner-close {
+                position: absolute;
+                right: max(0.5rem, var(--safe-right));
+                top: 0.6rem;
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 1.1rem;
+                opacity: 0.6;
+                padding: 0.4rem;
+                min-width: 32px;
+                min-height: 32px;
+                transition: opacity 0.2s;
+            }
+            .banner-close:hover {
+                opacity: 1;
+            }
+
+            /* ─── MOBILE DRAWER ─── */
+            .drawer {
+                position: fixed;
+                top: calc(var(--nav-height) + var(--safe-top));
+                left: 0;
+                right: 0;
+                background: rgba(255, 255, 255, 0.97);
+                backdrop-filter: blur(20px);
+                border-bottom: 1.5px solid var(--border-color);
+                box-shadow: 0 8px 32px rgba(74, 144, 226, 0.12);
+                z-index: 99;
+                overflow: hidden;
+                max-height: 0;
+                transition:
+                    max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.28s ease;
+                opacity: 0;
+            }
+            .drawer.open {
+                max-height: 420px;
+                opacity: 1;
+                overflow-y: auto;
+            }
+            .drawer-links {
                 list-style: none;
-                padding: 1rem 0.75rem;
+                padding: 0.75rem max(1rem, var(--safe-left)) calc(1rem + var(--safe-bottom));
                 display: flex;
                 flex-direction: column;
                 gap: 0.25rem;
-                flex: 1;
             }
-            #afo-drawer-links li a {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                color: var(--text-medium);
-                text-decoration: none;
+            .drawer-links button {
+                width: 100%;
+                text-align: left;
+                background: none;
+                border: none;
+                font-family: "DM Sans", sans-serif;
                 font-weight: 500;
                 font-size: 1.05rem;
+                color: var(--text-medium);
                 padding: 0.8rem 1rem;
                 border-radius: 10px;
+                cursor: pointer;
+                min-height: 44px;
                 transition:
                     color 0.18s,
                     background 0.18s;
             }
-            #afo-drawer-links li a:hover {
+            .drawer-links button:hover,
+            .drawer-links button:active {
                 color: var(--primary-blue);
                 background: var(--lighter-blue);
             }
-            #afo-drawer-links li a.afo-active {
+            .drawer-links button.active {
                 color: var(--primary-blue);
                 background: var(--light-blue);
                 font-weight: 600;
             }
-            #afo-drawer-links .afo-icon {
-                font-size: 1.1rem;
-                width: 24px;
-                text-align: center;
-                flex-shrink: 0;
-            }
 
-            #afo-drawer-footer {
-                padding: 1.25rem 1.5rem;
-                border-top: 1.5px solid var(--border-color);
-                color: var(--text-light);
-                font-size: 0.82rem;
-                text-align: center;
-                flex-shrink: 0;
-            }
-
-            /* ── HERO BANNER ── */
-            .hero-banner {
-                width: 100%;
-                display: block;
-                overflow: hidden;
-                position: relative;
-                max-height: 520px;
-            }
-            .hero-banner img {
-                width: 100%;
-                height: auto;
-                display: block;
-                object-fit: cover;
-                object-position: center;
-            }
-            .hero-overlay {
-                position: absolute;
-                bottom: 0;
+            /* ─── CONTENT AREA ─── */
+            .content-shell {
+                position: fixed;
+                top: calc(var(--nav-height) + var(--safe-top) + var(--banner-height));
                 left: 0;
                 right: 0;
-                height: 80px;
-                background: linear-gradient(to bottom, transparent, var(--lighter-blue));
+                bottom: 0;
+                overflow: hidden;
+                transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .frame-slot {
+                position: absolute;
+                inset: 0;
+                opacity: 0;
+                transform: translateY(18px) scale(0.985);
+                transition:
+                    opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+                    transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
                 pointer-events: none;
             }
-
-            /* ── MAIN LAYOUT ── */
-            .page-content {
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 2rem;
+            .frame-slot.visible {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                pointer-events: auto;
             }
-
-            .section-title {
-                font-family: "Bebas Neue", sans-serif;
-                font-size: 2.4rem;
-                letter-spacing: 0.08em;
-                color: var(--primary-blue);
-                margin-bottom: 1.5rem;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
+            .frame-slot.exit {
+                opacity: 0;
+                transform: translateY(-10px) scale(1.01);
+                pointer-events: none;
             }
-            .section-title::after {
-                content: "";
-                flex: 1;
-                height: 2px;
-                background: linear-gradient(to right, var(--primary-blue), transparent);
-            }
-
-            /* ── NEWS CAROUSEL ── */
-            .news-section {
-                margin-bottom: 3rem;
-            }
-            .carousel-wrapper {
-                position: relative;
-                background: var(--white);
-                border-radius: 20px;
-                box-shadow: var(--shadow-lg);
-                border: 1px solid var(--border-color);
-                overflow: hidden;
-            }
-            .carousel-track-container {
-                overflow: hidden;
-                border-radius: 20px 20px 0 0;
-            }
-            .carousel-track {
-                display: flex;
-                transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            .carousel-slide {
-                min-width: 100%;
-                display: flex;
-                flex-direction: column;
-            }
-            .carousel-slide img {
+            .frame-slot iframe {
                 width: 100%;
-                height: 400px;
-                object-fit: cover;
+                height: 100%;
+                border: none;
+                display: block;
+                background: var(--white);
             }
-            .carousel-info {
-                padding: 1.75rem 2rem;
-            }
-            .carousel-info h3 {
-                font-size: 1.5rem;
-                color: var(--text-dark);
-                margin-bottom: 0.75rem;
-            }
-            .carousel-info p {
-                color: var(--text-medium);
-                line-height: 1.7;
-            }
-            .carousel-controls {
+
+            /* ─── LOADING SHIMMER ─── */
+            .frame-loader {
+                position: absolute;
+                inset: 0;
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
+                background: var(--lighter-blue);
                 gap: 1rem;
+                transition: opacity 0.3s;
                 padding: 1rem;
-                border-top: 1px solid var(--border-color);
-            }
-            .carousel-btn {
-                background: var(--primary-blue);
-                color: white;
-                border: none;
-                border-radius: 50%;
-                width: 42px;
-                height: 42px;
-                font-size: 1.2rem;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .carousel-btn:hover {
-                background: var(--dark-blue);
-                transform: scale(1.08);
-            }
-            .carousel-dots {
-                display: flex;
-                gap: 0.5rem;
-            }
-            .carousel-dot {
-                width: 10px;
-                height: 10px;
-                border-radius: 50%;
-                background: var(--border-color);
-                border: none;
-                cursor: pointer;
-                transition: background 0.2s;
-            }
-            .carousel-dot.active {
-                background: var(--primary-blue);
-            }
-            .news-empty {
-                padding: 4rem 2rem;
-                text-align: center;
-                color: var(--text-light);
-                font-size: 1.1rem;
-            }
-
-            /* ── JOIN SECTION ── */
-            .join-section {
-                margin-bottom: 3rem;
-            }
-            .join-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 2rem;
-                align-items: start;
-            }
-
-            .join-left {
-                display: flex;
-                flex-direction: column;
-                gap: 1.25rem;
-            }
-            .rules-link-btn {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.6rem;
-                background: var(--lighter-blue);
-                border: 2px solid var(--border-color);
-                border-radius: 12px;
-                padding: 0.875rem 1.25rem;
-                text-decoration: none;
-                color: var(--primary-blue);
-                font-weight: 600;
-                font-size: 1rem;
-                transition: all 0.2s ease;
-                width: fit-content;
-            }
-            .rules-link-btn:hover {
-                background: var(--light-blue);
-                border-color: var(--primary-blue);
-                transform: translateY(-2px);
-                box-shadow: var(--shadow-md);
-            }
-
-            .play-now-btn {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.6rem;
-                background: linear-gradient(135deg, #27ae60, #1e8449);
-                color: white;
-                border: none;
-                border-radius: 14px;
-                padding: 1rem 2rem;
-                font-size: 1.2rem;
-                font-weight: 700;
-                font-family: "DM Sans", sans-serif;
-                cursor: pointer;
-                text-decoration: none;
-                transition: all 0.25s ease;
-                box-shadow: 0 4px 15px rgba(39, 174, 96, 0.35);
-                width: fit-content;
-            }
-            .play-now-btn:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 8px 25px rgba(39, 174, 96, 0.45);
-            }
-            .play-now-btn[href="#"] {
-                background: #aaa;
-                cursor: default;
-                box-shadow: none;
-            }
-
-            .agree-gate {
-                background: var(--white);
-                border: 2px solid var(--border-color);
-                border-radius: 16px;
-                padding: 1.5rem;
-                box-shadow: var(--shadow-md);
-            }
-            .agree-gate h4 {
-                font-size: 1rem;
-                color: var(--text-dark);
-                margin-bottom: 1rem;
-            }
-            .agree-checkbox-row {
-                display: flex;
-                align-items: flex-start;
-                gap: 0.75rem;
-                margin-bottom: 1.25rem;
-            }
-            .agree-checkbox-row input[type="checkbox"] {
-                width: 20px;
-                height: 20px;
-                accent-color: var(--primary-blue);
-                flex-shrink: 0;
-                margin-top: 2px;
-                cursor: pointer;
-            }
-            .agree-checkbox-row label {
-                cursor: pointer;
-                color: var(--text-medium);
-                font-size: 0.95rem;
-            }
-            .agree-checkbox-row a {
-                color: var(--primary-blue);
-                font-weight: 600;
-            }
-
-            /* ── SERVER OFFLINE BLOCK ── */
-            .server-offline-block {
-                display: none;
-                background: linear-gradient(135deg, #fff3cd, #ffe5a1);
-                border: 2px solid #ffd54f;
-                border-radius: 16px;
-                padding: 1.5rem;
-                text-align: center;
-                animation: fadeUp 0.4s ease;
-            }
-            .server-offline-block.visible {
-                display: block;
-            }
-            .server-offline-block .offline-icon {
-                font-size: 2.5rem;
-                margin-bottom: 0.5rem;
-            }
-            .server-offline-block h4 {
-                color: #856404;
-                font-size: 1.1rem;
-                margin-bottom: 0.5rem;
-            }
-            .server-offline-block p {
-                color: #856404;
-                font-size: 0.95rem;
-                margin-bottom: 0.75rem;
-            }
-            .offline-countdown {
-                display: inline-block;
-                background: rgba(133, 100, 4, 0.12);
-                border: 1.5px solid #ffd54f;
-                border-radius: 10px;
-                padding: 0.5rem 1.25rem;
-                font-family: "Bebas Neue", sans-serif;
-                font-size: 1.6rem;
-                letter-spacing: 0.08em;
-                color: #856404;
-                margin-top: 0.25rem;
-            }
-            /* ── NEW: back-at label under countdown ── */
-            .offline-back-at {
-                display: none;
-                margin-top: 0.5rem;
-                font-size: 0.88rem;
-                color: #856404;
-                opacity: 0.8;
-            }
-            .offline-back-at.visible {
-                display: block;
-            }
-
-            .code-reveal {
-                display: none;
-                flex-direction: column;
-                gap: 1rem;
-                animation: fadeUp 0.4s ease;
-            }
-            .code-reveal.visible {
-                display: flex;
-            }
-
-            .fingerprint-box {
-                background: var(--lighter-blue);
-                border: 2px dashed var(--primary-blue);
-                border-radius: 12px;
-                padding: 1rem 1.25rem;
-            }
-            .fingerprint-box h3 {
-                font-size: 0.8rem;
-                font-weight: 700;
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
-                color: var(--text-light);
-                margin-bottom: 0.6rem;
-                font-family: "DM Sans", sans-serif;
-            }
-            .fingerprint-row {
-                display: flex;
-                align-items: center;
-                gap: 0.6rem;
-            }
-            .fingerprint-value {
-                flex: 1;
-                min-width: 0;
-                font-family: monospace;
-                font-size: 0.85rem;
-                color: var(--text-dark);
-                background: var(--white);
-                border: 1px solid var(--border-color);
-                border-radius: 8px;
-                padding: 0.5rem 0.75rem;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-            .fingerprint-copy-btn {
-                flex-shrink: 0;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.4rem;
-                background: var(--primary-blue);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 0.55rem 0.9rem;
-                font-size: 0.85rem;
-                font-weight: 600;
-                font-family: "DM Sans", sans-serif;
-                cursor: pointer;
-                transition:
-                    background 0.18s,
-                    transform 0.15s;
-                white-space: nowrap;
-            }
-            .fingerprint-copy-btn:hover {
-                background: var(--dark-blue);
-                transform: translateY(-1px);
-            }
-            .fingerprint-copy-btn.copied {
-                background: var(--success);
-            }
-
-            @keyframes fadeUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .join-code-image {
-                width: 100%;
-                border-radius: 12px;
-                border: 2px solid var(--border-color);
-                box-shadow: var(--shadow-md);
-                object-fit: contain;
-                background: var(--lighter-blue);
-            }
-            .connection-id-box {
-                background: var(--lighter-blue);
-                border: 2px dashed var(--primary-blue);
-                border-radius: 12px;
-                padding: 1.25rem;
                 text-align: center;
             }
-            .connection-id-box .label {
-                font-size: 0.8rem;
-                font-weight: 700;
-                letter-spacing: 0.12em;
-                text-transform: uppercase;
-                color: var(--text-light);
-                margin-bottom: 0.4rem;
+            .frame-loader.hidden {
+                opacity: 0;
+                pointer-events: none;
             }
-            .connection-id-box .code-value {
-                font-family: "Bebas Neue", sans-serif;
-                font-size: 2rem;
-                letter-spacing: 0.12em;
-                color: var(--primary-blue);
-            }
-            .code-placeholder {
-                color: var(--text-light);
-                font-style: italic;
-                font-size: 0.9rem;
-                text-align: center;
-                padding: 1rem;
-            }
-
-            .join-right {
-                display: flex;
-                flex-direction: column;
-                gap: 1.25rem;
-            }
-
-            .downtime-container {
-                background: var(--white);
-                border: 2px solid var(--border-color);
-                border-radius: 14px;
-                overflow: hidden;
-                box-shadow: var(--shadow-sm);
-            }
-            .downtime-header {
-                padding: 1rem 1.25rem;
-                background: var(--lighter-blue);
-                cursor: pointer;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                user-select: none;
-                transition: background 0.2s;
-            }
-            .downtime-header:hover {
-                background: var(--light-blue);
-            }
-            .downtime-header h4 {
-                font-size: 1rem;
-                color: var(--text-dark);
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-            .downtime-arrow {
-                transition: transform 0.3s;
-                font-size: 0.9rem;
-                color: var(--text-medium);
-            }
-            .downtime-container.open .downtime-arrow {
-                transform: rotate(180deg);
-            }
-            .downtime-body {
-                display: none;
-                padding: 1rem 1.25rem;
-                border-top: 1px solid var(--border-color);
-            }
-            .downtime-container.open .downtime-body {
-                display: block;
-            }
-            .downtime-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.75rem;
-                border-radius: 8px;
-                margin-bottom: 0.5rem;
-                background: var(--lighter-blue);
-                border: 1px solid var(--border-color);
-                font-size: 0.9rem;
-            }
-            .downtime-empty {
-                color: var(--text-light);
-                font-style: italic;
-                font-size: 0.9rem;
-                padding: 0.5rem 0;
-            }
-
-            .downtime-alert {
-                display: none;
-                background: linear-gradient(135deg, #fff3cd, #ffe5a1);
-                border: 2px solid #ffd54f;
-                border-radius: 14px;
-                padding: 1.25rem;
-                animation: fadeUp 0.4s ease;
-            }
-            .downtime-alert.visible {
-                display: block;
-            }
-            .downtime-alert h4 {
-                color: #856404;
-                margin-bottom: 0.4rem;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-            .downtime-alert p {
-                color: #856404;
-                font-size: 0.95rem;
-            }
-
-            .status-pill {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.6rem;
-                background: var(--white);
-                border: 2px solid var(--border-color);
-                border-radius: 999px;
-                padding: 0.6rem 1.1rem;
-                box-shadow: var(--shadow-sm);
-                margin-bottom: 1rem;
-                font-size: 0.95rem;
-            }
-            .status-dot {
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-                background: #aaa;
-                flex-shrink: 0;
-                transition: background 0.3s ease;
-            }
-            .status-dot.online {
-                background: var(--success);
-                box-shadow: 0 0 8px rgba(39, 174, 96, 0.5);
-            }
-            .status-dot.offline {
-                background: var(--error);
-            }
-            .status-dot.pending {
-                background: #f6c90e;
-                box-shadow: 0 0 8px rgba(246, 201, 14, 0.5);
-            }
-            .status-label {
-                font-weight: 700;
-                color: var(--text-dark);
-            }
-            .status-players {
-                color: var(--text-medium);
-                font-size: 0.88rem;
-            }
-
-            .voice-card {
-                background: var(--white);
-                border: 2px solid var(--border-color);
-                border-radius: 14px;
-                padding: 1.5rem;
-                box-shadow: var(--shadow-md);
-            }
-            .voice-card h4 {
-                font-size: 1.1rem;
-                color: var(--text-dark);
-                margin-bottom: 0.5rem;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-            .voice-card p {
-                color: var(--text-medium);
-                font-size: 0.95rem;
-                margin-bottom: 1rem;
-                line-height: 1.6;
-            }
-            .voice-link {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                background: linear-gradient(135deg, #7289da, #5865f2);
-                color: white;
-                text-decoration: none;
-                padding: 0.75rem 1.25rem;
-                border-radius: 10px;
-                font-weight: 600;
-                font-size: 0.95rem;
-                transition: all 0.2s ease;
-            }
-            .voice-link:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
-            }
-            .voice-link-placeholder {
-                color: var(--text-light);
-                font-style: italic;
-                font-size: 0.9rem;
-            }
-
-            .spinner {
-                border: 3px solid var(--light-blue);
-                border-top: 3px solid var(--primary-blue);
-                border-radius: 50%;
+            .loader-spinner {
                 width: 36px;
                 height: 36px;
-                animation: spin 1s linear infinite;
-                margin: 2rem auto;
+                border: 3px solid var(--border-color);
+                border-top-color: var(--primary-blue);
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                flex-shrink: 0;
             }
             @keyframes spin {
                 to {
                     transform: rotate(360deg);
                 }
             }
-
-            footer {
-                background: var(--text-dark);
-                color: #a0aec0;
-                text-align: center;
-                padding: 2rem;
-                font-size: 0.9rem;
-                margin-top: 2rem;
-            }
-            footer a {
-                color: var(--accent-blue);
-                text-decoration: none;
+            .loader-text {
+                font-family: "DM Sans", sans-serif;
+                color: var(--text-medium);
+                font-size: 0.88rem;
+                letter-spacing: 0.02em;
             }
 
-            @media (max-width: 768px) {
-                .join-grid {
-                    grid-template-columns: 1fr;
+            /* ─── RIPPLE ─── */
+            .ripple-overlay {
+                position: fixed;
+                inset: 0;
+                pointer-events: none;
+                z-index: 200;
+                overflow: hidden;
+            }
+            .ripple {
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(74, 144, 226, 0.12);
+                transform: scale(0);
+                animation: rippleOut 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            }
+            @keyframes rippleOut {
+                to {
+                    transform: scale(40);
+                    opacity: 0;
                 }
-                .carousel-slide img {
-                    height: 220px;
+            }
+
+            /* ─── RESPONSIVE BREAKPOINTS ─── */
+            @media (max-width: 900px) {
+                .nav-links button {
+                    font-size: 0.9rem;
+                    padding: 0.4rem 0.65rem;
                 }
-                .notif-banner-inner {
-                    padding: 0.75rem 1rem;
-                    gap: 0.6rem;
+            }
+
+            @media (max-width: 700px) {
+                nav {
+                    padding-left: max(1rem, var(--safe-left));
+                    padding-right: max(1rem, var(--safe-right));
+                }
+                .nav-links {
+                    display: none;
+                }
+                .hamburger {
+                    display: flex;
+                }
+                .logo img {
+                    height: 34px;
+                }
+                .banner-inner {
+                    padding: 0.65rem 2.75rem;
+                    padding-left: max(2.75rem, calc(var(--safe-left) + 0.75rem));
+                    padding-right: max(2.75rem, calc(var(--safe-right) + 0.75rem));
+                    font-size: 0.88rem;
+                }
+                .banner-btn {
+                    font-size: 0.8rem;
+                    padding: 0.3rem 0.85rem;
+                }
+            }
+
+            @media (max-width: 400px) {
+                .logo img {
+                    height: 28px;
+                }
+                nav {
+                    padding-left: max(0.75rem, var(--safe-left));
+                    padding-right: max(0.75rem, var(--safe-right));
+                }
+                .banner-text {
+                    font-size: 0.82rem;
+                }
+            }
+
+            /* Landscape phones: shrink nav a bit to save vertical space */
+            @media (max-height: 420px) and (orientation: landscape) {
+                :root {
+                    --nav-height: 52px;
+                }
+                .logo img {
+                    height: 30px;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                *,
+                *::before,
+                *::after {
+                    animation-duration: 0.01ms !important;
+                    transition-duration: 0.01ms !important;
                 }
             }
         </style>
     </head>
     <body>
-        <!-- ── NOTIFICATION BANNER ── -->
+        <nav>
+            <div class="nav-inner">
+                <a href="/" style="display: contents">
+                    <span class="logo" onclick="navigate('/', event)">
+                        <img src="https://allforonesmp.github.io/images/logo.png" alt="AllForOne SMP Logo" />
+                    </span>
+                </a>
+
+                <ul class="nav-links" id="navLinks">
+                    <li><button data-path="/" onclick="navigate('/', event)">Home</button></li>
+                    <li><button data-path="/mods" onclick="navigate('/mods', event)">Mods</button></li>
+                    <li><button data-path="/rules" onclick="navigate('/rules', event)">Rules</button></li>
+                    <li><button data-path="/profile" onclick="navigate('/profile', event)">Profile</button></li>
+                    <li><button data-path="/post" onclick="navigate('/post', event)">Post</button></li>
+                    <li><button data-path="/messages" onclick="navigate('/messages', event)">Message</button></li>
+                </ul>
+                <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" onclick="toggleDrawer()">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Notification Banner -->
         <div id="notifBanner">
-            <div class="notif-banner-inner" id="notifBannerInner">
-                <span class="notif-banner-text" id="notifBannerText"></span>
-                <a
-                    id="notifBannerBtn"
-                    class="notif-banner-btn"
-                    style="display: none"
-                    target="_blank"
-                    rel="noopener"></a>
+            <div class="banner-inner" id="bannerInner">
+                <span class="banner-text" id="bannerText"></span>
+                <a class="banner-btn" id="bannerBtn" href="#" target="_blank" rel="noopener" style="display: none"></a>
+                <button class="banner-close" id="bannerClose" onclick="dismissBanner()" aria-label="Dismiss">✕</button>
             </div>
         </div>
 
-        <!-- ── HERO BANNER ── -->
-        <div class="hero-banner">
-            <img id="heroBannerImg" src="https://allforonesmp.github.io/images/banner.png" alt="AllForOne SMP Banner" />
-            <div class="hero-overlay"></div>
+        <!-- Mobile Drawer -->
+        <div class="drawer" id="drawer">
+            <ul class="drawer-links" id="drawerLinks">
+                <li><button data-path="/" onclick="navigate('/', event); closeDrawer()">Home</button></li>
+                <li><button data-path="/mods" onclick="navigate('/mods', event); closeDrawer()">Mods</button></li>
+                <li><button data-path="/rules" onclick="navigate('/rules', event); closeDrawer()">Rules</button></li>
+                <li><button data-path="/profile" onclick="navigate('/profile', event); closeDrawer()">Profile</button></li>
+                <li><button data-path="/post" onclick="navigate('/post', event); closeDrawer()">Post</button></li>
+                <li><button data-path="/messages" onclick="navigate('/messages', event); closeDrawer()">Message</button></li>
+            </ul>
         </div>
 
-        <!-- ── PAGE CONTENT ── -->
-        <div class="page-content">
-            <section class="news-section">
-                <div class="section-title">Latest News</div>
-                <div class="carousel-wrapper" id="newsCarouselWrapper">
-                    <div id="newsLoadingSpinner"><div class="spinner"></div></div>
-                    <div id="newsCarouselInner" style="display: none">
-                        <div class="carousel-track-container">
-                            <div class="carousel-track" id="carouselTrack"></div>
-                        </div>
-                        <div class="carousel-controls">
-                            <button class="carousel-btn" onclick="carouselPrev()">&#8592;</button>
-                            <div class="carousel-dots" id="carouselDots"></div>
-                            <button class="carousel-btn" onclick="carouselNext()">&#8594;</button>
-                        </div>
-                    </div>
-                    <div id="newsEmpty" class="news-empty" style="display: none">No news yet – check back soon!</div>
-                </div>
-            </section>
-
-            <section class="join-section">
-                <div class="section-title">Join the Server</div>
-
-                <div class="status-pill" id="statusPill">
-                    <span class="status-dot" id="statusDot"></span>
-                    <span class="status-label" id="statusLabel">Checking…</span>
-                    <span class="status-players" id="playerCount"></span>
-                </div>
-
-                <div class="downtime-alert" id="downtimeAlert">
-                    <h4>Upcoming Server Downtime</h4>
-                    <p id="downtimeAlertText">Scheduled maintenance approaching.</p>
-                </div>
-                <div style="margin-bottom: 1rem"></div>
-
-                <div class="join-grid">
-                    <div class="join-left">
-                        <a href="https://allforonesmp.github.io/rules" class="rules-link-btn" target="_blank">
-                            Read the Server Rules
-                        </a>
-
-                        <!-- Shown when server is currently offline -->
-                        <div class="server-offline-block" id="serverOfflineBlock">
-                            <div class="offline-icon">🔧</div>
-                            <h4>Server is Currently Offline</h4>
-                            <p id="serverOfflineText">The server is undergoing scheduled maintenance.</p>
-                            <div class="offline-countdown" id="offlineCountdown" style="display: none">Back in —</div>
-                            <!-- NEW: human-readable "back at HH:MM" label under the countdown -->
-                            <div class="offline-back-at" id="offlineBackAt"></div>
-                        </div>
-
-                        <div class="agree-gate" id="agreeGate">
-                            <h4>Access the Join Code</h4>
-                            <div class="agree-checkbox-row">
-                                <input type="checkbox" id="agreeCheck" onchange="toggleCodeReveal()" />
-                                <label for="agreeCheck">
-                                    I have read and agreed to the rules for the
-                                    <a href="https://allforonesmp.github.io/rules" target="_blank">AllForOne SMP</a>.
-                                </label>
-                            </div>
-                            <div class="code-reveal" id="codeReveal">
-                                <div class="connection-id-box">
-                                    <div class="label">Server IP</div>
-                                    <div class="code-value" id="serverIpValue">Loading…</div>
-                                </div>
-                                <div class="fingerprint-box">
-                                    <h3>AutoModpack Server Fingerprint</h3>
-                                    <div class="fingerprint-row">
-                                        <div class="fingerprint-value" id="fingerprintValue">
-                                            aa8356134cab5699365a9d917d8ed6f9359e923e6d6027e6a092b938562e5572
-                                        </div>
-                                        <button
-                                            class="fingerprint-copy-btn"
-                                            id="fingerprintCopyBtn"
-                                            onclick="copyFingerprint()">
-                                            Copy
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="join-right">
-                        <div class="downtime-container" id="downtimeContainer">
-                            <div class="downtime-header" onclick="toggleDowntime()">
-                                <h4>Server Downtime Schedule</h4>
-                                <span class="downtime-arrow">▼</span>
-                            </div>
-                            <div class="downtime-body" id="downtimeBody">
-                                <div id="downtimeList"><div class="downtime-empty">No scheduled downtimes.</div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <footer>
-            <p>
-                AllForOne SMP &copy; 2026 &nbsp;|&nbsp;
-                <a href="https://allforonesmp.github.io/rules">Rules</a> &nbsp;|&nbsp; Built with ❤️
-            </p>
-        </footer>
+        <div class="ripple-overlay" id="rippleOverlay"></div>
+        <div class="content-shell" id="contentShell"></div>
 
         <!-- Firebase -->
         <script type="module">
@@ -1009,12 +548,8 @@
             import {
                 getFirestore,
                 doc,
-                onSnapshot,
-                collection,
-                orderBy,
-                query
+                onSnapshot
             } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-            import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
             const firebaseConfig = {
                 apiKey: "AIzaSyDzQlAqhCeytCLEYafboYGpFu6pY3Kv9WE",
@@ -1023,433 +558,247 @@
                 projectId: "allforonemedia-9a7d8",
                 storageBucket: "allforonemedia-9a7d8.firebasestorage.app",
                 messagingSenderId: "892787060584",
-                appId: "1:892787060584:web:e65609062592f9ba96f0dd",
-                measurementId: "G-JSXKLMBRLC"
+                appId: "1:892787060584:web:e65609062592f9ba96f0dd"
             };
-
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
-            const rtdb = getDatabase(app);
 
-            // ─── NEWS CAROUSEL ──────────────────────────────────────────
-            const NEWS_QUEUE_KEY = "afo_news_queue";
-            let carouselIndex = 0;
-            let newsItems = [];
+            // Listen for banner config from Firestore
+            onSnapshot(doc(db, "serverInfo", "main"), (snap) => {
+                if (!snap.exists()) return;
+                const data = snap.data();
+                window._bannerConfig = data.notificationBanner || null;
+                if (window.applyBanner) window.applyBanner(window._currentPath);
+            });
+        </script>
 
-            /**
-             * Pick the starting slide index for this page load.
-             *
-             * Strategy: keep a shuffled queue of news IDs in localStorage.
-             * Each load pops the first ID from the queue and uses that slide.
-             * When the queue is empty (all news shown), refill with a fresh shuffle.
-             */
-            function pickStartIndex(items) {
-                if (items.length === 0) return 0;
-                if (items.length === 1) return 0;
+        <script>
+            const BASE = "https://allforonesmp.github.io/";
+            const ROUTES = {
+                "/": BASE + "/main.html",
+                "/mods": BASE + "/mods",
+                "/rules": BASE + "/rules",
+                "/profile": BASE + "/profile",
+                "/post": BASE + "/post",
+                "/messages": BASE + "/messages"
+            };
+            const PAGE_TITLES = {
+                "/": "AllForOne SMP",
+                "/mods": "Mods – AllForOne SMP",
+                "/rules": "Rules – AllForOne SMP",
+                "/profile": "Profile – AllForOne SMP",
+                "/post": "Post – AllForOne SMP",
+                "/messages": "Messages – AllForOne SMP"
+            };
 
-                const ids = items.map((i) => i.id);
+            const shell = document.getElementById("contentShell");
+            const overlay = document.getElementById("rippleOverlay");
+            const drawer = document.getElementById("drawer");
+            const hamburger = document.getElementById("hamburgerBtn");
 
-                // Load existing queue, filtering out IDs that no longer exist
-                let queue = [];
+            let currentPath = null;
+            let frames = {};
+            let activeSlot = null;
+            let refreshTimers = {};
+            let bannerDismissed = false;
+
+            window._currentPath = "/";
+            window._bannerConfig = null;
+
+            // ── Banner ──────────────────────────────────────────────────
+            function applyBanner(path) {
+                const cfg = window._bannerConfig;
+                const banner = document.getElementById("notifBanner");
+                const bannerInner = document.getElementById("bannerInner");
+                const bannerText = document.getElementById("bannerText");
+                const bannerBtn = document.getElementById("bannerBtn");
+                const bannerClose = document.getElementById("bannerClose");
+
+                if (!cfg || !cfg.enabled || bannerDismissed) {
+                    banner.classList.remove("visible");
+                    updateBannerHeight(0);
+                    return;
+                }
+
+                // Check if this page should show the banner
+                const pages = cfg.pages || [];
+                if (pages.length > 0 && !pages.includes(path)) {
+                    banner.classList.remove("visible");
+                    updateBannerHeight(0);
+                    return;
+                }
+
+                // Apply colours
+                bannerInner.style.backgroundColor = cfg.bgColor || "#4a90e2";
+                bannerInner.style.color = cfg.textColor || "#ffffff";
+                bannerClose.style.color = cfg.textColor || "#ffffff";
+                bannerText.textContent = cfg.text || "";
+
+                // Button
+                if (cfg.btnLabel && cfg.btnLink) {
+                    bannerBtn.textContent = cfg.btnLabel;
+                    bannerBtn.href = cfg.btnLink;
+                    bannerBtn.style.backgroundColor = cfg.btnBgColor || "rgba(255,255,255,0.25)";
+                    bannerBtn.style.color = cfg.btnTextColor || "#ffffff";
+                    bannerBtn.style.display = "inline-block";
+                } else {
+                    bannerBtn.style.display = "none";
+                }
+
+                banner.classList.add("visible");
+                // Measure real height after layout
+                requestAnimationFrame(() => {
+                    updateBannerHeight(bannerInner.offsetHeight);
+                });
+            }
+            window.applyBanner = applyBanner;
+
+            function updateBannerHeight(h) {
+                document.documentElement.style.setProperty("--banner-height", h + "px");
+            }
+
+            window.dismissBanner = function () {
+                bannerDismissed = true;
+                document.getElementById("notifBanner").classList.remove("visible");
+                updateBannerHeight(0);
+            };
+
+            // ── Page title ───────────────────────────────────────────────
+            function updateTitle(path) {
+                // Try reading iframe title; fallback to our map
+                const frame = frames[path];
+                let iframeTitle = null;
                 try {
-                    const stored = localStorage.getItem(NEWS_QUEUE_KEY);
-                    if (stored) queue = JSON.parse(stored).filter((id) => ids.includes(id));
+                    iframeTitle = frame?.iframe?.contentDocument?.title;
                 } catch (_) {}
+                document.title = iframeTitle && iframeTitle.trim() ? iframeTitle : PAGE_TITLES[path] || "AllForOne SMP";
+            }
 
-                // If queue is empty, build a fresh shuffled queue
-                // Exclude the very last shown ID so we don't repeat immediately after a refill
-                if (queue.length === 0) {
-                    let lastShown = null;
+            // ── Ripple ───────────────────────────────────────────────────
+            function spawnRipple(e) {
+                const r = document.createElement("div");
+                r.className = "ripple";
+                const size = 60;
+                const x = (e?.clientX ?? window.innerWidth / 2) - size / 2;
+                const y = (e?.clientY ?? window.innerHeight / 2) - size / 2;
+                r.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;`;
+                overlay.appendChild(r);
+                r.addEventListener("animationend", () => r.remove());
+            }
+
+            // ── Frame creation ───────────────────────────────────────────
+            function getOrCreateFrame(path) {
+                if (frames[path]) return frames[path];
+
+                const slot = document.createElement("div");
+                slot.className = "frame-slot";
+
+                const loader = document.createElement("div");
+                loader.className = "frame-loader";
+                loader.innerHTML = `<div class="loader-spinner"></div><p class="loader-text">Loading…</p>`;
+                slot.appendChild(loader);
+
+                const iframe = document.createElement("iframe");
+                iframe.src = ROUTES[path];
+                iframe.style.opacity = "0";
+                iframe.style.transition = "opacity 0.35s";
+                iframe.setAttribute("loading", "eager");
+                iframe.setAttribute("title", PAGE_TITLES[path] || "AllForOne SMP");
+
+                iframe.addEventListener("load", () => {
+                    iframe.style.opacity = "1";
+                    loader.classList.add("hidden");
+                    if (currentPath === path) updateTitle(path);
                     try {
-                        lastShown = localStorage.getItem(NEWS_QUEUE_KEY + "_last");
+                        iframe.contentWindow.postMessage({ type: "afo-pathname", pathname: path }, "*");
                     } catch (_) {}
+                });
 
-                    // Fisher-Yates shuffle
-                    const shuffled = [...ids];
-                    for (let i = shuffled.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                    }
+                slot.appendChild(iframe);
+                shell.appendChild(slot);
 
-                    // If the first item after shuffle is the same as last shown, rotate it to the end
-                    if (shuffled.length > 1 && shuffled[0] === lastShown) {
-                        shuffled.push(shuffled.shift());
-                    }
-
-                    queue = shuffled;
-                }
-
-                // Pop the first ID from the queue
-                const chosenId = queue.shift();
-                const chosenIndex = ids.indexOf(chosenId);
-
-                // Persist the updated queue and the last-shown ID
-                try {
-                    localStorage.setItem(NEWS_QUEUE_KEY, JSON.stringify(queue));
-                    localStorage.setItem(NEWS_QUEUE_KEY + "_last", chosenId);
-                } catch (_) {}
-
-                return chosenIndex >= 0 ? chosenIndex : 0;
+                frames[path] = { slot, iframe };
+                startRefreshTimer(path);
+                return frames[path];
             }
 
-            window.copyFingerprint = function () {
-                const text = document.getElementById("fingerprintValue").textContent.trim();
-                const btn = document.getElementById("fingerprintCopyBtn");
-                navigator.clipboard.writeText(text).then(() => {
-                    const original = btn.textContent;
-                    btn.textContent = "Copied!";
-                    btn.classList.add("copied");
-                    setTimeout(() => {
-                        btn.textContent = original;
-                        btn.classList.remove("copied");
-                    }, 1500);
+            // ── Auto-refresh every 2 minutes (paused while tab hidden) ────
+            function startRefreshTimer(path) {
+                if (refreshTimers[path]) clearInterval(refreshTimers[path]);
+                refreshTimers[path] = setInterval(
+                    () => {
+                        if (document.hidden) return; // don't thrash background tabs
+                        const frame = frames[path];
+                        if (!frame) return;
+                        const loader = frame.slot.querySelector(".frame-loader");
+                        frame.iframe.style.opacity = "0";
+                        if (loader) loader.classList.remove("hidden");
+                        // Force reload by resetting src
+                        frame.iframe.src = ROUTES[path];
+                    },
+                    2 * 60 * 1000
+                ); // 2 minutes
+            }
+
+            function setActiveButtons(path) {
+                document.querySelectorAll("[data-path]").forEach((btn) => {
+                    btn.classList.toggle("active", btn.getAttribute("data-path") === path);
                 });
+            }
+
+            window.navigate = function (path, e) {
+                if (!ROUTES[path]) return;
+                if (path === currentPath) {
+                    closeDrawer();
+                    return;
+                }
+                spawnRipple(e);
+                bannerDismissed = false; // reset dismiss on navigation
+
+                if (activeSlot) {
+                    activeSlot.classList.remove("visible");
+                    activeSlot.classList.add("exit");
+                    const old = activeSlot;
+                    setTimeout(() => old.classList.remove("exit"), 450);
+                }
+
+                const frame = getOrCreateFrame(path);
+                setTimeout(() => {
+                    frame.slot.classList.add("visible");
+                }, 60);
+
+                activeSlot = frame.slot;
+                currentPath = path;
+                window._currentPath = path;
+                setActiveButtons(path);
+                updateTitle(path);
+                applyBanner(path);
             };
 
-            async function loadNews() {
-                try {
-                    const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
-                    onSnapshot(q, (snapshot) => {
-                        newsItems = [];
-                        snapshot.forEach((d) => newsItems.push({ id: d.id, ...d.data() }));
-                        renderCarousel();
-                    });
-                } catch (e) {
-                    document.getElementById("newsLoadingSpinner").style.display = "none";
-                    document.getElementById("newsEmpty").style.display = "block";
-                }
-            }
-
-            function renderCarousel() {
-                const spinner = document.getElementById("newsLoadingSpinner");
-                const inner = document.getElementById("newsCarouselInner");
-                const empty = document.getElementById("newsEmpty");
-                const track = document.getElementById("carouselTrack");
-                const dots = document.getElementById("carouselDots");
-
-                spinner.style.display = "none";
-
-                if (newsItems.length === 0) {
-                    inner.style.display = "none";
-                    empty.style.display = "block";
-                    return;
-                }
-                inner.style.display = "block";
-                empty.style.display = "none";
-                track.innerHTML = "";
-                dots.innerHTML = "";
-
-                newsItems.forEach((item, i) => {
-                    const slide = document.createElement("div");
-                    slide.className = "carousel-slide";
-                    slide.innerHTML = `
-                        <img src="${item.imageUrl || "https://via.placeholder.com/1200x400/4A90E2/ffffff?text=News"}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/1200x400/4A90E2/ffffff?text=News'">
-                        <div class="carousel-info">
-                            <h3>${item.title || "Untitled"}</h3>
-                            <p>${item.description || ""}</p>
-                        </div>`;
-                    track.appendChild(slide);
-
-                    const dot = document.createElement("button");
-                    dot.className = "carousel-dot" + (i === 0 ? " active" : "");
-                    dot.onclick = () => goToSlide(i);
-                    dots.appendChild(dot);
-                });
-
-                // Jump to the randomly chosen starting slide for this page load
-                const startIdx = pickStartIndex(newsItems);
-                goToSlide(startIdx);
-            }
-
-            function goToSlide(idx) {
-                carouselIndex = (idx + newsItems.length) % newsItems.length;
-                document.getElementById("carouselTrack").style.transform = `translateX(-${carouselIndex * 100}%)`;
-                document
-                    .querySelectorAll(".carousel-dot")
-                    .forEach((d, i) => d.classList.toggle("active", i === carouselIndex));
-            }
-
-            window.carouselPrev = () => goToSlide(carouselIndex - 1);
-            window.carouselNext = () => goToSlide(carouselIndex + 1);
-            // ── Auto-scroll removed ──
-
-            // ─── SERVER STATE ───────────────────────────────────────────
-            let serverData = {};
-            let codeLoaded = false;
-            let serverOnline = true;
-            let countdownInterval = null;
-
-            function checkServerOnlineStatus(downtimes) {
-                const now = new Date();
-                if (!downtimes || downtimes.length === 0) return null;
-
-                for (const dt of downtimes) {
-                    if (!dt.timestamp) continue;
-                    const start = new Date(dt.timestamp);
-                    const end = dt.durationMinutes ? new Date(start.getTime() + dt.durationMinutes * 60000) : null;
-
-                    const started = now >= start;
-                    const finished = end ? now >= end : false;
-
-                    if (started && !finished) {
-                        return { downtime: dt, start, end };
-                    }
-                }
-                return null;
-            }
-
-            function startCountdown(endTime) {
-                if (countdownInterval) clearInterval(countdownInterval);
-                const el = document.getElementById("offlineCountdown");
-                const backAtEl = document.getElementById("offlineBackAt");
-
-                if (!endTime) {
-                    el.style.display = "none";
-                    backAtEl.classList.remove("visible");
-                    return;
-                }
-
-                // Show static "back at HH:MM" label
-                const backAtTime = endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                backAtEl.textContent = `Expected back at ${backAtTime}`;
-                backAtEl.classList.add("visible");
-
-                el.style.display = "inline-block";
-                function tick() {
-                    const diff = Math.max(0, endTime - new Date());
-                    const hrs = Math.floor(diff / 3600000);
-                    const mins = Math.floor((diff % 3600000) / 60000);
-                    const secs = Math.floor((diff % 60000) / 1000);
-                    el.textContent = hrs > 0 ? `Back in ${hrs}h ${mins}m` : `Back in ${mins}m ${secs}s`;
-                    if (diff <= 0) {
-                        clearInterval(countdownInterval);
-                        el.textContent = "Should be back online now — refresh the page!";
-                        backAtEl.classList.remove("visible");
-                    }
-                }
-                tick();
-                countdownInterval = setInterval(tick, 1000);
-            }
-
-            function applyServerOnlineState(activeDowntime) {
-                const offlineBlock = document.getElementById("serverOfflineBlock");
-                const agreeGate = document.getElementById("agreeGate");
-
-                if (activeDowntime) {
-                    serverOnline = false;
-                    offlineBlock.classList.add("visible");
-                    agreeGate.style.display = "none";
-
-                    const dt = activeDowntime.downtime;
-                    document.getElementById("serverOfflineText").textContent =
-                        `${dt.label || "Maintenance"}. The join code is hidden until the server is back online.`;
-
-                    startCountdown(activeDowntime.end);
-                } else {
-                    serverOnline = true;
-                    offlineBlock.classList.remove("visible");
-                    agreeGate.style.display = "block";
-                    if (countdownInterval) clearInterval(countdownInterval);
-                    document.getElementById("offlineBackAt").classList.remove("visible");
-                }
-            }
-
-            // ─── HELPER: format a Date as a readable time string ────────
-            function formatTime(date) {
-                return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-            }
-
-            // ─── JOIN CODE & SERVER INFO ────────────────────────────────
-            async function loadServerInfo() {
-                onSnapshot(doc(db, "serverInfo", "main"), (snap) => {
-                    if (!snap.exists()) return;
-                    serverData = snap.data();
-
-                    // Server IP
-                    const ipEl = document.getElementById("serverIpValue");
-                    if (ipEl) {
-                        ipEl.textContent = serverData.serverIp || "allforonesmp.duckdns.org";
-                    }
-
-                    // Check and apply downtime / online state
-                    const active = checkServerOnlineStatus(serverData.downtimes || []);
-                    applyServerOnlineState(active);
-                    renderDowntimes(serverData.downtimes || []);
-
-                    // Notification banner
-                    renderNotifBanner(serverData.notifBanner || null);
-
-                    codeLoaded = true;
-                });
-            }
-
-            // ─── NOTIFICATION BANNER ────────────────────────────────────
-            function renderNotifBanner(banner) {
-                const el = document.getElementById("notifBanner");
-                const inner = document.getElementById("notifBannerInner");
-                const textEl = document.getElementById("notifBannerText");
-                const btnEl = document.getElementById("notifBannerBtn");
-
-                if (!banner || !banner.enabled || !banner.text) {
-                    el.classList.remove("visible");
-                    return;
-                }
-
-                el.classList.add("visible");
-                inner.style.background = banner.bgColor || "#4a90e2";
-                inner.style.color = banner.textColor || "#ffffff";
-                textEl.textContent = banner.text;
-
-                if (banner.btnText && banner.btnLink) {
-                    btnEl.textContent = banner.btnText;
-                    btnEl.href = banner.btnLink;
-                    btnEl.style.display = "inline-flex";
-                } else {
-                    btnEl.style.display = "none";
-                }
-            }
-
-            // ─── DOWNTIMES ──────────────────────────────────────────────
-            function renderDowntimes(downtimes) {
-                const list = document.getElementById("downtimeList");
-                const alert = document.getElementById("downtimeAlert");
-                const alertText = document.getElementById("downtimeAlertText");
-
-                list.innerHTML = "";
-
-                if (!downtimes || downtimes.length === 0) {
-                    list.innerHTML = '<div class="downtime-empty">No scheduled downtimes.</div>';
-                    alert.classList.remove("visible");
-                    return;
-                }
-
-                const now = new Date();
-                let upcomingAlert = null;
-
-                downtimes.forEach((dt) => {
-                    const item = document.createElement("div");
-                    item.className = "downtime-item";
-
-                    // Build "until HH:MM" text if duration is known
-                    let untilText = "";
-                    if (dt.timestamp && dt.durationMinutes) {
-                        const endTime = new Date(new Date(dt.timestamp).getTime() + dt.durationMinutes * 60000);
-                        untilText = ` · until ${formatTime(endTime)}`;
-                    }
-
-                    item.innerHTML = `
-                        <span style="font-weight:600;color:var(--text-dark);">${dt.label || "Maintenance"}</span>
-                        <span style="color:var(--text-medium);">${dt.time || ""}${untilText}</span>`;
-                    list.appendChild(item);
-
-                    // Only flag as upcoming alert if within 10 hours
-                    if (dt.timestamp) {
-                        const dtDate = new Date(dt.timestamp);
-                        const diffHrs = (dtDate - now) / 36e5;
-                        if (diffHrs >= 0 && diffHrs <= 10) upcomingAlert = dt;
-                    }
-                });
-
-                if (upcomingAlert) {
-                    let untilStr = "";
-                    if (upcomingAlert.timestamp && upcomingAlert.durationMinutes) {
-                        const endTime = new Date(
-                            new Date(upcomingAlert.timestamp).getTime() + upcomingAlert.durationMinutes * 60000
-                        );
-                        untilStr = ` until ${formatTime(endTime)}`;
-                    }
-                    alertText.textContent = `"${upcomingAlert.label || "Maintenance"}" scheduled at ${upcomingAlert.time}${untilStr}. Please make sure you finish what you're doing!`;
-                    alert.classList.add("visible");
-                    document.getElementById("downtimeContainer").classList.add("open");
-                } else {
-                    alert.classList.remove("visible");
-                }
-            }
-
-            window.toggleCodeReveal = function () {
-                const checked = document.getElementById("agreeCheck").checked;
-                const reveal = document.getElementById("codeReveal");
-                if (checked && serverOnline) {
-                    reveal.classList.add("visible");
-                } else {
-                    reveal.classList.remove("visible");
-                }
+            // ── Drawer ───────────────────────────────────────────────────
+            window.toggleDrawer = function () {
+                const open = drawer.classList.toggle("open");
+                hamburger.classList.toggle("open", open);
+                hamburger.setAttribute("aria-expanded", String(open));
             };
-
-            window.toggleDowntime = function () {
-                document.getElementById("downtimeContainer").classList.toggle("open");
+            window.closeDrawer = function () {
+                drawer.classList.remove("open");
+                hamburger.classList.remove("open");
+                hamburger.setAttribute("aria-expanded", "false");
             };
+            document.addEventListener("click", (e) => {
+                if (!drawer.contains(e.target) && !hamburger.contains(e.target)) closeDrawer();
+            });
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") closeDrawer();
+            });
 
-            // ─── LIVE SERVER STATUS PILL ─────────────────────────────────
-            const STALE_THRESHOLD_MS = 50 * 1000; // 50 seconds
-            let liveStatusData = { state: "offline", lastHeartbeat: null, playersOnline: 0, playerList: [] };
-            let statusRecheckInterval = null;
+            // Recompute banner height on resize/orientation change (text can reflow)
+            window.addEventListener("resize", () => {
+                if (window._bannerConfig) applyBanner(window._currentPath);
+            });
 
-            function loadLiveStatus() {
-                onSnapshot(doc(db, "serverStatus", "live"), (snap) => {
-                    if (snap.exists()) {
-                        liveStatusData = snap.data();
-                    } else {
-                        liveStatusData = { state: "offline", lastHeartbeat: null, playersOnline: 0, playerList: [] };
-                    }
-                    renderStatusPill();
-                });
-
-                // Re-check staleness every 5s even if Firestore hasn't pushed a new update,
-                // so a frozen Pi gets flagged as offline once the heartbeat goes stale.
-                if (statusRecheckInterval) clearInterval(statusRecheckInterval);
-                statusRecheckInterval = setInterval(renderStatusPill, 5000);
-            }
-
-            function renderStatusPill() {
-                const dot = document.getElementById("statusDot");
-                const label = document.getElementById("statusLabel");
-                const playersEl = document.getElementById("playerCount");
-                if (!dot || !label || !playersEl) return;
-
-                const rawState = liveStatusData.state || "offline";
-
-                let ageMs = Infinity;
-                const hb = liveStatusData.lastHeartbeat;
-                if (hb) {
-                    const hbMillis = typeof hb.toMillis === "function" ? hb.toMillis() : new Date(hb).getTime();
-                    ageMs = Date.now() - hbMillis;
-                }
-                const isStale = ageMs > STALE_THRESHOLD_MS;
-
-                // "stopping" and "restarting" are intentional states set directly by the
-                // control script, so they should show even if the heartbeat has gone stale
-                // (the Pi may not be heartbeating at all mid-restart).
-                let displayState = rawState;
-                if (isStale && rawState !== "stopping" && rawState !== "restarting") {
-                    displayState = "offline";
-                }
-
-                const stateMap = {
-                    online: { dotClass: "online", text: "Online" },
-                    restarting: { dotClass: "pending", text: "Restarting…" },
-                    stopping: { dotClass: "pending", text: "Stopping…" },
-                    offline: { dotClass: "offline", text: "Offline" }
-                };
-                const s = stateMap[displayState] || stateMap.offline;
-
-                dot.className = "status-dot " + s.dotClass;
-                label.textContent = s.text;
-
-                if (displayState === "online") {
-                    const count = liveStatusData.playersOnline || 0;
-                    const names = liveStatusData.playerList || [];
-                    playersEl.textContent = count > 0 ? `${count} online: ${names.join(", ")}` : "No players online";
-                } else {
-                    playersEl.textContent = "";
-                }
-            }
-
-            loadLiveStatus();
-
-            // ─── INIT ─────────────────────────────────────────────────
-            loadNews();
-            loadServerInfo();
+            navigate("/", null);
         </script>
     </body>
 </html>
