@@ -2,7 +2,8 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta name="theme-color" content="#4a90e2" />
         <title>AllForOne SMP</title>
         <link rel="icon" type="image/x-icon" href="https://allforonesmp.github.io/images/logo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -22,12 +23,19 @@
                 --white: #ffffff;
                 --nav-height: 64px;
                 --banner-height: 0px; /* updated by JS */
+                --safe-top: env(safe-area-inset-top, 0px);
+                --safe-bottom: env(safe-area-inset-bottom, 0px);
+                --safe-left: env(safe-area-inset-left, 0px);
+                --safe-right: env(safe-area-inset-right, 0px);
+                --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+                --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
             }
 
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
+                -webkit-tap-highlight-color: transparent;
             }
 
             html,
@@ -37,6 +45,12 @@
                 overflow: hidden;
                 background: var(--white);
                 font-family: "DM Sans", sans-serif;
+                overscroll-behavior: none;
+            }
+
+            button {
+                touch-action: manipulation;
+                font-size: 16px; /* prevents iOS zoom on focus */
             }
 
             /* ─── NAV ─── */
@@ -45,7 +59,8 @@
                 top: 0;
                 left: 0;
                 right: 0;
-                height: var(--nav-height);
+                height: calc(var(--nav-height) + var(--safe-top));
+                padding-top: var(--safe-top);
                 background: rgba(255, 255, 255, 0.92);
                 backdrop-filter: blur(16px) saturate(180%);
                 -webkit-backdrop-filter: blur(16px) saturate(180%);
@@ -53,7 +68,8 @@
                 box-shadow: 0 2px 24px rgba(74, 144, 226, 0.08);
                 display: flex;
                 align-items: center;
-                padding: 0 2rem;
+                padding-left: max(1.25rem, var(--safe-left));
+                padding-right: max(1.25rem, var(--safe-right));
                 z-index: 100;
             }
             .nav-inner {
@@ -63,6 +79,8 @@
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
+                height: var(--nav-height);
+                min-width: 0;
             }
             .logo {
                 font-family: "Spectral", serif;
@@ -73,8 +91,15 @@
                 letter-spacing: -0.01em;
                 white-space: nowrap;
                 flex-shrink: 0;
-                transition: color 0.2s;
+                transition: color 0.2s var(--ease-standard);
                 cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+            }
+            .logo img {
+                height: 40px;
+                max-width: 100%;
+                display: block;
             }
             .logo:hover {
                 color: var(--dark-blue);
@@ -85,6 +110,8 @@
                 align-items: center;
                 gap: 0.2rem;
                 list-style: none;
+                min-width: 0;
+                flex-wrap: nowrap;
             }
             .nav-links button {
                 color: var(--text-medium);
@@ -97,8 +124,8 @@
                 border-radius: 8px;
                 cursor: pointer;
                 transition:
-                    color 0.18s,
-                    background 0.18s;
+                    color 0.18s var(--ease-standard),
+                    background 0.18s var(--ease-standard);
                 white-space: nowrap;
                 position: relative;
             }
@@ -121,8 +148,8 @@
                 background: var(--primary-blue);
                 border-radius: 2px;
                 transition:
-                    left 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                    right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    left 0.28s var(--ease-out),
+                    right 0.28s var(--ease-out);
             }
             .nav-links button.active::after {
                 left: 12px;
@@ -139,21 +166,23 @@
                 background: none;
                 border: none;
                 cursor: pointer;
-                padding: 0.5rem;
+                padding: 0.6rem;
                 border-radius: 8px;
-                transition: background 0.18s;
+                transition: background 0.18s var(--ease-standard);
                 flex-shrink: 0;
+                min-width: 44px;
+                min-height: 44px;
             }
             .hamburger:hover {
                 background: var(--lighter-blue);
             }
             .hamburger span {
                 display: block;
-                width: 24px;
+                width: 22px;
                 height: 2.5px;
                 background: var(--text-medium);
                 border-radius: 2px;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.32s var(--ease-standard);
                 transform-origin: center;
             }
             .hamburger.open span:nth-child(1) {
@@ -170,40 +199,45 @@
             /* ─── NOTIFICATION BANNER ─── */
             #notifBanner {
                 position: fixed;
-                top: var(--nav-height);
+                top: calc(var(--nav-height) + var(--safe-top));
                 left: 0;
                 right: 0;
                 z-index: 98;
                 overflow: hidden;
                 max-height: 0;
                 transition:
-                    max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                    opacity 0.3s ease;
+                    max-height 0.42s var(--ease-standard),
+                    opacity 0.32s ease;
                 opacity: 0;
+                will-change: max-height, opacity;
             }
             #notifBanner.visible {
-                max-height: 80px;
+                max-height: 160px;
                 opacity: 1;
             }
             .banner-inner {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                gap: 1rem;
-                padding: 0.7rem 2rem;
+                flex-wrap: wrap;
+                gap: 0.5rem 1rem;
+                padding: 0.7rem 3rem;
+                padding-left: max(3rem, calc(var(--safe-left) + 1rem));
+                padding-right: max(3rem, calc(var(--safe-right) + 1rem));
                 font-size: 0.95rem;
                 font-weight: 500;
                 min-height: 44px;
                 position: relative;
             }
             .banner-text {
-                flex: 1;
+                flex: 1 1 auto;
                 text-align: center;
+                min-width: 120px;
+                word-break: break-word;
             }
             .banner-btn {
                 display: inline-block;
                 padding: 0.35rem 1rem;
-                margin: auto;
                 border-radius: 20px;
                 font-size: 0.85rem;
                 font-weight: 700;
@@ -213,8 +247,8 @@
                 white-space: nowrap;
                 flex-shrink: 0;
                 transition:
-                    opacity 0.2s,
-                    transform 0.15s;
+                    opacity 0.2s var(--ease-standard),
+                    transform 0.15s var(--ease-standard);
                 text-decoration: none;
             }
             .banner-btn:hover {
@@ -223,17 +257,17 @@
             }
             .banner-close {
                 position: absolute;
-                right: 1rem;
-                top: 50%;
-                margin: auto;
-                transform: translateY(-50%);
+                right: max(0.5rem, var(--safe-right));
+                top: 0.6rem;
                 background: none;
                 border: none;
                 cursor: pointer;
                 font-size: 1.1rem;
                 opacity: 0.6;
-                padding: 0.25rem;
-                transition: opacity 0.2s;
+                padding: 0.4rem;
+                min-width: 32px;
+                min-height: 32px;
+                transition: opacity 0.2s var(--ease-standard);
             }
             .banner-close:hover {
                 opacity: 1;
@@ -242,7 +276,7 @@
             /* ─── MOBILE DRAWER ─── */
             .drawer {
                 position: fixed;
-                top: var(--nav-height);
+                top: calc(var(--nav-height) + var(--safe-top));
                 left: 0;
                 right: 0;
                 background: rgba(255, 255, 255, 0.97);
@@ -253,17 +287,19 @@
                 overflow: hidden;
                 max-height: 0;
                 transition:
-                    max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1),
-                    opacity 0.28s ease;
+                    max-height 0.36s var(--ease-standard),
+                    opacity 0.26s ease;
                 opacity: 0;
+                will-change: max-height, opacity;
             }
             .drawer.open {
-                max-height: 320px;
+                max-height: 420px;
                 opacity: 1;
+                overflow-y: auto;
             }
             .drawer-links {
                 list-style: none;
-                padding: 0.75rem 1rem 1rem;
+                padding: 0.75rem max(1rem, var(--safe-left)) calc(1rem + var(--safe-bottom));
                 display: flex;
                 flex-direction: column;
                 gap: 0.25rem;
@@ -277,14 +313,16 @@
                 font-weight: 500;
                 font-size: 1.05rem;
                 color: var(--text-medium);
-                padding: 0.7rem 1rem;
+                padding: 0.8rem 1rem;
                 border-radius: 10px;
                 cursor: pointer;
+                min-height: 44px;
                 transition:
-                    color 0.18s,
-                    background 0.18s;
+                    color 0.18s var(--ease-standard),
+                    background 0.18s var(--ease-standard);
             }
-            .drawer-links button:hover {
+            .drawer-links button:hover,
+            .drawer-links button:active {
                 color: var(--primary-blue);
                 background: var(--lighter-blue);
             }
@@ -297,39 +335,46 @@
             /* ─── CONTENT AREA ─── */
             .content-shell {
                 position: fixed;
-                top: calc(var(--nav-height) + var(--banner-height));
+                top: calc(var(--nav-height) + var(--safe-top) + var(--banner-height));
                 left: 0;
                 right: 0;
                 bottom: 0;
                 overflow: hidden;
-                transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: top 0.42s var(--ease-standard);
             }
 
             .frame-slot {
                 position: absolute;
                 inset: 0;
                 opacity: 0;
-                transform: translateY(18px) scale(0.985);
+                transform: translateY(14px) scale(0.99);
                 transition:
-                    opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1),
-                    transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+                    opacity 0.4s var(--ease-out),
+                    transform 0.4s var(--ease-out);
                 pointer-events: none;
+                will-change: opacity, transform;
             }
             .frame-slot.visible {
                 opacity: 1;
                 transform: translateY(0) scale(1);
                 pointer-events: auto;
+                z-index: 2;
             }
             .frame-slot.exit {
                 opacity: 0;
-                transform: translateY(-10px) scale(1.01);
+                transform: translateY(-8px) scale(1.005);
                 pointer-events: none;
+                z-index: 1;
+                transition:
+                    opacity 0.3s var(--ease-standard),
+                    transform 0.3s var(--ease-standard);
             }
             .frame-slot iframe {
                 width: 100%;
                 height: 100%;
                 border: none;
                 display: block;
+                background: var(--white);
             }
 
             /* ─── LOADING SHIMMER ─── */
@@ -342,7 +387,10 @@
                 justify-content: center;
                 background: var(--lighter-blue);
                 gap: 1rem;
-                transition: opacity 0.3s;
+                transition: opacity 0.3s var(--ease-standard);
+                padding: 1rem;
+                text-align: center;
+                z-index: 0;
             }
             .frame-loader.hidden {
                 opacity: 0;
@@ -355,6 +403,7 @@
                 border-top-color: var(--primary-blue);
                 border-radius: 50%;
                 animation: spin 0.8s linear infinite;
+                flex-shrink: 0;
             }
             @keyframes spin {
                 to {
@@ -381,7 +430,7 @@
                 border-radius: 50%;
                 background: rgba(74, 144, 226, 0.12);
                 transform: scale(0);
-                animation: rippleOut 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+                animation: rippleOut 0.55s var(--ease-standard) forwards;
             }
             @keyframes rippleOut {
                 to {
@@ -390,9 +439,18 @@
                 }
             }
 
+            /* ─── RESPONSIVE BREAKPOINTS ─── */
+            @media (max-width: 900px) {
+                .nav-links button {
+                    font-size: 0.9rem;
+                    padding: 0.4rem 0.65rem;
+                }
+            }
+
             @media (max-width: 700px) {
                 nav {
-                    padding: 0 1rem;
+                    padding-left: max(1rem, var(--safe-left));
+                    padding-right: max(1rem, var(--safe-right));
                 }
                 .nav-links {
                     display: none;
@@ -400,13 +458,63 @@
                 .hamburger {
                     display: flex;
                 }
+                .logo img {
+                    height: 34px;
+                }
+                .banner-inner {
+                    padding: 0.65rem 2.75rem;
+                    padding-left: max(2.75rem, calc(var(--safe-left) + 0.75rem));
+                    padding-right: max(2.75rem, calc(var(--safe-right) + 0.75rem));
+                    font-size: 0.88rem;
+                }
+                .banner-btn {
+                    font-size: 0.8rem;
+                    padding: 0.3rem 0.85rem;
+                }
+            }
+
+            @media (max-width: 400px) {
+                .logo img {
+                    height: 28px;
+                }
+                nav {
+                    padding-left: max(0.75rem, var(--safe-left));
+                    padding-right: max(0.75rem, var(--safe-right));
+                }
+                .banner-text {
+                    font-size: 0.82rem;
+                }
+            }
+
+            /* Landscape phones: shrink nav a bit to save vertical space */
+            @media (max-height: 420px) and (orientation: landscape) {
+                :root {
+                    --nav-height: 52px;
+                }
+                .logo img {
+                    height: 30px;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                *,
+                *::before,
+                *::after {
+                    animation-duration: 0.01ms !important;
+                    transition-duration: 0.01ms !important;
+                }
             }
         </style>
     </head>
     <body>
         <nav>
             <div class="nav-inner">
-                <span class="logo" onclick="navigate('/', event)">AllForOne SMP</span>
+                <a href="/" style="display: contents">
+                    <span class="logo" onclick="navigate('/', event)">
+                        <img src="https://allforonesmp.github.io/images/logo.png" alt="AllForOne SMP Logo" />
+                    </span>
+                </a>
+
                 <ul class="nav-links" id="navLinks">
                     <li><button data-path="/" onclick="navigate('/', event)">Home</button></li>
                     <li><button data-path="/mods" onclick="navigate('/mods', event)">Mods</button></li>
@@ -415,7 +523,7 @@
                     <li><button data-path="/post" onclick="navigate('/post', event)">Post</button></li>
                     <li><button data-path="/messages" onclick="navigate('/messages', event)">Message</button></li>
                 </ul>
-                <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" onclick="toggleDrawer()">
+                <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" onclick="toggleDrawer()">
                     <span></span><span></span><span></span>
                 </button>
             </div>
@@ -425,8 +533,7 @@
         <div id="notifBanner">
             <div class="banner-inner" id="bannerInner">
                 <span class="banner-text" id="bannerText"></span>
-                <a class="banner-btn" id="bannerBtn" href="#" target="_blank" style="display: none"></a>
-                <br />
+                <a class="banner-btn" id="bannerBtn" href="#" target="_blank" rel="noopener" style="display: none"></a>
                 <button class="banner-close" id="bannerClose" onclick="dismissBanner()" aria-label="Dismiss">✕</button>
             </div>
         </div>
@@ -435,19 +542,59 @@
         <div class="drawer" id="drawer">
             <ul class="drawer-links" id="drawerLinks">
                 <li><button data-path="/" onclick="navigate('/', event); closeDrawer()">Home</button></li>
+                <li><button data-path="/mods" onclick="navigate('/mods', event); closeDrawer()">Mods</button></li>
                 <li><button data-path="/rules" onclick="navigate('/rules', event); closeDrawer()">Rules</button></li>
-                <li>
-                    <button data-path="/profile" onclick="navigate('/profile', event); closeDrawer()">Profile</button>
-                </li>
+                <li><button data-path="/profile" onclick="navigate('/profile', event); closeDrawer()">Profile</button></li>
                 <li><button data-path="/post" onclick="navigate('/post', event); closeDrawer()">Post</button></li>
-                <li>
-                    <button data-path="/messages" onclick="navigate('/messages', event); closeDrawer()">Message</button>
-                </li>
+                <li><button data-path="/messages" onclick="navigate('/messages', event); closeDrawer()">Message</button></li>
             </ul>
         </div>
 
         <div class="ripple-overlay" id="rippleOverlay"></div>
         <div class="content-shell" id="contentShell"></div>
+
+        <script>
+            // ── Recursion guard ─────────────────────────────────────────
+            // If this shell is itself running inside one of its own
+            // iframes (i.e. a route page like main.html mistakenly
+            // contains a full copy of this navbar), stop immediately
+            // instead of spawning another nested navbar+iframe forever.
+            (function () {
+                try {
+                    var depth = 0;
+                    var win = window;
+                    while (win !== win.parent) {
+                        try {
+                            // Only counts if the parent frame is running the
+                            // same app (same origin required to introspect it).
+                            if (win.parent.document && win.parent.document.getElementById("contentShell")) {
+                                depth++;
+                            }
+                        } catch (_) {
+                            // Cross-origin parent — can't introspect, so we
+                            // can't confirm nesting; stop counting here.
+                            break;
+                        }
+                        win = win.parent;
+                        if (depth > 2) break; // safety bound on the walk itself
+                    }
+                    if (depth >= 1) {
+                        document.documentElement.innerHTML =
+                            '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#4a5568;text-align:center;padding:2rem;">' +
+                            "This page (" + window.location.pathname + ") contains the site navbar and was loaded inside another navbar frame, " +
+                            "which would nest infinitely. Remove the &lt;nav&gt;/iframe-shell markup from this page \u2014 " +
+                            "route pages should only contain their own content." +
+                            "</div>";
+                        throw new Error("AllForOne SMP: blocked recursive navbar nesting");
+                    }
+                } catch (e) {
+                    if (e && e.message && e.message.indexOf("blocked recursive navbar nesting") !== -1) throw e;
+                    // Any other error (e.g. sandboxed iframe with no parent
+                    // access at all) just means we can't check — proceed
+                    // normally rather than breaking legitimate top-level loads.
+                }
+            })();
+        </script>
 
         <!-- Firebase -->
         <script type="module">
@@ -475,12 +622,12 @@
                 if (!snap.exists()) return;
                 const data = snap.data();
                 window._bannerConfig = data.notificationBanner || null;
-                applyBanner(window._currentPath);
+                if (window.applyBanner) window.applyBanner(window._currentPath);
             });
         </script>
 
         <script>
-            const BASE = "https://allforonesmp.github.io/";
+            const BASE = "https://allforonesmp.github.io";
             const ROUTES = {
                 "/": BASE + "/main.html",
                 "/mods": BASE + "/mods",
@@ -491,23 +638,29 @@
             };
             const PAGE_TITLES = {
                 "/": "AllForOne SMP",
-                "/rules": "Mods – AllForOne SMP",
+                "/mods": "Mods – AllForOne SMP",
                 "/rules": "Rules – AllForOne SMP",
                 "/profile": "Profile – AllForOne SMP",
                 "/post": "Post – AllForOne SMP",
                 "/messages": "Messages – AllForOne SMP"
             };
+            const REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes
+            const EXIT_DURATION = 320; // must be >= slot exit transition time
 
             const shell = document.getElementById("contentShell");
             const overlay = document.getElementById("rippleOverlay");
             const drawer = document.getElementById("drawer");
             const hamburger = document.getElementById("hamburgerBtn");
+            const notifBanner = document.getElementById("notifBanner");
+            const bannerInner = document.getElementById("bannerInner");
 
             let currentPath = null;
             let frames = {};
             let activeSlot = null;
             let refreshTimers = {};
+            let exitTimeout = null;
             let bannerDismissed = false;
+            let bannerResizeObserver = null;
 
             window._currentPath = "/";
             window._bannerConfig = null;
@@ -515,23 +668,24 @@
             // ── Banner ──────────────────────────────────────────────────
             function applyBanner(path) {
                 const cfg = window._bannerConfig;
-                const banner = document.getElementById("notifBanner");
-                const bannerInner = document.getElementById("bannerInner");
                 const bannerText = document.getElementById("bannerText");
                 const bannerBtn = document.getElementById("bannerBtn");
                 const bannerClose = document.getElementById("bannerClose");
 
-                if (!cfg || !cfg.enabled || bannerDismissed) {
-                    banner.classList.remove("visible");
+                const hide = () => {
+                    notifBanner.classList.remove("visible");
                     updateBannerHeight(0);
+                };
+
+                if (!cfg || !cfg.enabled || bannerDismissed) {
+                    hide();
                     return;
                 }
 
                 // Check if this page should show the banner
                 const pages = cfg.pages || [];
                 if (pages.length > 0 && !pages.includes(path)) {
-                    banner.classList.remove("visible");
-                    updateBannerHeight(0);
+                    hide();
                     return;
                 }
 
@@ -552,11 +706,26 @@
                     bannerBtn.style.display = "none";
                 }
 
-                banner.classList.add("visible");
-                // Measure real height after layout
+                notifBanner.classList.add("visible");
+                // Measure real height after layout, and keep it accurate if
+                // the text wraps differently (e.g. on resize/zoom) by
+                // observing the inner element while the banner is visible.
                 requestAnimationFrame(() => {
                     updateBannerHeight(bannerInner.offsetHeight);
                 });
+                observeBannerSize();
+            }
+            window.applyBanner = applyBanner;
+
+            function observeBannerSize() {
+                if (bannerResizeObserver || typeof ResizeObserver === "undefined") return;
+                bannerResizeObserver = new ResizeObserver((entries) => {
+                    if (!notifBanner.classList.contains("visible")) return;
+                    for (const entry of entries) {
+                        updateBannerHeight(entry.contentRect.height);
+                    }
+                });
+                bannerResizeObserver.observe(bannerInner);
             }
 
             function updateBannerHeight(h) {
@@ -565,18 +734,22 @@
 
             window.dismissBanner = function () {
                 bannerDismissed = true;
-                document.getElementById("notifBanner").classList.remove("visible");
+                notifBanner.classList.remove("visible");
                 updateBannerHeight(0);
             };
 
             // ── Page title ───────────────────────────────────────────────
             function updateTitle(path) {
-                // Try reading iframe title; fallback to our map
+                // Try reading iframe title; fallback to our map.
+                // Same-origin/cross-origin access can throw — always fall
+                // back gracefully instead of leaving a stale title.
                 const frame = frames[path];
                 let iframeTitle = null;
                 try {
                     iframeTitle = frame?.iframe?.contentDocument?.title;
-                } catch (_) {}
+                } catch (_) {
+                    iframeTitle = null;
+                }
                 document.title = iframeTitle && iframeTitle.trim() ? iframeTitle : PAGE_TITLES[path] || "AllForOne SMP";
             }
 
@@ -585,11 +758,24 @@
                 const r = document.createElement("div");
                 r.className = "ripple";
                 const size = 60;
-                const x = (e?.clientX ?? window.innerWidth / 2) - size / 2;
-                const y = (e?.clientY ?? window.innerHeight / 2) - size / 2;
+                // Use the button's own center when triggered via keyboard/
+                // synthetic events (no clientX/Y), rather than always
+                // falling back to viewport center.
+                let x, y;
+                if (e && typeof e.clientX === "number" && (e.clientX !== 0 || e.clientY !== 0)) {
+                    x = e.clientX - size / 2;
+                    y = e.clientY - size / 2;
+                } else if (e && e.target && e.target.getBoundingClientRect) {
+                    const rect = e.target.getBoundingClientRect();
+                    x = rect.left + rect.width / 2 - size / 2;
+                    y = rect.top + rect.height / 2 - size / 2;
+                } else {
+                    x = window.innerWidth / 2 - size / 2;
+                    y = window.innerHeight / 2 - size / 2;
+                }
                 r.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;`;
                 overlay.appendChild(r);
-                r.addEventListener("animationend", () => r.remove());
+                r.addEventListener("animationend", () => r.remove(), { once: true });
             }
 
             // ── Frame creation ───────────────────────────────────────────
@@ -607,7 +793,9 @@
                 const iframe = document.createElement("iframe");
                 iframe.src = ROUTES[path];
                 iframe.style.opacity = "0";
-                iframe.style.transition = "opacity 0.35s";
+                iframe.style.transition = "opacity 0.35s var(--ease-standard)";
+                iframe.setAttribute("loading", "eager");
+                iframe.setAttribute("title", PAGE_TITLES[path] || "AllForOne SMP");
 
                 iframe.addEventListener("load", () => {
                     iframe.style.opacity = "1";
@@ -621,26 +809,28 @@
                 slot.appendChild(iframe);
                 shell.appendChild(slot);
 
-                frames[path] = { slot, iframe };
+                frames[path] = { slot, iframe, loader };
                 startRefreshTimer(path);
                 return frames[path];
             }
 
-            // ── Auto-refresh every 2 minutes ─────────────────────────────
+            // ── Auto-refresh every 2 minutes (paused while tab hidden) ────
             function startRefreshTimer(path) {
                 if (refreshTimers[path]) clearInterval(refreshTimers[path]);
-                refreshTimers[path] = setInterval(
-                    () => {
-                        const frame = frames[path];
-                        if (!frame) return;
-                        const loader = frame.slot.querySelector(".frame-loader");
+                refreshTimers[path] = setInterval(() => {
+                    if (document.hidden) return; // don't thrash background tabs
+                    const frame = frames[path];
+                    if (!frame) return;
+                    // Only show the loading spinner for a refresh if this is
+                    // the page currently on screen — refreshing a hidden
+                    // frame shouldn't flash a loader nobody sees, but the
+                    // reload should still happen so it's fresh when visited.
+                    if (path === currentPath) {
                         frame.iframe.style.opacity = "0";
-                        if (loader) loader.classList.remove("hidden");
-                        // Force reload by resetting src
-                        frame.iframe.src = ROUTES[path];
-                    },
-                    2 * 60 * 1000
-                ); // 2 minutes
+                        frame.loader.classList.remove("hidden");
+                    }
+                    frame.iframe.src = ROUTES[path];
+                }, REFRESH_INTERVAL);
             }
 
             function setActiveButtons(path) {
@@ -650,21 +840,39 @@
             }
 
             window.navigate = function (path, e) {
-                if (path === currentPath) return;
+                if (!ROUTES[path]) return;
+                if (path === currentPath) {
+                    closeDrawer();
+                    return;
+                }
                 spawnRipple(e);
                 bannerDismissed = false; // reset dismiss on navigation
 
-                if (activeSlot) {
-                    activeSlot.classList.remove("visible");
-                    activeSlot.classList.add("exit");
-                    const old = activeSlot;
-                    setTimeout(() => old.classList.remove("exit"), 450);
+                // Clear any pending cleanup from a previous rapid nav so
+                // slots don't get stuck mid-transition or removed early.
+                if (exitTimeout) {
+                    clearTimeout(exitTimeout);
+                    exitTimeout = null;
+                }
+
+                const outgoing = activeSlot;
+                if (outgoing) {
+                    outgoing.classList.remove("visible");
+                    outgoing.classList.add("exit");
+                    exitTimeout = setTimeout(() => {
+                        outgoing.classList.remove("exit");
+                        exitTimeout = null;
+                    }, EXIT_DURATION);
                 }
 
                 const frame = getOrCreateFrame(path);
-                setTimeout(() => {
+                // Force reflow before adding "visible" so the enter
+                // transition reliably fires even if the slot was just
+                // created and browsers coalesce back-to-back class changes.
+                void frame.slot.offsetWidth;
+                requestAnimationFrame(() => {
                     frame.slot.classList.add("visible");
-                }, 60);
+                });
 
                 activeSlot = frame.slot;
                 currentPath = path;
@@ -678,13 +886,42 @@
             window.toggleDrawer = function () {
                 const open = drawer.classList.toggle("open");
                 hamburger.classList.toggle("open", open);
+                hamburger.setAttribute("aria-expanded", String(open));
             };
             window.closeDrawer = function () {
+                if (!drawer.classList.contains("open")) return;
                 drawer.classList.remove("open");
                 hamburger.classList.remove("open");
+                hamburger.setAttribute("aria-expanded", "false");
             };
             document.addEventListener("click", (e) => {
                 if (!drawer.contains(e.target) && !hamburger.contains(e.target)) closeDrawer();
+            });
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") closeDrawer();
+            });
+
+            // Recompute banner height on resize/orientation change (text can reflow).
+            // Debounced so rapid resize events (e.g. dragging a window edge)
+            // don't spam layout reads.
+            let resizeRAF = null;
+            window.addEventListener("resize", () => {
+                if (!window._bannerConfig) return;
+                if (resizeRAF) cancelAnimationFrame(resizeRAF);
+                resizeRAF = requestAnimationFrame(() => {
+                    applyBanner(window._currentPath);
+                    resizeRAF = null;
+                });
+            });
+
+            // Pause background iframe refresh cycles cleanly when the tab
+            // becomes hidden/visible instead of relying only on the guard
+            // inside the interval callback — avoids a burst of "catch up"
+            // reloads firing the instant the tab regains focus.
+            document.addEventListener("visibilitychange", () => {
+                if (!document.hidden && currentPath && frames[currentPath]) {
+                    updateTitle(currentPath);
+                }
             });
 
             navigate("/", null);
