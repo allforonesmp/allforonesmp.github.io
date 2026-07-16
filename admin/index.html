@@ -3,11 +3,12 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>AllForOne SMP – Admin Panel</title>
+        <title>AllForOne SMP | Admin</title>
+        <link rel="icon" type="image/x-icon" href="https://allforonesmp.github.io/images/logo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Spectral:wght@600;700&family=Bebas+Neue&display=swap"
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Spectral:wght@600;700&family=Bebas+Neue&display=swap"
             rel="stylesheet" />
         <style>
             :root {
@@ -15,6 +16,7 @@
                 --light-blue: #e8f4f8;
                 --lighter-blue: #f5fbfd;
                 --dark-blue: #2c5f8d;
+                --accent-blue: #5ba3f5;
                 --text-dark: #1a2332;
                 --text-medium: #4a5568;
                 --text-light: #718096;
@@ -22,265 +24,725 @@
                 --white: #ffffff;
                 --error: #e74c3c;
                 --success: #27ae60;
-                --admin-gold: #f6c90e;
-                --admin-gold-dark: #c9a800;
-                --admin-gradient: linear-gradient(135deg, #f6c90e 0%, #ff8c00 100%);
-                --shadow-sm: 0 1px 3px rgba(74,144,226,0.08);
-                --shadow-md: 0 4px 12px rgba(74,144,226,0.12);
-                --shadow-lg: 0 10px 30px rgba(74,144,226,0.15);
+                --shadow-sm: 0 1px 3px rgba(74, 144, 226, 0.08);
+                --shadow-md: 0 4px 12px rgba(74, 144, 226, 0.12);
+                --shadow-lg: 0 10px 30px rgba(74, 144, 226, 0.15);
             }
-            * { margin: 0; padding: 0; box-sizing: border-box; }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
             body {
                 font-family: "DM Sans", sans-serif;
-                background: linear-gradient(135deg, var(--lighter-blue), var(--light-blue));
-                color: var(--text-dark); min-height: 100vh;
+                background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
+                color: var(--text-dark);
+                min-height: 100vh;
+                line-height: 1.6;
             }
-            h1, h2, h3, h4 { font-family: "Spectral", serif; font-weight: 700; }
+            h1, h2, h3, h4 {
+                font-family: "Spectral", serif;
+                font-weight: 700;
+            }
 
             /* ── LOGIN ── */
-            .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-            .login-card {
-                background: var(--white); border-radius: 20px; padding: 3rem;
-                width: 90%; max-width: 420px;
-                box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); text-align: center;
+            .login-screen {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1.5rem;
             }
-            .login-card h2 { color: var(--admin-gold-dark); font-size: 1.8rem; margin-bottom: 0.5rem; }
-            .login-card p { color: var(--text-medium); margin-bottom: 2rem; }
+            .login-card {
+                background: var(--white);
+                border-radius: 20px;
+                padding: 2.75rem;
+                width: 100%;
+                max-width: 420px;
+                box-shadow: var(--shadow-lg);
+                border: 1px solid var(--border-color);
+                text-align: center;
+            }
+            .login-card h2 {
+                color: var(--primary-blue);
+                font-size: 1.8rem;
+                margin-bottom: 0.4rem;
+            }
+            .login-card p {
+                color: var(--text-medium);
+                margin-bottom: 2rem;
+            }
             .login-card input {
-                width: 100%; padding: 0.875rem 1rem;
-                border: 2px solid var(--border-color); border-radius: 10px;
-                font-size: 1rem; font-family: "DM Sans", sans-serif;
-                background: var(--lighter-blue); margin-bottom: 1rem;
+                width: 100%;
+                padding: 0.875rem 1rem;
+                border: 2px solid var(--border-color);
+                border-radius: 10px;
+                font-size: 1rem;
+                font-family: "DM Sans", sans-serif;
+                background: var(--lighter-blue);
+                margin-bottom: 1rem;
                 transition: border-color 0.2s;
             }
-            .login-card input:focus { outline: none; border-color: var(--primary-blue); }
-            .login-error { color: var(--error); font-size: 0.9rem; margin-top: 0.5rem; display: none; }
-
-            #adminApp { display: none; }
-
-            header {
-                background: var(--text-dark); padding: 1rem 2rem;
-                display: flex; justify-content: space-between; align-items: center;
-                box-shadow: 0 2px 0 var(--admin-gold);
+            .login-card input:focus {
+                outline: none;
+                border-color: var(--primary-blue);
             }
-            header .logo { font-family: "Spectral", serif; font-size: 1.5rem; color: var(--admin-gold); }
-            header span { color: #a0aec0; font-size: 0.9rem; }
-            header button { background: var(--error); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+            .login-error {
+                color: var(--error);
+                font-size: 0.9rem;
+                margin-top: 0.5rem;
+                display: none;
+            }
 
-            .admin-layout { max-width: 1100px; margin: 2rem auto; padding: 0 2rem; display: flex; flex-direction: column; gap: 2rem; }
+            #adminApp {
+                display: none;
+            }
+
+            /* ── HEADER ── (mirrors hero-banner treatment) */
+            .admin-header {
+                background: var(--white);
+                border-bottom: 1px solid var(--border-color);
+                padding: 1.1rem 2rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: var(--shadow-sm);
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+            .admin-header .logo {
+                font-family: "Spectral", serif;
+                font-size: 1.4rem;
+                color: var(--primary-blue);
+            }
+            .admin-header .logo span {
+                color: var(--text-light);
+                font-family: "DM Sans", sans-serif;
+                font-weight: 400;
+                font-size: 0.95rem;
+                margin-left: 0.6rem;
+            }
+            .logout-btn {
+                background: var(--lighter-blue);
+                color: var(--text-medium);
+                border: 2px solid var(--border-color);
+                padding: 0.5rem 1.1rem;
+                border-radius: 10px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                font-weight: 600;
+                font-family: "DM Sans", sans-serif;
+                transition: all 0.18s;
+            }
+            .logout-btn:hover {
+                background: var(--light-blue);
+                border-color: var(--primary-blue);
+                color: var(--primary-blue);
+            }
+
+            .admin-layout {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 2rem;
+                display: flex;
+                flex-direction: column;
+                gap: 2.5rem;
+            }
 
             .section-title {
                 font-family: "Bebas Neue", sans-serif;
-                font-size: 2rem; letter-spacing: 0.08em;
-                color: var(--admin-gold-dark); margin-bottom: 1.25rem;
-                display: flex; align-items: center; gap: 0.75rem;
+                font-size: 2rem;
+                letter-spacing: 0.08em;
+                color: var(--primary-blue);
+                margin-bottom: 1.25rem;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
             }
-            .section-title::after { content: ""; flex: 1; height: 2px; background: linear-gradient(to right, var(--admin-gold), transparent); }
-
-            .card { background: var(--white); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-md); border: 1px solid var(--border-color); }
-            .card.gold-border { border: 2px solid var(--admin-gold); background: linear-gradient(135deg, #fffbe6, #fff9d6); }
-            .card.purple-border { border: 2px solid #9b59b6; background: linear-gradient(135deg, #f9f0ff, #f3e8ff); }
-
-            .form-group { margin-bottom: 1.25rem; }
-            label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; color: var(--text-dark); }
-            input[type="text"], input[type="url"], input[type="number"], input[type="datetime-local"], input[type="color"], textarea {
-                width: 100%; padding: 0.75rem 1rem;
-                border: 2px solid var(--border-color); border-radius: 10px;
-                font-size: 0.95rem; font-family: "DM Sans", sans-serif;
-                background: var(--lighter-blue); transition: border-color 0.2s;
+            .section-title::after {
+                content: "";
+                flex: 1;
+                height: 2px;
+                background: linear-gradient(to right, var(--primary-blue), transparent);
             }
-            input[type="color"] { padding: 0.3rem 0.5rem; height: 46px; cursor: pointer; }
-            input:focus, textarea:focus { outline: none; border-color: var(--primary-blue); background: var(--white); }
-            textarea { resize: vertical; min-height: 90px; }
 
-            .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; font-family: "DM Sans", sans-serif; transition: all 0.2s; }
-            .btn-primary { background: var(--primary-blue); color: white; }
-            .btn-primary:hover { background: var(--dark-blue); transform: translateY(-1px); }
-            .btn-gold { background: var(--admin-gradient); color: #1a1a1a; }
-            .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(246,201,14,0.4); }
-            .btn-danger { background: var(--error); color: white; padding: 0.4rem 0.875rem; font-size: 0.85rem; border-radius: 8px; }
-            .btn-danger:hover { background: #c0392b; }
-            .btn-success { background: var(--success); color: white; }
-            .btn-success:hover { background: #1e8449; transform: translateY(-1px); }
-            .btn-purple { background: #9b59b6; color: white; }
-            .btn-purple:hover { background: #7d3c98; transform: translateY(-1px); }
+            .card {
+                background: var(--white);
+                border-radius: 16px;
+                padding: 2rem;
+                box-shadow: var(--shadow-md);
+                border: 1px solid var(--border-color);
+            }
+
+            .form-group {
+                margin-bottom: 1.25rem;
+            }
+            label {
+                display: block;
+                margin-bottom: 0.4rem;
+                font-weight: 500;
+                font-size: 0.9rem;
+                color: var(--text-dark);
+            }
+            input[type="text"],
+            input[type="url"],
+            input[type="number"],
+            input[type="datetime-local"],
+            input[type="color"],
+            textarea,
+            select {
+                width: 100%;
+                padding: 0.75rem 1rem;
+                border: 2px solid var(--border-color);
+                border-radius: 10px;
+                font-size: 0.95rem;
+                font-family: "DM Sans", sans-serif;
+                background: var(--lighter-blue);
+                transition: border-color 0.2s;
+            }
+            input[type="color"] {
+                padding: 0.3rem 0.5rem;
+                height: 46px;
+                cursor: pointer;
+            }
+            input:focus,
+            textarea:focus,
+            select:focus {
+                outline: none;
+                border-color: var(--primary-blue);
+                background: var(--white);
+            }
+            textarea {
+                resize: vertical;
+                min-height: 90px;
+            }
+
+            .btn {
+                padding: 0.75rem 1.5rem;
+                border: none;
+                border-radius: 10px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                font-family: "DM Sans", sans-serif;
+                transition: all 0.2s;
+            }
+            .btn-primary {
+                background: var(--primary-blue);
+                color: white;
+            }
+            .btn-primary:hover {
+                background: var(--dark-blue);
+                transform: translateY(-1px);
+            }
+            .btn-primary:disabled {
+                background: #a9c8ea;
+                cursor: default;
+                transform: none;
+            }
+            .btn-outline {
+                background: var(--white);
+                color: var(--primary-blue);
+                border: 2px solid var(--border-color);
+            }
+            .btn-outline:hover {
+                border-color: var(--primary-blue);
+                background: var(--lighter-blue);
+            }
+            .btn-danger {
+                background: var(--white);
+                color: var(--error);
+                border: 2px solid var(--border-color);
+                padding: 0.4rem 0.875rem;
+                font-size: 0.85rem;
+                border-radius: 8px;
+            }
+            .btn-danger:hover {
+                background: #fdeeec;
+                border-color: var(--error);
+            }
+            .btn-success {
+                background: var(--success);
+                color: white;
+            }
+            .btn-success:hover {
+                background: #1e8449;
+                transform: translateY(-1px);
+            }
+            .btn-small {
+                padding: 0.4rem 0.875rem;
+                font-size: 0.85rem;
+                border-radius: 8px;
+            }
 
             /* Toggle switch */
-            .toggle-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
-            .toggle-label { font-weight: 600; font-size: 0.95rem; color: var(--text-dark); }
-            .toggle-switch { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
-            .toggle-switch input { opacity: 0; width: 0; height: 0; }
+            .toggle-row {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1.25rem;
+            }
+            .toggle-label {
+                font-weight: 600;
+                font-size: 0.95rem;
+                color: var(--text-dark);
+            }
+            .toggle-switch {
+                position: relative;
+                width: 52px;
+                height: 28px;
+                flex-shrink: 0;
+            }
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
             .toggle-slider {
-                position: absolute; inset: 0;
-                background: #ccc; border-radius: 28px; cursor: pointer;
+                position: absolute;
+                inset: 0;
+                background: #ccc;
+                border-radius: 28px;
+                cursor: pointer;
                 transition: background 0.25s;
             }
             .toggle-slider::before {
-                content: ""; position: absolute;
-                height: 22px; width: 22px; left: 3px; bottom: 3px;
-                background: white; border-radius: 50%;
+                content: "";
+                position: absolute;
+                height: 22px;
+                width: 22px;
+                left: 3px;
+                bottom: 3px;
+                background: white;
+                border-radius: 50%;
                 transition: transform 0.25s;
-                box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
             }
-            .toggle-switch input:checked + .toggle-slider { background: #9b59b6; }
-            .toggle-switch input:checked + .toggle-slider::before { transform: translateX(24px); }
+            .toggle-switch input:checked + .toggle-slider {
+                background: var(--primary-blue);
+            }
+            .toggle-switch input:checked + .toggle-slider::before {
+                transform: translateX(24px);
+            }
 
             /* Page checkboxes */
-            .page-checks { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.4rem; }
+            .page-checks {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.6rem;
+                margin-top: 0.4rem;
+            }
             .page-check-btn {
-                padding: 0.35rem 0.85rem; border-radius: 20px;
-                font-size: 0.85rem; font-weight: 600; cursor: pointer;
+                padding: 0.35rem 0.85rem;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                cursor: pointer;
                 border: 2px solid var(--border-color);
-                background: var(--lighter-blue); color: var(--text-medium);
-                transition: all 0.18s; user-select: none;
+                background: var(--lighter-blue);
+                color: var(--text-medium);
+                transition: all 0.18s;
+                user-select: none;
                 font-family: "DM Sans", sans-serif;
             }
             .page-check-btn.selected {
-                background: #9b59b6; color: white; border-color: #9b59b6;
+                background: var(--primary-blue);
+                color: white;
+                border-color: var(--primary-blue);
             }
 
             /* Banner preview */
             .banner-preview {
-                border-radius: 10px; padding: 0.7rem 1.25rem;
-                display: flex; align-items: center; gap: 0.75rem;
+                border-radius: 10px;
+                padding: 0.7rem 1.25rem;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
                 margin-top: 0.5rem;
                 transition: all 0.2s;
-                font-size: 0.9rem; font-weight: 500;
+                font-size: 0.9rem;
+                font-weight: 500;
+                border: 1px solid var(--border-color);
             }
-            .banner-preview-text { flex: 1; }
+            .banner-preview-text {
+                flex: 1;
+            }
             .banner-preview-btn {
-                padding: 0.3rem 0.9rem; border-radius: 20px;
-                font-size: 0.82rem; font-weight: 700;
-                border: none; cursor: default;
+                padding: 0.3rem 0.9rem;
+                border-radius: 20px;
+                font-size: 0.82rem;
+                font-weight: 700;
+                border: none;
+                cursor: default;
                 white-space: nowrap;
             }
 
             /* Upload zone */
             .upload-zone {
-                border: 2px dashed var(--border-color); border-radius: 12px;
-                padding: 2rem; text-align: center;
-                background: var(--lighter-blue); cursor: pointer;
-                transition: all 0.2s; margin-bottom: 1rem;
+                border: 2px dashed var(--border-color);
+                border-radius: 12px;
+                padding: 1.75rem;
+                text-align: center;
+                background: var(--lighter-blue);
+                cursor: pointer;
+                transition: all 0.2s;
+                margin-bottom: 0.75rem;
             }
-            .upload-zone:hover { border-color: var(--primary-blue); background: var(--light-blue); }
-            .upload-zone p { color: var(--text-medium); margin-bottom: 0.4rem; }
-            .upload-zone small { color: var(--text-light); }
-            .preview-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 10px; border: 2px solid var(--border-color); margin-top: 0.75rem; background: var(--lighter-blue); }
+            .upload-zone:hover {
+                border-color: var(--primary-blue);
+                background: var(--light-blue);
+            }
+            .upload-zone p {
+                color: var(--text-medium);
+                margin-bottom: 0.3rem;
+                font-weight: 500;
+            }
+            .upload-zone small {
+                color: var(--text-light);
+            }
+            .preview-img,
+            .preview-video {
+                width: 100%;
+                max-height: 220px;
+                object-fit: contain;
+                border-radius: 10px;
+                border: 2px solid var(--border-color);
+                margin-top: 0.6rem;
+                background: var(--lighter-blue);
+                display: block;
+            }
+
+            /* Media item list (for news form) */
+            .media-item-list {
+                display: flex;
+                flex-direction: column;
+                gap: 0.6rem;
+                margin-top: 0.75rem;
+            }
+            .media-item {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.6rem 0.75rem;
+                background: var(--lighter-blue);
+                border: 1px solid var(--border-color);
+                border-radius: 10px;
+            }
+            .media-item .thumb {
+                width: 64px;
+                height: 40px;
+                object-fit: cover;
+                border-radius: 6px;
+                flex-shrink: 0;
+                background: var(--light-blue);
+            }
+            .media-item .thumb-icon {
+                width: 64px;
+                height: 40px;
+                border-radius: 6px;
+                flex-shrink: 0;
+                background: var(--light-blue);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--primary-blue);
+                font-size: 0.75rem;
+                font-weight: 700;
+            }
+            .media-item .label {
+                flex: 1;
+                min-width: 0;
+                font-size: 0.85rem;
+                color: var(--text-medium);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .media-add-row {
+                display: flex;
+                gap: 0.6rem;
+                margin-top: 0.75rem;
+                flex-wrap: wrap;
+            }
 
             /* Downtime list */
-            .downtime-entry { display: flex; justify-content: space-between; align-items: center; padding: 0.875rem 1rem; background: var(--lighter-blue); border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 0.75rem; }
-            .downtime-entry .info strong { display: block; color: var(--text-dark); font-size: 0.95rem; }
-            .downtime-entry .info span { color: var(--text-medium); font-size: 0.85rem; }
+            .downtime-entry {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.875rem 1rem;
+                background: var(--lighter-blue);
+                border-radius: 10px;
+                border: 1px solid var(--border-color);
+                margin-bottom: 0.75rem;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+            .downtime-entry .info strong {
+                display: block;
+                color: var(--text-dark);
+                font-size: 0.95rem;
+            }
+            .downtime-entry .info span {
+                color: var(--text-medium);
+                font-size: 0.85rem;
+            }
 
             /* News list */
-            .news-entry { display: flex; gap: 1rem; align-items: center; padding: 0.875rem 1rem; background: var(--lighter-blue); border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 0.75rem; }
-            .news-entry img { width: 80px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
-            .news-entry .info { flex: 1; }
-            .news-entry .info strong { display: block; }
-            .news-entry .info small { color: var(--text-medium); }
+            .news-entry {
+                display: flex;
+                gap: 1rem;
+                align-items: center;
+                padding: 0.875rem 1rem;
+                background: var(--lighter-blue);
+                border-radius: 10px;
+                border: 1px solid var(--border-color);
+                margin-bottom: 0.75rem;
+                flex-wrap: wrap;
+            }
+            .news-entry img {
+                width: 80px;
+                height: 45px;
+                object-fit: cover;
+                border-radius: 8px;
+                flex-shrink: 0;
+                background: var(--light-blue);
+            }
+            .news-entry .info {
+                flex: 1;
+                min-width: 150px;
+            }
+            .news-entry .info strong {
+                display: block;
+            }
+            .news-entry .info small {
+                color: var(--text-medium);
+            }
+            .news-entry .actions {
+                display: flex;
+                gap: 0.5rem;
+            }
 
-            .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 12px; color: white; font-weight: 500; font-size: 0.95rem; box-shadow: var(--shadow-lg); z-index: 9999; animation: slideInRight 0.4s ease; display: none; }
-            .toast.success { background: var(--success); }
-            .toast.error { background: var(--error); }
-            @keyframes slideInRight { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
+            .toast {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                left: 2rem;
+                max-width: 380px;
+                margin-left: auto;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                color: white;
+                font-weight: 500;
+                font-size: 0.95rem;
+                box-shadow: var(--shadow-lg);
+                z-index: 9999;
+                animation: slideInRight 0.4s ease;
+                display: none;
+            }
+            .toast.success {
+                background: var(--success);
+            }
+            .toast.error {
+                background: var(--error);
+            }
+            @keyframes slideInRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(60px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
 
-            .spinner { border: 3px solid var(--light-blue); border-top: 3px solid var(--primary-blue); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 1rem auto; }
-            @keyframes spin { to { transform: rotate(360deg); } }
-            .empty-state { color: var(--text-light); font-style: italic; padding: 1rem 0; }
+            .spinner {
+                border: 3px solid var(--light-blue);
+                border-top: 3px solid var(--primary-blue);
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                animation: spin 1s linear infinite;
+                margin: 1rem auto;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            .empty-state {
+                color: var(--text-light);
+                font-style: italic;
+                padding: 1rem 0;
+            }
 
-            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-            @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
-            .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-            @media (max-width: 700px) { .three-col { grid-template-columns: 1fr; } }
-            .four-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
-            @media (max-width: 900px) { .four-col { grid-template-columns: 1fr 1fr; } }
-            @media (max-width: 500px) { .four-col { grid-template-columns: 1fr; } }
+            .two-col {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+            }
+            @media (max-width: 700px) {
+                .two-col {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .three-col {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            @media (max-width: 700px) {
+                .three-col {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .four-col {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+                gap: 1rem;
+                margin-bottom: 1.25rem;
+            }
+            @media (max-width: 900px) {
+                .four-col {
+                    grid-template-columns: 1fr 1fr;
+                }
+            }
+            @media (max-width: 500px) {
+                .four-col {
+                    grid-template-columns: 1fr;
+                }
+            }
 
-            .hint { font-size: 0.82rem; color: var(--text-light); margin-top: 0.3rem; }
-            .divider { border: none; border-top: 1px solid var(--border-color); margin: 1.5rem 0; }
+            .hint {
+                font-size: 0.82rem;
+                color: var(--text-light);
+                margin-top: 0.3rem;
+            }
+            .divider {
+                border: none;
+                border-top: 1px solid var(--border-color);
+                margin: 1.5rem 0;
+            }
+            .status-line {
+                margin-left: 1rem;
+                color: var(--success);
+                font-size: 0.9rem;
+                display: none;
+            }
+
+            @media (max-width: 768px) {
+                .admin-layout {
+                    padding: 1.25rem;
+                    gap: 2rem;
+                }
+                .card {
+                    padding: 1.25rem;
+                }
+                .section-title {
+                    font-size: 1.6rem;
+                }
+                .toast {
+                    right: 1rem;
+                    left: 1rem;
+                    bottom: 1rem;
+                    max-width: none;
+                }
+            }
         </style>
     </head>
     <body>
-
         <!-- ── LOGIN ── -->
         <div class="login-screen" id="loginScreen">
             <div class="login-card">
-                <h2>⚡ Admin Panel</h2>
+                <h2>Admin Panel</h2>
                 <p>AllForOne SMP Server Management</p>
-                <input type="password" id="passwordInput" placeholder="Enter admin password"
+                <input
+                    type="password"
+                    id="passwordInput"
+                    placeholder="Enter admin password"
                     onkeydown="if(event.key==='Enter')checkPassword()" />
-                <button class="btn btn-gold" style="width:100%;margin-top:0.25rem" onclick="checkPassword()">
+                <button class="btn btn-primary" style="width: 100%; margin-top: 0.25rem" onclick="checkPassword()">
                     Access Admin Panel
                 </button>
-                <div class="login-error" id="loginError">❌ Incorrect password.</div>
+                <div class="login-error" id="loginError">Incorrect password.</div>
             </div>
         </div>
 
         <!-- ── ADMIN APP ── -->
         <div id="adminApp">
-            <header>
-                <span class="logo">⚡ AllForOne Admin</span>
-                <span>Server Management Panel</span>
-                <button onclick="logout()">Logout</button>
-            </header>
+            <div class="admin-header">
+                <span class="logo">AllForOne SMP<span>Admin Panel</span></span>
+                <button class="logout-btn" onclick="logout()">Log out</button>
+            </div>
 
             <div class="admin-layout">
-
                 <!-- NOTIFICATION BANNER SECTION -->
                 <div>
-                    <div class="section-title">🔔 Notification Banner</div>
-                    <div class="card purple-border">
-
-                        <!-- Enable toggle -->
+                    <div class="section-title">Notification Banner</div>
+                    <div class="card">
                         <div class="toggle-row">
                             <label class="toggle-switch">
-                                <input type="checkbox" id="bannerEnabled" onchange="updateBannerPreview()">
+                                <input type="checkbox" id="bannerEnabled" onchange="updateBannerPreview()" />
                                 <span class="toggle-slider"></span>
                             </label>
                             <span class="toggle-label">Enable banner</span>
                         </div>
 
-                        <!-- Text -->
                         <div class="form-group">
-                            <label>📢 Banner Text</label>
-                            <input type="text" id="bannerText" placeholder="e.g. Server maintenance this Saturday at 8 PM!" oninput="updateBannerPreview()" />
+                            <label>Banner Text</label>
+                            <input
+                                type="text"
+                                id="bannerText"
+                                placeholder="e.g. Server maintenance this Saturday at 8 PM!"
+                                spellcheck="true"
+                                autocorrect="on"
+                                autocapitalize="sentences"
+                                oninput="updateBannerPreview()" />
                         </div>
 
-                        <!-- Colours -->
                         <div class="four-col">
-                            <div class="form-group" style="margin:0">
-                                <label>🎨 Background Colour</label>
+                            <div class="form-group" style="margin: 0">
+                                <label>Background Colour</label>
                                 <input type="color" id="bannerBgColor" value="#4a90e2" oninput="updateBannerPreview()" />
                             </div>
-                            <div class="form-group" style="margin:0">
-                                <label>✏️ Text Colour</label>
+                            <div class="form-group" style="margin: 0">
+                                <label>Text Colour</label>
                                 <input type="color" id="bannerTextColor" value="#ffffff" oninput="updateBannerPreview()" />
                             </div>
-                            <div class="form-group" style="margin:0">
-                                <label>🔘 Button Background</label>
+                            <div class="form-group" style="margin: 0">
+                                <label>Button Background</label>
                                 <input type="color" id="bannerBtnBgColor" value="#ffffff" oninput="updateBannerPreview()" />
                             </div>
-                            <div class="form-group" style="margin:0">
-                                <label>🖊️ Button Text Colour</label>
+                            <div class="form-group" style="margin: 0">
+                                <label>Button Text Colour</label>
                                 <input type="color" id="bannerBtnTextColor" value="#4a90e2" oninput="updateBannerPreview()" />
                             </div>
                         </div>
 
-                        <!-- Button (optional) -->
-                        <div class="two-col" style="margin-bottom:1.25rem">
-                            <div class="form-group" style="margin:0">
-                                <label>🔗 Button Label <span style="font-weight:400;color:var(--text-light)">— optional</span></label>
-                                <input type="text" id="bannerBtnLabel" placeholder="e.g. Learn More" oninput="updateBannerPreview()" />
+                        <div class="two-col" style="margin-bottom: 1.25rem">
+                            <div class="form-group" style="margin: 0">
+                                <label>Button Label <span style="font-weight: 400; color: var(--text-light)">— optional</span></label>
+                                <input
+                                    type="text"
+                                    id="bannerBtnLabel"
+                                    placeholder="e.g. Learn More"
+                                    spellcheck="true"
+                                    autocorrect="on"
+                                    oninput="updateBannerPreview()" />
                             </div>
-                            <div class="form-group" style="margin:0">
-                                <label>🌐 Button Link <span style="font-weight:400;color:var(--text-light)">— optional</span></label>
+                            <div class="form-group" style="margin: 0">
+                                <label>Button Link <span style="font-weight: 400; color: var(--text-light)">— optional</span></label>
                                 <input type="url" id="bannerBtnLink" placeholder="https://..." />
                             </div>
                         </div>
 
-                        <!-- Pages -->
                         <div class="form-group">
-                            <label>📄 Show on Pages <span style="font-weight:400;color:var(--text-light)">— leave all unselected to show everywhere</span></label>
+                            <label>Show on Pages <span style="font-weight: 400; color: var(--text-light)">— leave all unselected to show everywhere</span></label>
                             <div class="page-checks" id="pageChecks">
                                 <button class="page-check-btn" data-page="/" onclick="togglePage(this)">Home</button>
                                 <button class="page-check-btn" data-page="/rules" onclick="togglePage(this)">Rules</button>
@@ -290,70 +752,122 @@
                             </div>
                         </div>
 
-                        <!-- Live preview -->
                         <hr class="divider" />
-                        <label style="margin-bottom:0.5rem;display:block">👁️ Live Preview</label>
+                        <label style="margin-bottom: 0.5rem; display: block">Live Preview</label>
                         <div class="banner-preview" id="bannerPreview">
                             <span class="banner-preview-text" id="previewText">Your banner text will appear here…</span>
-                            <span class="banner-preview-btn" id="previewBtn" style="display:none"></span>
+                            <span class="banner-preview-btn" id="previewBtn" style="display: none"></span>
                         </div>
 
                         <hr class="divider" />
-                        <button class="btn btn-purple" onclick="saveBanner()">💾 Save Banner</button>
-                        <span id="bannerSaveStatus" style="margin-left:1rem;color:var(--success);font-size:0.9rem;display:none">✓ Saved!</span>
+                        <button class="btn btn-primary" onclick="saveBanner()">Save Banner</button>
+                        <span id="bannerSaveStatus" class="status-line">Saved</span>
                     </div>
                 </div>
 
-                <!-- SERVER IP & INFO SECTION -->
+                <!-- INFO MESSAGE SECTION (replaces Voice Chat) -->
                 <div>
-                    <div class="section-title">🎮 Server IP & Info</div>
-                    <div class="card gold-border">
+                    <div class="section-title">Info Message</div>
+                    <div class="card">
+                        <p class="hint" style="margin-bottom: 1.25rem">
+                            Shown as a card on the homepage next to the downtime schedule. Use it for things like
+                            reminders to install AutoModpack. Paste a link (starting with http:// or https://) and it
+                            will automatically become clickable on the page.
+                        </p>
+
+                        <div class="toggle-row">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="infoEnabled" />
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label">Show info card</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Card Title</label>
+                            <input
+                                type="text"
+                                id="infoTitle"
+                                placeholder="e.g. Before You Join"
+                                spellcheck="true"
+                                autocorrect="on"
+                                autocapitalize="sentences" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea
+                                id="infoText"
+                                placeholder="e.g. Make sure to install AutoModpack! https://allforonesmp.github.io"
+                                spellcheck="true"
+                                autocorrect="on"
+                                autocapitalize="sentences"
+                                style="min-height: 120px"></textarea>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="saveInfoMessage()">Save Info Message</button>
+                        <span id="infoSaveStatus" class="status-line">Saved</span>
+                    </div>
+                </div>
+
+                <!-- JOIN CODE SECTION -->
+                <div>
+                    <div class="section-title">Join Code &amp; Server Info</div>
+                    <div class="card">
                         <div class="two-col">
                             <div>
                                 <div class="form-group">
-                                    <label>🌐 Server IP / Address</label>
+                                    <label>Server IP</label>
                                     <input type="text" id="serverIp" placeholder="e.g. allforonesmp.duckdns.org" />
-                                    <p class="hint">This is what's shown to players after they agree to the rules. Also used to check live online/player-count status (via mcsrvstat.us) — include the port here too if it isn't the default 25565, e.g. myserver.com:25566.</p>
+                                    <p class="hint">Leave this empty and the Server IP box will not appear on the homepage at all.</p>
+                                </div>
+                                <div class="form-group">
+                                    <label>Connection ID</label>
+                                    <input type="text" id="connectionId" placeholder="e.g. abc123xyz" />
                                 </div>
                             </div>
                             <div>
                                 <div class="form-group">
-                                    <label>🎙️ Proximity Voice Chat Link</label>
-                                    <input type="url" id="voiceChatLink" placeholder="https://..." />
-                                </div>
-                                <div class="form-group">
-                                    <label>🎙️ Voice Chat Description</label>
-                                    <textarea id="voiceChatDescription" placeholder="Describe the voice chat feature..."></textarea>
+                                    <label>Play Now Button Link</label>
+                                    <input type="url" id="playNowLink" placeholder="https://..." />
                                 </div>
                             </div>
                         </div>
-                        <button class="btn btn-gold" onclick="saveServerInfo()">💾 Save Server Info</button>
-                        <span id="serverInfoStatus" style="margin-left:1rem;color:var(--success);font-size:0.9rem;display:none">✓ Saved!</span>
+                        <button class="btn btn-primary" onclick="saveServerInfo()">Save Server Info</button>
+                        <span id="serverInfoStatus" class="status-line">Saved</span>
                     </div>
                 </div>
 
                 <!-- DOWNTIME SECTION -->
                 <div>
-                    <div class="section-title">🕐 Server Downtime</div>
+                    <div class="section-title">Server Downtime</div>
                     <div class="card">
                         <div class="three-col">
-                            <div class="form-group" style="margin:0">
+                            <div class="form-group" style="margin: 0">
                                 <label>Downtime Label</label>
-                                <input type="text" id="dtLabel" placeholder="e.g. Weekly Maintenance" />
+                                <input
+                                    type="text"
+                                    id="dtLabel"
+                                    placeholder="e.g. Weekly Maintenance"
+                                    spellcheck="true"
+                                    autocorrect="on"
+                                    autocapitalize="sentences" />
                             </div>
-                            <div class="form-group" style="margin:0">
-                                <label>Scheduled Date & Time</label>
-                                <input type="datetime-local" id="dtDateTime" />
+                            <div class="form-group" style="margin: 0">
+                                <label>Start Date &amp; Time</label>
+                                <input type="datetime-local" id="dtStart" />
                             </div>
-                            <div class="form-group" style="margin:0">
-                                <label>Duration (minutes) <span style="font-weight:400;color:var(--text-light)">— optional</span></label>
-                                <input type="number" id="dtDuration" placeholder="e.g. 60" min="1" />
-                                <p class="hint">Used to calculate the "until" end time shown on the home page.</p>
+                            <div class="form-group" style="margin: 0">
+                                <label>End Date &amp; Time <span style="font-weight: 400; color: var(--text-light)">— optional</span></label>
+                                <input type="datetime-local" id="dtEnd" />
+                                <p class="hint">If left blank, the server will stay marked offline until you remove this entry.</p>
                             </div>
                         </div>
-                        <button class="btn btn-primary" onclick="addDowntime()">+ Add Downtime</button>
-                        <div style="margin-top:1.5rem">
-                            <h4 style="margin-bottom:1rem;color:var(--text-medium);font-size:0.9rem;font-family:'DM Sans';font-weight:700">CURRENT DOWNTIMES</h4>
+                        <button class="btn btn-primary" onclick="addDowntime()">Add Downtime</button>
+                        <div style="margin-top: 1.5rem">
+                            <h4 style="margin-bottom: 1rem; color: var(--text-medium); font-size: 0.9rem; font-family: 'DM Sans'; font-weight: 700">
+                                CURRENT DOWNTIMES
+                            </h4>
                             <div id="downtimeList"><div class="empty-state">No downtimes scheduled.</div></div>
                         </div>
                     </div>
@@ -361,34 +875,73 @@
 
                 <!-- NEWS SECTION -->
                 <div>
-                    <div class="section-title">📰 News Posts</div>
+                    <div class="section-title">News Posts</div>
                     <div class="card">
-                        <h3 style="margin-bottom:1.25rem;color:var(--primary-blue)">Add News Item</h3>
-                        <div class="form-group">
-                            <label>News Image</label>
-                            <div class="upload-zone" onclick="document.getElementById('newsImageInput').click()">
-                                <p>Click to upload news image</p>
-                                <small>Will appear in the carousel</small>
-                            </div>
-                            <input type="file" id="newsImageInput" accept="image/*" style="display:none" onchange="previewNewsImage(event)" />
-                            <img id="newsImagePreview" class="preview-img" style="display:none" alt="News Preview" />
-                        </div>
+                        <h3 id="newsFormHeading" style="margin-bottom: 1.25rem; color: var(--primary-blue); font-size: 1.2rem">
+                            Add News Item
+                        </h3>
+
                         <div class="form-group">
                             <label>Title</label>
-                            <input type="text" id="newsTitle" placeholder="News headline" />
+                            <input
+                                type="text"
+                                id="newsTitle"
+                                placeholder="News headline"
+                                spellcheck="true"
+                                autocorrect="on"
+                                autocapitalize="sentences" />
                         </div>
                         <div class="form-group">
                             <label>Description</label>
-                            <textarea id="newsDescription" placeholder="News details..."></textarea>
+                            <textarea
+                                id="newsDescription"
+                                placeholder="News details... paste a link and it becomes clickable automatically"
+                                spellcheck="true"
+                                autocorrect="on"
+                                autocapitalize="sentences"></textarea>
                         </div>
-                        <button class="btn btn-success" onclick="addNews()">📰 Publish News</button>
-                        <div style="margin-top:1.75rem">
-                            <h4 style="margin-bottom:1rem;color:var(--text-medium);font-size:0.9rem;font-family:'DM Sans';font-weight:700">PUBLISHED NEWS</h4>
+
+                        <div class="form-group">
+                            <label>Media</label>
+                            <p class="hint" style="margin-bottom: 0.6rem">
+                                Images must be exactly 16:9 (for example 1920×1080 or 1280×720). Images that aren't
+                                that exact ratio will be rejected. Each image or video becomes its own slide in the
+                                carousel, sharing this title and description.
+                            </p>
+
+                            <div class="upload-zone" onclick="document.getElementById('newsImageInput').click()">
+                                <p>Click to upload an image</p>
+                                <small>Must be exactly 16:9 — PNG or JPG</small>
+                            </div>
+                            <input type="file" id="newsImageInput" accept="image/*" style="display: none" onchange="handleImageSelect(event)" />
+
+                            <div class="upload-zone" onclick="document.getElementById('newsVideoInput').click()">
+                                <p>Click to upload a video file</p>
+                                <small>MP4 recommended</small>
+                            </div>
+                            <input type="file" id="newsVideoInput" accept="video/*" style="display: none" onchange="handleVideoSelect(event)" />
+
+                            <div class="media-add-row">
+                                <input type="url" id="newsVideoLinkInput" placeholder="Paste a YouTube link…" style="flex: 1; min-width: 200px" />
+                                <button class="btn btn-outline btn-small" onclick="addVideoLink()">Add Video Link</button>
+                            </div>
+
+                            <div class="media-item-list" id="mediaItemList"></div>
+                        </div>
+
+                        <button class="btn btn-success" id="newsSubmitBtn" onclick="submitNews()">Publish News</button>
+                        <button class="btn btn-outline" id="newsCancelEditBtn" style="display: none; margin-left: 0.6rem" onclick="cancelEditNews()">
+                            Cancel Edit
+                        </button>
+
+                        <div style="margin-top: 1.75rem">
+                            <h4 style="margin-bottom: 1rem; color: var(--text-medium); font-size: 0.9rem; font-family: 'DM Sans'; font-weight: 700">
+                                PUBLISHED NEWS
+                            </h4>
                             <div id="newsList"><div class="spinner"></div></div>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -399,8 +952,18 @@
         <script type="module">
             import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
             import {
-                getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc,
-                updateDoc, collection, onSnapshot, orderBy, query, serverTimestamp
+                getFirestore,
+                doc,
+                getDoc,
+                setDoc,
+                addDoc,
+                deleteDoc,
+                updateDoc,
+                collection,
+                onSnapshot,
+                orderBy,
+                query,
+                serverTimestamp
             } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
             import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -421,6 +984,13 @@
             const CLOUDINARY_CLOUD_NAME = "dgrmpcha9";
             const CLOUDINARY_UPLOAD_PRESET = "AllForOne Posts";
 
+            // Strict aspect ratio enforced for news images: 16:9
+            const REQUIRED_RATIO = 16 / 9;
+            const RATIO_TOLERANCE = 0.01; // small tolerance for rounding
+
+            function formatDateTime(date) {
+                return date.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+            }
             function formatTime(date) {
                 return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
             }
@@ -438,7 +1008,9 @@
                     } else {
                         document.getElementById("loginError").style.display = "block";
                     }
-                } catch (e) { showToast("Could not verify password: " + e.message, "error"); }
+                } catch (e) {
+                    showToast("Could not verify password: " + e.message, "error");
+                }
             };
 
             window.logout = function () {
@@ -454,11 +1026,15 @@
             }
 
             // ─── CLOUDINARY ───────────────────────────────────────────
-            async function uploadToCloudinary(file) {
+            async function uploadToCloudinary(file, resourceType) {
                 const fd = new FormData();
                 fd.append("file", file);
                 fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: "POST", body: fd });
+                const type = resourceType || "auto";
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type}/upload`, {
+                    method: "POST",
+                    body: fd
+                });
                 const data = await res.json();
                 if (!data.secure_url) throw new Error("Cloudinary upload failed");
                 return data.secure_url;
@@ -495,9 +1071,10 @@
 
             window.saveBanner = async function () {
                 const btn = document.querySelector('[onclick="saveBanner()"]');
-                btn.textContent = "⏳ Saving…"; btn.disabled = true;
+                btn.textContent = "Saving…";
+                btn.disabled = true;
                 try {
-                    const pages = [...document.querySelectorAll(".page-check-btn.selected")].map(b => b.dataset.page);
+                    const pages = [...document.querySelectorAll(".page-check-btn.selected")].map((b) => b.dataset.page);
                     const bannerData = {
                         enabled: document.getElementById("bannerEnabled").checked,
                         text: document.getElementById("bannerText").value.trim(),
@@ -510,65 +1087,98 @@
                         pages
                     };
                     await setDoc(doc(db, "serverInfo", "main"), { notificationBanner: bannerData }, { merge: true });
-                    showToast("✓ Banner saved!", "success");
-                    const s = document.getElementById("bannerSaveStatus");
-                    s.style.display = "inline"; setTimeout(() => s.style.display = "none", 2500);
-                } catch (e) { showToast("Error: " + e.message, "error"); }
-                btn.textContent = "💾 Save Banner"; btn.disabled = false;
+                    showToast("Banner saved.", "success");
+                    flashStatus("bannerSaveStatus");
+                } catch (e) {
+                    showToast("Error: " + e.message, "error");
+                }
+                btn.textContent = "Save Banner";
+                btn.disabled = false;
             };
 
-            async function loadBannerConfig() {
-                try {
-                    const snap = await getDoc(doc(db, "serverInfo", "main"));
-                    if (!snap.exists()) return;
-                    const cfg = snap.data().notificationBanner;
-                    if (!cfg) return;
-                    document.getElementById("bannerEnabled").checked = !!cfg.enabled;
-                    document.getElementById("bannerText").value = cfg.text || "";
-                    if (cfg.bgColor) document.getElementById("bannerBgColor").value = cfg.bgColor;
-                    if (cfg.textColor) document.getElementById("bannerTextColor").value = cfg.textColor;
-                    if (cfg.btnBgColor) document.getElementById("bannerBtnBgColor").value = cfg.btnBgColor;
-                    if (cfg.btnTextColor) document.getElementById("bannerBtnTextColor").value = cfg.btnTextColor;
-                    document.getElementById("bannerBtnLabel").value = cfg.btnLabel || "";
-                    document.getElementById("bannerBtnLink").value = cfg.btnLink || "";
-                    // Restore page selections
-                    if (cfg.pages && cfg.pages.length) {
-                        document.querySelectorAll(".page-check-btn").forEach(btn => {
-                            if (cfg.pages.includes(btn.dataset.page)) btn.classList.add("selected");
-                        });
-                    }
-                    window.updateBannerPreview();
-                } catch (_) {}
+            async function loadBannerConfig(existingData) {
+                const cfg = existingData.notificationBanner;
+                if (!cfg) return;
+                document.getElementById("bannerEnabled").checked = !!cfg.enabled;
+                document.getElementById("bannerText").value = cfg.text || "";
+                if (cfg.bgColor) document.getElementById("bannerBgColor").value = cfg.bgColor;
+                if (cfg.textColor) document.getElementById("bannerTextColor").value = cfg.textColor;
+                if (cfg.btnBgColor) document.getElementById("bannerBtnBgColor").value = cfg.btnBgColor;
+                if (cfg.btnTextColor) document.getElementById("bannerBtnTextColor").value = cfg.btnTextColor;
+                document.getElementById("bannerBtnLabel").value = cfg.btnLabel || "";
+                document.getElementById("bannerBtnLink").value = cfg.btnLink || "";
+                if (cfg.pages && cfg.pages.length) {
+                    document.querySelectorAll(".page-check-btn").forEach((btn) => {
+                        if (cfg.pages.includes(btn.dataset.page)) btn.classList.add("selected");
+                    });
+                }
+                window.updateBannerPreview();
             }
 
-            // ─── SERVER IP / SERVER INFO ──────────────────────────────
+            // ─── INFO MESSAGE ─────────────────────────────────────────
+            window.saveInfoMessage = async function () {
+                const btn = document.querySelector('[onclick="saveInfoMessage()"]');
+                btn.textContent = "Saving…";
+                btn.disabled = true;
+                try {
+                    const infoData = {
+                        enabled: document.getElementById("infoEnabled").checked,
+                        title: document.getElementById("infoTitle").value.trim(),
+                        text: document.getElementById("infoText").value.trim()
+                    };
+                    await setDoc(doc(db, "serverInfo", "main"), { infoMessage: infoData }, { merge: true });
+                    showToast("Info message saved.", "success");
+                    flashStatus("infoSaveStatus");
+                } catch (e) {
+                    showToast("Error: " + e.message, "error");
+                }
+                btn.textContent = "Save Info Message";
+                btn.disabled = false;
+            };
+
+            function loadInfoMessage(existingData) {
+                const info = existingData.infoMessage;
+                if (!info) return;
+                document.getElementById("infoEnabled").checked = !!info.enabled;
+                document.getElementById("infoTitle").value = info.title || "";
+                document.getElementById("infoText").value = info.text || "";
+            }
+
+            // ─── JOIN CODE / SERVER INFO ──────────────────────────────
             async function loadCurrentServerInfo() {
                 try {
                     const snap = await getDoc(doc(db, "serverInfo", "main"));
-                    if (!snap.exists()) return;
-                    const d = snap.data();
+                    const d = snap.exists() ? snap.data() : {};
                     document.getElementById("serverIp").value = d.serverIp || "";
-                    document.getElementById("voiceChatLink").value = d.voiceChatLink || "";
-                    document.getElementById("voiceChatDescription").value = d.voiceChatDescription || "";
-                    await loadBannerConfig();
+                    document.getElementById("connectionId").value = d.connectionId || "";
+                    document.getElementById("playNowLink").value = d.playNowLink || "";
+                    loadBannerConfig(d);
+                    loadInfoMessage(d);
                 } catch (_) {}
             }
 
             window.saveServerInfo = async function () {
                 const btn = document.querySelector('[onclick="saveServerInfo()"]');
-                btn.textContent = "⏳ Saving…"; btn.disabled = true;
+                btn.textContent = "Saving…";
+                btn.disabled = true;
                 try {
-                    const existing = (await getDoc(doc(db, "serverInfo", "main"))).data() || {};
-                    await setDoc(doc(db, "serverInfo", "main"), {
-                        serverIp: document.getElementById("serverIp").value.trim(),
-                        voiceChatLink: document.getElementById("voiceChatLink").value.trim(),
-                        voiceChatDescription: document.getElementById("voiceChatDescription").value.trim(),
-                        downtimes: existing.downtimes || [],
-                        updatedAt: serverTimestamp()
-                    }, { merge: true });
-                    showToast("✓ Server info saved!", "success");
-                } catch (e) { showToast("Error: " + e.message, "error"); }
-                btn.textContent = "💾 Save Server Info"; btn.disabled = false;
+                    await setDoc(
+                        doc(db, "serverInfo", "main"),
+                        {
+                            serverIp: document.getElementById("serverIp").value.trim(),
+                            connectionId: document.getElementById("connectionId").value.trim(),
+                            playNowLink: document.getElementById("playNowLink").value.trim(),
+                            updatedAt: serverTimestamp()
+                        },
+                        { merge: true }
+                    );
+                    showToast("Server info saved.", "success");
+                    flashStatus("serverInfoStatus");
+                } catch (e) {
+                    showToast("Error: " + e.message, "error");
+                }
+                btn.textContent = "Save Server Info";
+                btn.disabled = false;
             };
 
             // ─── DOWNTIMES ────────────────────────────────────────────
@@ -582,36 +1192,52 @@
             function renderDowntimeList() {
                 const list = document.getElementById("downtimeList");
                 list.innerHTML = "";
-                if (!currentDowntimes.length) { list.innerHTML = '<div class="empty-state">No downtimes scheduled.</div>'; return; }
+                if (!currentDowntimes.length) {
+                    list.innerHTML = '<div class="empty-state">No downtimes scheduled.</div>';
+                    return;
+                }
                 currentDowntimes.forEach((dt, i) => {
-                    let untilStr = "";
-                    if (dt.timestamp && dt.durationMinutes) {
-                        const end = new Date(new Date(dt.timestamp).getTime() + dt.durationMinutes * 60000);
-                        untilStr = ` · until ${formatTime(end)}`;
+                    if (!dt.startTimestamp) return;
+                    const start = new Date(dt.startTimestamp);
+                    let rangeText = formatDateTime(start);
+                    if (dt.endTimestamp) {
+                        const end = new Date(dt.endTimestamp);
+                        const sameDay = start.toDateString() === end.toDateString();
+                        rangeText += sameDay ? ` – ${formatTime(end)}` : ` → ${formatDateTime(end)}`;
+                    } else {
+                        rangeText += " (no end set)";
                     }
                     const el = document.createElement("div");
                     el.className = "downtime-entry";
-                    el.innerHTML = `<div class="info"><strong>${dt.label}</strong><span>${dt.time}${untilStr}</span></div>
+                    el.innerHTML = `<div class="info"><strong>${escapeHtml(dt.label)}</strong><span>${escapeHtml(rangeText)}</span></div>
                         <button class="btn btn-danger" onclick="removeDowntime(${i})">Remove</button>`;
                     list.appendChild(el);
                 });
             }
             window.addDowntime = async function () {
                 const label = document.getElementById("dtLabel").value.trim();
-                const dtVal = document.getElementById("dtDateTime").value;
-                const durationRaw = document.getElementById("dtDuration").value.trim();
-                if (!label || !dtVal) { showToast("Fill in the label and date/time fields.", "error"); return; }
-                const dtDate = new Date(dtVal);
-                const formatted = dtDate.toLocaleString("en-US", { weekday:"short", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
-                const entry = { label, time: formatted, timestamp: dtDate.toISOString() };
-                const dur = parseInt(durationRaw, 10);
-                if (!isNaN(dur) && dur > 0) entry.durationMinutes = dur;
+                const startVal = document.getElementById("dtStart").value;
+                const endVal = document.getElementById("dtEnd").value;
+                if (!label || !startVal) {
+                    showToast("Fill in the label and start date/time.", "error");
+                    return;
+                }
+                const startDate = new Date(startVal);
+                const entry = { label, startTimestamp: startDate.toISOString() };
+                if (endVal) {
+                    const endDate = new Date(endVal);
+                    if (endDate <= startDate) {
+                        showToast("End date/time must be after the start.", "error");
+                        return;
+                    }
+                    entry.endTimestamp = endDate.toISOString();
+                }
                 currentDowntimes.push(entry);
                 await updateDoc(doc(db, "serverInfo", "main"), { downtimes: currentDowntimes });
                 document.getElementById("dtLabel").value = "";
-                document.getElementById("dtDateTime").value = "";
-                document.getElementById("dtDuration").value = "";
-                showToast("Downtime added!", "success");
+                document.getElementById("dtStart").value = "";
+                document.getElementById("dtEnd").value = "";
+                showToast("Downtime added.", "success");
             };
             window.removeDowntime = async function (idx) {
                 currentDowntimes.splice(idx, 1);
@@ -619,62 +1245,266 @@
                 showToast("Downtime removed.", "success");
             };
 
-            // ─── NEWS ─────────────────────────────────────────────────
-            let newsImageFile = null;
-            window.previewNewsImage = function (e) {
-                newsImageFile = e.target.files[0];
-                if (!newsImageFile) return;
-                const r = new FileReader();
-                r.onload = (ev) => { const img = document.getElementById("newsImagePreview"); img.src = ev.target.result; img.style.display = "block"; };
-                r.readAsDataURL(newsImageFile);
+            // ─── NEWS: MEDIA STAGING ────────────────────────────────────
+            // pendingMedia holds items to be attached to the news post being created/edited.
+            // Each item: { type: 'image'|'video-file'|'video-link', url, file (optional, pre-upload), previewUrl }
+            let pendingMedia = [];
+            let editingNewsId = null; // null = creating new
+
+            function getImageDimensions(file) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    const url = URL.createObjectURL(file);
+                    img.onload = () => {
+                        resolve({ width: img.naturalWidth, height: img.naturalHeight, objectUrl: url });
+                    };
+                    img.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        reject(new Error("Could not read image."));
+                    };
+                    img.src = url;
+                });
+            }
+
+            window.handleImageSelect = async function (e) {
+                const file = e.target.files[0];
+                e.target.value = "";
+                if (!file) return;
+                try {
+                    const { width, height, objectUrl } = await getImageDimensions(file);
+                    const ratio = width / height;
+                    if (Math.abs(ratio - REQUIRED_RATIO) > RATIO_TOLERANCE) {
+                        URL.revokeObjectURL(objectUrl);
+                        showToast(
+                            `Image is ${width}×${height}, which is not 16:9. Please upload an image with an exact 16:9 ratio (e.g. 1920×1080).`,
+                            "error"
+                        );
+                        return;
+                    }
+                    pendingMedia.push({ type: "image", file, previewUrl: objectUrl });
+                    renderMediaItemList();
+                } catch (err) {
+                    showToast(err.message, "error");
+                }
             };
+
+            window.handleVideoSelect = function (e) {
+                const file = e.target.files[0];
+                e.target.value = "";
+                if (!file) return;
+                const previewUrl = URL.createObjectURL(file);
+                pendingMedia.push({ type: "video-file", file, previewUrl });
+                renderMediaItemList();
+            };
+
+            window.addVideoLink = function () {
+                const input = document.getElementById("newsVideoLinkInput");
+                const url = input.value.trim();
+                if (!url) return;
+                if (!/^https?:\/\//i.test(url)) {
+                    showToast("Video link must start with http:// or https://", "error");
+                    return;
+                }
+                pendingMedia.push({ type: "video-link", url });
+                input.value = "";
+                renderMediaItemList();
+            };
+
+            window.removeMediaItem = function (idx) {
+                const item = pendingMedia[idx];
+                if (item && item.previewUrl && item.file) URL.revokeObjectURL(item.previewUrl);
+                pendingMedia.splice(idx, 1);
+                renderMediaItemList();
+            };
+
+            function renderMediaItemList() {
+                const list = document.getElementById("mediaItemList");
+                list.innerHTML = "";
+                pendingMedia.forEach((item, i) => {
+                    const el = document.createElement("div");
+                    el.className = "media-item";
+
+                    let thumbHtml = "";
+                    if (item.type === "image") {
+                        thumbHtml = `<img class="thumb" src="${item.previewUrl}" alt="">`;
+                    } else if (item.type === "video-file") {
+                        thumbHtml = `<div class="thumb-icon">VIDEO</div>`;
+                    } else {
+                        thumbHtml = `<div class="thumb-icon">LINK</div>`;
+                    }
+
+                    const labelText =
+                        item.type === "image"
+                            ? item.file
+                                ? item.file.name
+                                : "Image"
+                            : item.type === "video-file"
+                              ? item.file.name
+                              : item.url;
+
+                    el.innerHTML = `${thumbHtml}<span class="label">${escapeHtml(labelText)}</span>
+                        <button class="btn btn-danger btn-small" onclick="removeMediaItem(${i})">Remove</button>`;
+                    list.appendChild(el);
+                });
+            }
+
+            // ─── NEWS: PUBLISH / EDIT / DELETE ─────────────────────────
             function loadNews() {
                 const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
                 onSnapshot(q, (snap) => {
                     const list = document.getElementById("newsList");
                     list.innerHTML = "";
-                    if (snap.empty) { list.innerHTML = '<div class="empty-state">No news published yet.</div>'; return; }
+                    if (snap.empty) {
+                        list.innerHTML = '<div class="empty-state">No news published yet.</div>';
+                        return;
+                    }
                     snap.forEach((d) => {
                         const n = { id: d.id, ...d.data() };
+                        const firstImage =
+                            (Array.isArray(n.media) && n.media.find((m) => m.type === "image")) || null;
+                        const thumbSrc = firstImage ? firstImage.url : n.imageUrl || null;
+
                         const el = document.createElement("div");
                         el.className = "news-entry";
-                        el.innerHTML = `<img src="${n.imageUrl || "https://via.placeholder.com/80x60/4A90E2/fff?text=News"}" alt="">
-                            <div class="info"><strong>${n.title || "Untitled"}</strong><small>${n.description ? n.description.substring(0,80)+"…" : ""}</small></div>
-                            <button class="btn btn-danger" onclick="deleteNews('${n.id}')">Delete</button>`;
+                        const mediaCount = Array.isArray(n.media) ? n.media.length : n.imageUrl ? 1 : 0;
+                        el.innerHTML = `${thumbSrc ? `<img src="${thumbSrc}" alt="">` : `<div class="thumb-icon" style="width:80px;height:45px">NO IMG</div>`}
+                            <div class="info"><strong>${escapeHtml(n.title || "Untitled")}</strong><small>${mediaCount} media item${mediaCount === 1 ? "" : "s"}</small></div>
+                            <div class="actions">
+                                <button class="btn btn-outline btn-small" onclick="editNews('${n.id}')">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteNews('${n.id}')">Delete</button>
+                            </div>`;
                         list.appendChild(el);
                     });
                 });
             }
-            window.addNews = async function () {
+
+            window.editNews = async function (id) {
+                try {
+                    const snap = await getDoc(doc(db, "news", id));
+                    if (!snap.exists()) {
+                        showToast("That news item no longer exists.", "error");
+                        return;
+                    }
+                    const n = snap.data();
+                    editingNewsId = id;
+                    document.getElementById("newsTitle").value = n.title || "";
+                    document.getElementById("newsDescription").value = n.description || "";
+
+                    pendingMedia = [];
+                    const mediaList = Array.isArray(n.media) ? n.media : n.imageUrl ? [{ type: "image", url: n.imageUrl }] : [];
+                    mediaList.forEach((m) => {
+                        if (m.type === "image") pendingMedia.push({ type: "image", url: m.url, previewUrl: m.url });
+                        else if (m.type === "video-file") pendingMedia.push({ type: "video-file", url: m.url, previewUrl: m.url });
+                        else if (m.type === "video-link") pendingMedia.push({ type: "video-link", url: m.url });
+                    });
+                    renderMediaItemList();
+
+                    document.getElementById("newsFormHeading").textContent = "Edit News Item";
+                    document.getElementById("newsSubmitBtn").textContent = "Save Changes";
+                    document.getElementById("newsCancelEditBtn").style.display = "inline-block";
+                    document.getElementById("newsTitle").scrollIntoView({ behavior: "smooth", block: "center" });
+                } catch (e) {
+                    showToast("Error loading news item: " + e.message, "error");
+                }
+            };
+
+            window.cancelEditNews = function () {
+                resetNewsForm();
+            };
+
+            function resetNewsForm() {
+                editingNewsId = null;
+                document.getElementById("newsTitle").value = "";
+                document.getElementById("newsDescription").value = "";
+                pendingMedia.forEach((item) => {
+                    if (item.previewUrl && item.file) URL.revokeObjectURL(item.previewUrl);
+                });
+                pendingMedia = [];
+                renderMediaItemList();
+                document.getElementById("newsFormHeading").textContent = "Add News Item";
+                document.getElementById("newsSubmitBtn").textContent = "Publish News";
+                document.getElementById("newsCancelEditBtn").style.display = "none";
+            }
+
+            window.submitNews = async function () {
                 const title = document.getElementById("newsTitle").value.trim();
                 const description = document.getElementById("newsDescription").value.trim();
-                if (!title) { showToast("Title is required.", "error"); return; }
-                const btn = document.querySelector('[onclick="addNews()"]');
-                btn.textContent = "⏳ Publishing…"; btn.disabled = true;
+                if (!title) {
+                    showToast("Title is required.", "error");
+                    return;
+                }
+                const btn = document.getElementById("newsSubmitBtn");
+                const originalLabel = btn.textContent;
+                btn.textContent = "Publishing…";
+                btn.disabled = true;
                 try {
-                    let imageUrl = null;
-                    if (newsImageFile) imageUrl = await uploadToCloudinary(newsImageFile);
-                    await addDoc(collection(db, "news"), { title, description, imageUrl, createdAt: serverTimestamp() });
-                    document.getElementById("newsTitle").value = "";
-                    document.getElementById("newsDescription").value = "";
-                    document.getElementById("newsImagePreview").style.display = "none";
-                    newsImageFile = null;
-                    showToast("News published!", "success");
-                } catch (e) { showToast("Error: " + e.message, "error"); }
-                btn.textContent = "📰 Publish News"; btn.disabled = false;
+                    // Upload any new files, keep existing URLs as-is
+                    const resolvedMedia = [];
+                    for (const item of pendingMedia) {
+                        if (item.type === "image") {
+                            const url = item.file ? await uploadToCloudinary(item.file, "image") : item.url;
+                            resolvedMedia.push({ type: "image", url });
+                        } else if (item.type === "video-file") {
+                            const url = item.file ? await uploadToCloudinary(item.file, "video") : item.url;
+                            resolvedMedia.push({ type: "video-file", url });
+                        } else if (item.type === "video-link") {
+                            resolvedMedia.push({ type: "video-link", url: item.url });
+                        }
+                    }
+
+                    if (editingNewsId) {
+                        await updateDoc(doc(db, "news", editingNewsId), {
+                            title,
+                            description,
+                            media: resolvedMedia,
+                            updatedAt: serverTimestamp()
+                        });
+                        showToast("News item updated.", "success");
+                    } else {
+                        await addDoc(collection(db, "news"), {
+                            title,
+                            description,
+                            media: resolvedMedia,
+                            createdAt: serverTimestamp()
+                        });
+                        showToast("News published.", "success");
+                    }
+                    resetNewsForm();
+                } catch (e) {
+                    showToast("Error: " + e.message, "error");
+                }
+                btn.textContent = originalLabel === "Publishing…" ? "Publish News" : originalLabel;
+                btn.disabled = false;
             };
+
             window.deleteNews = async function (id) {
                 if (!confirm("Delete this news item?")) return;
                 await deleteDoc(doc(db, "news", id));
+                if (editingNewsId === id) resetNewsForm();
                 showToast("News deleted.", "success");
             };
 
-            // ─── TOAST ────────────────────────────────────────────────
+            // ─── UTIL ─────────────────────────────────────────────────
+            function escapeHtml(str) {
+                const div = document.createElement("div");
+                div.textContent = str == null ? "" : String(str);
+                return div.innerHTML;
+            }
+
+            function flashStatus(elId) {
+                const s = document.getElementById(elId);
+                s.style.display = "inline";
+                setTimeout(() => (s.style.display = "none"), 2500);
+            }
+
             function showToast(msg, type = "success") {
                 const t = document.getElementById("toast");
-                t.textContent = msg; t.className = "toast " + type;
+                t.textContent = msg;
+                t.className = "toast " + type;
                 t.style.display = "block";
-                setTimeout(() => { t.style.display = "none"; }, 3500);
+                setTimeout(() => {
+                    t.style.display = "none";
+                }, 3500);
             }
         </script>
     </body>
