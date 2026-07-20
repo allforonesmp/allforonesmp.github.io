@@ -814,9 +814,16 @@
 
                         <!-- Shown when server is currently offline -->
                         <div class="server-offline-block" id="serverOfflineBlock">
-                            <img src="https://allforonesmp.github.io/images/logo.png" alt="AllForOne" width="100" height="100">
+                            <img
+                                src="https://allforonesmp.github.io/images/logo.png"
+                                alt="AllForOne"
+                                width="100"
+                                height="100" />
                             <h4>Server is Currently Offline</h4>
-                            <p id="serverOfflineText">The server is undergoing maintenance. The server I.P will be shown as per the time below:</p>
+                            <p id="serverOfflineText">
+                                The server is undergoing maintenance. The server I.P will be shown as per the time
+                                below:
+                            </p>
                             <div class="offline-countdown" id="offlineCountdown" style="display: none">Back in —</div>
                             <div class="offline-back-at" id="offlineBackAt"></div>
                         </div>
@@ -1197,6 +1204,33 @@
                 return null;
             }
 
+            function formatCountdown(msRemaining) {
+                if (msRemaining < 0) msRemaining = 0;
+
+                const totalMinutes = Math.floor(msRemaining / 60000);
+                const totalHours = Math.floor(totalMinutes / 60);
+                const totalDays = Math.floor(totalHours / 24);
+                // Using average month/year lengths for approximation
+                const totalMonths = Math.floor(totalDays / 30.44);
+                const totalYears = Math.floor(totalDays / 365.25);
+
+                if (totalYears >= 1) {
+                    const remMonths = Math.floor((totalDays - totalYears * 365.25) / 30.44);
+                    return `${totalYears}y ${remMonths}mo`;
+                } else if (totalMonths >= 1) {
+                    const remDays = Math.floor(totalDays - totalMonths * 30.44);
+                    return `${totalMonths}mo ${remDays}d`;
+                } else if (totalDays >= 1) {
+                    const remHours = totalHours % 24;
+                    return `${totalDays}d ${remHours}h`;
+                } else if (totalHours >= 1) {
+                    const remMinutes = totalMinutes % 60;
+                    return `${totalHours}h ${remMinutes}m`;
+                } else {
+                    return `${totalMinutes}m`;
+                }
+            }
+
             function startCountdown(endTime) {
                 if (countdownInterval) clearInterval(countdownInterval);
                 const el = document.getElementById("offlineCountdown");
@@ -1208,20 +1242,18 @@
                     return;
                 }
 
-                const backAtTime = endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                const end = new Date(endTime);
+                const backAtTime = end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
                 backAtEl.textContent = `Expected back at ${backAtTime}`;
                 backAtEl.classList.add("visible");
 
                 el.style.display = "inline-block";
                 function tick() {
-                    const diff = Math.max(0, endTime - new Date());
-                    const hrs = Math.floor(diff / 3600000);
-                    const mins = Math.floor((diff % 3600000) / 60000);
-                    const secs = Math.floor((diff % 60000) / 1000);
-                    el.textContent = hrs > 0 ? `Back in ${hrs}h ${mins}m` : `Back in ${mins}m ${secs}s`;
+                    const diff = Math.max(0, end - new Date());
+                    el.textContent =
+                        diff > 0 ? `Back in ${formatCountdown(diff)}` : "Should be back online now — refresh the page!";
                     if (diff <= 0) {
                         clearInterval(countdownInterval);
-                        el.textContent = "Should be back online now — refresh the page!";
                         backAtEl.classList.remove("visible");
                     }
                 }
@@ -1232,16 +1264,13 @@
             function applyServerOnlineState(activeDowntime) {
                 const offlineBlock = document.getElementById("serverOfflineBlock");
                 const agreeGate = document.getElementById("agreeGate");
-
                 if (activeDowntime) {
                     serverOnline = false;
                     offlineBlock.classList.add("visible");
                     agreeGate.style.display = "none";
-
                     const dt = activeDowntime.downtime;
                     document.getElementById("serverOfflineText").textContent =
                         `${dt.label || "Maintenance"}. The server is undergoing maintenance. The server I.P will be shown as per the time below:`;
-
                     startCountdown(activeDowntime.end);
                 } else {
                     serverOnline = true;
@@ -1256,7 +1285,13 @@
                 return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
             }
             function formatDateTime(date) {
-                return date.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+                return date.toLocaleString([], {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
             }
 
             // ─── JOIN CODE & SERVER INFO ────────────────────────────────
