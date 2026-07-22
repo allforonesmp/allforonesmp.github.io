@@ -1430,8 +1430,9 @@
                 document.getElementById("downtimeContainer").classList.toggle("open");
             };
 
-            // ─── LIVE SERVER STATUS PILL ─────────────────────────────────
-            const STALE_THRESHOLD_MS = 50 * 1000;
+// ─── LIVE SERVER STATUS PILL ─────────────────────────────────
+            const STALE_THRESHOLD_MS = 10 * 1000; // offline if no heartbeat update in 10s
+            const STATUS_RECHECK_MS = 2 * 1000;    // re-evaluate staleness every 2s for prompt detection
             let liveStatusData = { state: "offline", lastHeartbeat: null, playersOnline: 0, playerList: [] };
             let statusRecheckInterval = null;
 
@@ -1446,7 +1447,7 @@
                 });
 
                 if (statusRecheckInterval) clearInterval(statusRecheckInterval);
-                statusRecheckInterval = setInterval(renderStatusPill, 5000);
+                statusRecheckInterval = setInterval(renderStatusPill, STATUS_RECHECK_MS);
             }
 
             function renderStatusPill() {
@@ -1465,8 +1466,10 @@
                 }
                 const isStale = ageMs > STALE_THRESHOLD_MS;
 
+                // If there's no heartbeat at all, or it's stale, force offline —
+                // regardless of what "state" says — unless it's mid-transition.
                 let displayState = rawState;
-                if (isStale && rawState !== "stopping" && rawState !== "restarting") {
+                if ((isStale || !hb) && rawState !== "stopping" && rawState !== "restarting") {
                     displayState = "offline";
                 }
 
