@@ -522,6 +522,7 @@
                     <li><button data-path="/profile" onclick="navigate('/profile', event)">Profile</button></li>
                     <li><button data-path="/post" onclick="navigate('/post', event)">Post</button></li>
                     <li><button data-path="/admin" onclick="navigate('/admin', event)">Admin Page</button></li>
+                    <li><button data-path="/stats" onclick="navigate('/stats', event)">Stats For 🤓's</button></li>
                 </ul>
                 <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" onclick="toggleDrawer()">
                     <span></span><span></span><span></span>
@@ -547,6 +548,7 @@
                 <li><button data-path="/profile" onclick="navigate('/profile', event); closeDrawer()">Profile</button></li>
                 <li><button data-path="/post" onclick="navigate('/post', event); closeDrawer()">Post</button></li>
                 <li><button data-path="/admin" onclick="navigate('/admin', event); closeDrawer()">Admin Page</button></li>
+               <li><button data-path="/stats" onclick="navigate('/stats', event); closeDrawer()">Stats For 🤓's</button></li>
             </ul>
         </div>
 
@@ -635,14 +637,16 @@
                 "/profile": BASE + "/profile",
                 "/post": BASE + "/post",
                 "/admin": BASE + "/admin"
+                "/stats": BASE + "/stats"
             };
             const PAGE_TITLES = {
                 "/": "AllForOne SMP",
-                "/mods": "Mods – AllForOne SMP",
-                "/rules": "Rules – AllForOne SMP",
-                "/profile": "Profile – AllForOne SMP",
-                "/post": "Post – AllForOne SMP",
-                "/admin": "Admin – AllForOne SMP"
+                "/mods": "Mods | AllForOne SMP",
+                "/rules": "Rules | AllForOne SMP",
+                "/profile": "Profile | AllForOne SMP",
+                "/post": "Post | AllForOne SMP",
+                "/admin": "Admin | AllForOne SMP"
+                "/stats": "🤓 | AllForOne SMP"
             };
             const REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes
             const EXIT_DURATION = 320; // must be >= slot exit transition time
