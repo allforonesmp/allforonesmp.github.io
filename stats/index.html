@@ -408,6 +408,12 @@
                 <span class="status-meta" id="statusMeta">—</span>
             </div>
 
+            <div class="status-strip" id="serverStatusStrip">
+                <div class="status-dot pending" id="serverStatusDot"></div>
+                <span class="status-label" id="serverStatusLabel">Checking server…</span>
+                <span class="status-meta" id="serverStatusMeta">—</span>
+            </div>
+
             <div class="stat-grid">
                 <div class="stat-card">
                     <div class="stat-card-label">Uptime</div>
@@ -523,6 +529,90 @@
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+        <!-- Firebase: live Minecraft server state (online / restarting / stopping / offline). -->
+        <!-- Same source the homepage's status pill uses — this is the actual game-server state, -->
+        <!-- separate from the "Reporting Live/Offline" pill above, which reflects this page's own -->
+        <!-- self-hosted reporter/API pipeline health. -->
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+            import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyDzQlAqhCeytCLEYafboYGpFu6pY3Kv9WE",
+                authDomain: "allforonemedia-9a7d8.firebaseapp.com",
+                databaseURL: "https://allforonemedia-9a7d8-default-rtdb.firebaseio.com",
+                projectId: "allforonemedia-9a7d8",
+                storageBucket: "allforonemedia-9a7d8.firebasestorage.app",
+                messagingSenderId: "892787060584",
+                appId: "1:892787060584:web:e65609062592f9ba96f0dd",
+                measurementId: "G-JSXKLMBRLC"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+
+            const SERVER_STALE_THRESHOLD_MS = 10 * 1000; // offline if no heartbeat update in 10s
+            const SERVER_STATUS_RECHECK_MS = 2 * 1000; // re-evaluate staleness every 2s
+            let liveServerData = { state: "offline", lastHeartbeat: null, playersOnline: 0, playerList: [] };
+            let serverStatusRecheckInterval = null;
+
+            function renderServerStatusPill() {
+                const dot = document.getElementById("serverStatusDot");
+                const label = document.getElementById("serverStatusLabel");
+                const meta = document.getElementById("serverStatusMeta");
+                if (!dot || !label || !meta) return;
+
+                const rawState = liveServerData.state || "offline";
+
+                let ageMs = Infinity;
+                const hb = liveServerData.lastHeartbeat;
+                if (hb) {
+                    const hbMillis = typeof hb.toMillis === "function" ? hb.toMillis() : new Date(hb).getTime();
+                    ageMs = Date.now() - hbMillis;
+                }
+                const isStale = ageMs > SERVER_STALE_THRESHOLD_MS;
+
+                let displayState = rawState;
+                if ((isStale || !hb) && rawState !== "stopping" && rawState !== "restarting") {
+                    displayState = "offline";
+                }
+
+                const stateMap = {
+                    online: { dotClass: "online", text: "Server Online" },
+                    restarting: { dotClass: "pending", text: "Server Restarting…" },
+                    stopping: { dotClass: "pending", text: "Server Stopping…" },
+                    offline: { dotClass: "offline", text: "Server Offline" }
+                };
+                const s = stateMap[displayState] || stateMap.offline;
+
+                dot.className = "status-dot " + s.dotClass;
+                label.textContent = s.text;
+
+                if (displayState === "online") {
+                    const count = liveServerData.playersOnline || 0;
+                    const names = liveServerData.playerList || [];
+                    meta.textContent = count > 0 ? `${count} online: ${names.join(", ")}` : "No players online";
+                } else {
+                    meta.textContent = "—";
+                }
+            }
+
+            function loadLiveServerStatus() {
+                onSnapshot(doc(db, "serverStatus", "live"), (snap) => {
+                    liveServerData = snap.exists()
+                        ? snap.data()
+                        : { state: "offline", lastHeartbeat: null, playersOnline: 0, playerList: [] };
+                    renderServerStatusPill();
+                });
+
+                if (serverStatusRecheckInterval) clearInterval(serverStatusRecheckInterval);
+                serverStatusRecheckInterval = setInterval(renderServerStatusPill, SERVER_STATUS_RECHECK_MS);
+            }
+
+            loadLiveServerStatus();
+        </script>
+
         <script>
             (function () {
                 "use strict";
@@ -635,7 +725,7 @@
                 // ---------------------------------------------------------------------
                 // RENDER: history charts
                 // ---------------------------------------------------------------------
-                function buildChart(canvasId, datasets, emptyElId) {
+                function buildChart(canvasId, datasets, emptyElId, yMax) {
                     const canvas = document.getElementById(canvasId);
                     const empty = document.getElementById(emptyElId);
                     const hasData = datasets.some((d) => d.data.length > 0);
@@ -643,6 +733,17 @@
                     canvas.style.display = hasData ? "block" : "none";
                     empty.style.display = hasData ? "none" : "flex";
                     if (!hasData) return null;
+
+                    const yScale = {
+                        beginAtZero: true,
+                        grid: { color: "#e8f4f8" },
+                        ticks: { color: "#718096" }
+                    };
+                    if (yMax != null) {
+                        yScale.max = yMax;
+                        // Whole-number ticks make sense for a small integer range like player count
+                        yScale.ticks = { color: "#718096", stepSize: 1 };
+                    }
 
                     return new Chart(canvas, {
                         type: "line",
@@ -659,11 +760,7 @@
                                     grid: { display: false },
                                     ticks: { color: "#718096", maxTicksLimit: 6 }
                                 },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: "#e8f4f8" },
-                                    ticks: { color: "#718096" }
-                                }
+                                y: yScale
                             },
                             plugins: { legend: { display: false } },
                             elements: { point: { radius: 0 }, line: { borderWidth: 2, tension: 0.25 } }
@@ -686,7 +783,8 @@
                     charts.cpu = buildChart(
                         "cpuChart",
                         [{ data: cpuData, borderColor: "#4a90e2", backgroundColor: "transparent" }],
-                        "cpuEmpty"
+                        "cpuEmpty",
+                        100
                     );
 
                     // memory: nested shape, same as /api/live (memory.usedPercent)
@@ -696,7 +794,8 @@
                     charts.ram = buildChart(
                         "ramChart",
                         [{ data: ramData, borderColor: "#5ba3f5", backgroundColor: "transparent" }],
-                        "ramEmpty"
+                        "ramEmpty",
+                        100
                     );
 
                     const downData = rows
@@ -727,7 +826,8 @@
                                 fill: true
                             }
                         ],
-                        "playersEmpty"
+                        "playersEmpty",
+                        8
                     );
                 }
 
