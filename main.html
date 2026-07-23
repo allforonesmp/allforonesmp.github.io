@@ -2,14 +2,14 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-        <meta name="theme-color" content="#4a90e2" />
-        <title>AllForOne SMP</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AllForOne SMP | Home</title>
         <link rel="icon" type="image/x-icon" href="https://allforonesmp.github.io/images/logo.png" />
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Spectral:wght@600;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Spectral:wght@600;700&family=Bebas+Neue&display=swap"
             rel="stylesheet" />
         <style>
             :root {
@@ -17,601 +17,877 @@
                 --light-blue: #e8f4f8;
                 --lighter-blue: #f5fbfd;
                 --dark-blue: #2c5f8d;
+                --accent-blue: #5ba3f5;
                 --text-dark: #1a2332;
                 --text-medium: #4a5568;
+                --text-light: #718096;
                 --border-color: #d4e8f0;
                 --white: #ffffff;
-                --nav-height: 64px;
-                --banner-height: 0px; /* updated by JS */
-                --safe-top: env(safe-area-inset-top, 0px);
-                --safe-bottom: env(safe-area-inset-bottom, 0px);
-                --safe-left: env(safe-area-inset-left, 0px);
-                --safe-right: env(safe-area-inset-right, 0px);
-                --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
-                --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+                --error: #e74c3c;
+                --success: #27ae60;
+                --shadow-sm: 0 1px 3px rgba(74, 144, 226, 0.08);
+                --shadow-md: 0 4px 12px rgba(74, 144, 226, 0.12);
+                --shadow-lg: 0 10px 30px rgba(74, 144, 226, 0.15);
             }
 
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
-                -webkit-tap-highlight-color: transparent;
             }
 
-            html,
             body {
-                height: 100%;
-                width: 100%;
-                overflow: hidden;
-                background: var(--white);
                 font-family: "DM Sans", sans-serif;
-                overscroll-behavior: none;
+                background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
+                color: var(--text-dark);
+                min-height: 100vh;
+                line-height: 1.6;
             }
 
-            button {
-                touch-action: manipulation;
-                font-size: 16px; /* prevents iOS zoom on focus */
-            }
-
-            /* ─── NAV ─── */
-            nav {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: calc(var(--nav-height) + var(--safe-top));
-                padding-top: var(--safe-top);
-                background: rgba(255, 255, 255, 0.92);
-                backdrop-filter: blur(16px) saturate(180%);
-                -webkit-backdrop-filter: blur(16px) saturate(180%);
-                border-bottom: 1.5px solid var(--border-color);
-                box-shadow: 0 2px 24px rgba(74, 144, 226, 0.08);
-                display: flex;
-                align-items: center;
-                padding-left: max(1.25rem, var(--safe-left));
-                padding-right: max(1.25rem, var(--safe-right));
-                z-index: 100;
-            }
-            .nav-inner {
-                width: 100%;
-                max-width: 2400px;
-                margin: 0 auto;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                height: var(--nav-height);
-                min-width: 0;
-            }
-            .logo {
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
                 font-family: "Spectral", serif;
-                font-size: 1.6rem;
                 font-weight: 700;
-                color: var(--primary-blue);
-                text-decoration: none;
-                letter-spacing: -0.01em;
-                white-space: nowrap;
-                flex-shrink: 0;
-                transition: color 0.2s var(--ease-standard);
-                cursor: pointer;
-                display: inline-flex;
-                align-items: center;
-            }
-            .logo img {
-                height: 40px;
-                max-width: 100%;
-                display: block;
-            }
-            .logo:hover {
-                color: var(--dark-blue);
             }
 
-            .nav-links {
-                display: flex;
-                align-items: center;
-                gap: 0.2rem;
-                list-style: none;
-                min-width: 0;
-                flex-wrap: nowrap;
-            }
-            .nav-links button {
-                color: var(--text-medium);
-                background: none;
-                border: none;
-                font-family: "DM Sans", sans-serif;
-                font-weight: 500;
-                font-size: 0.97rem;
-                padding: 0.45rem 0.9rem;
-                border-radius: 8px;
-                cursor: pointer;
-                transition:
-                    color 0.18s var(--ease-standard),
-                    background 0.18s var(--ease-standard);
-                white-space: nowrap;
-                position: relative;
-            }
-            .nav-links button:hover {
-                color: var(--primary-blue);
-                background: var(--lighter-blue);
-            }
-            .nav-links button.active {
-                color: var(--primary-blue);
-                background: var(--light-blue);
-                font-weight: 600;
-            }
-            .nav-links button::after {
-                content: "";
-                position: absolute;
-                bottom: 4px;
-                left: 50%;
-                right: 50%;
-                height: 2px;
-                background: var(--primary-blue);
-                border-radius: 2px;
-                transition:
-                    left 0.28s var(--ease-out),
-                    right 0.28s var(--ease-out);
-            }
-            .nav-links button.active::after {
-                left: 12px;
-                right: 12px;
-            }
-
-            /* ─── HAMBURGER ─── */
-            .hamburger {
-                display: none;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                gap: 5px;
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 0.6rem;
-                border-radius: 8px;
-                transition: background 0.18s var(--ease-standard);
-                flex-shrink: 0;
-                min-width: 44px;
-                min-height: 44px;
-            }
-            .hamburger:hover {
-                background: var(--lighter-blue);
-            }
-            .hamburger span {
-                display: block;
-                width: 22px;
-                height: 2.5px;
-                background: var(--text-medium);
-                border-radius: 2px;
-                transition: all 0.32s var(--ease-standard);
-                transform-origin: center;
-            }
-            .hamburger.open span:nth-child(1) {
-                transform: translateY(7.5px) rotate(45deg);
-            }
-            .hamburger.open span:nth-child(2) {
-                opacity: 0;
-                transform: scaleX(0);
-            }
-            .hamburger.open span:nth-child(3) {
-                transform: translateY(-7.5px) rotate(-45deg);
-            }
-
-            /* ─── NOTIFICATION BANNER ─── */
+            /* ── NOTIFICATION BANNER ── */
             #notifBanner {
-                position: fixed;
-                top: calc(var(--nav-height) + var(--safe-top));
-                left: 0;
-                right: 0;
-                z-index: 98;
-                overflow: hidden;
-                max-height: 0;
-                transition:
-                    max-height 0.42s var(--ease-standard),
-                    opacity 0.32s ease;
-                opacity: 0;
-                will-change: max-height, opacity;
+                display: none;
+                width: 100%;
+                position: relative;
+                z-index: 100;
+                animation: bannerSlideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             }
             #notifBanner.visible {
-                max-height: 160px;
-                opacity: 1;
+                display: block;
             }
-            .banner-inner {
+            @keyframes bannerSlideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-12px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .notif-banner-inner {
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                gap: 1rem;
+                padding: 0.85rem 2rem;
                 flex-wrap: wrap;
-                gap: 0.5rem 1rem;
-                padding: 0.7rem 3rem;
-                padding-left: max(3rem, calc(var(--safe-left) + 1rem));
-                padding-right: max(3rem, calc(var(--safe-right) + 1rem));
-                font-size: 0.95rem;
-                font-weight: 500;
-                min-height: 44px;
-                position: relative;
-            }
-            .banner-text {
-                flex: 1 1 auto;
                 text-align: center;
-                min-width: 120px;
-                word-break: break-word;
             }
-            .banner-btn {
-                display: inline-block;
-                padding: 0.35rem 1rem;
-                border-radius: 20px;
-                font-size: 0.85rem;
+            .notif-banner-text {
+                font-weight: 600;
+                font-size: 0.97rem;
+                line-height: 1.4;
+                flex: 1;
+                min-width: 0;
+            }
+            .notif-banner-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.45rem 1.1rem;
+                border-radius: 8px;
                 font-weight: 700;
-                cursor: pointer;
-                border: none;
-                font-family: "DM Sans", sans-serif;
-                white-space: nowrap;
-                flex-shrink: 0;
-                transition:
-                    opacity 0.2s var(--ease-standard),
-                    transform 0.15s var(--ease-standard);
+                font-size: 0.88rem;
                 text-decoration: none;
+                white-space: nowrap;
+                border: 2px solid rgba(255, 255, 255, 0.5);
+                background: rgba(255, 255, 255, 0.18);
+                color: inherit;
+                transition:
+                    background 0.18s,
+                    border-color 0.18s,
+                    transform 0.15s;
+                cursor: pointer;
+                font-family: "DM Sans", sans-serif;
             }
-            .banner-btn:hover {
-                opacity: 0.85;
+            .notif-banner-btn:hover {
+                background: rgba(255, 255, 255, 0.32);
+                border-color: rgba(255, 255, 255, 0.8);
                 transform: translateY(-1px);
             }
-            .banner-close {
-                position: absolute;
-                right: max(0.5rem, var(--safe-right));
-                top: 0.6rem;
-                background: none;
-                border: none;
-                cursor: pointer;
-                font-size: 1.1rem;
-                opacity: 0.6;
-                padding: 0.4rem;
-                min-width: 32px;
-                min-height: 32px;
-                transition: opacity 0.2s var(--ease-standard);
-            }
-            .banner-close:hover {
-                opacity: 1;
-            }
 
-            /* ─── MOBILE DRAWER ─── */
-            .drawer {
-                position: fixed;
-                top: calc(var(--nav-height) + var(--safe-top));
+            /* ── HERO BANNER ── */
+            .hero-banner {
+                width: 100%;
+                display: block;
+                overflow: hidden;
+                position: relative;
+                max-height: 520px;
+            }
+            .hero-banner img {
+                width: 100%;
+                height: auto;
+                display: block;
+                object-fit: cover;
+                object-position: center;
+            }
+            .hero-overlay {
+                position: absolute;
+                bottom: 0;
                 left: 0;
                 right: 0;
-                background: rgba(255, 255, 255, 0.97);
-                backdrop-filter: blur(20px);
-                border-bottom: 1.5px solid var(--border-color);
-                box-shadow: 0 8px 32px rgba(74, 144, 226, 0.12);
-                z-index: 99;
+                height: 80px;
+                background: linear-gradient(to bottom, transparent, var(--lighter-blue));
+                pointer-events: none;
+            }
+
+            /* ── MAIN LAYOUT ── */
+            .page-content {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 2rem;
+            }
+
+            .section-title {
+                font-family: "Bebas Neue", sans-serif;
+                font-size: 2.4rem;
+                letter-spacing: 0.08em;
+                color: var(--primary-blue);
+                margin-bottom: 1.5rem;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            .section-title::after {
+                content: "";
+                flex: 1;
+                height: 2px;
+                background: linear-gradient(to right, var(--primary-blue), transparent);
+            }
+
+            /* ── NEWS CAROUSEL ── */
+            .news-section {
+                margin-bottom: 3rem;
+            }
+            .carousel-wrapper {
+                position: relative;
+                background: var(--white);
+                border-radius: 20px;
+                box-shadow: var(--shadow-lg);
+                border: 1px solid var(--border-color);
                 overflow: hidden;
-                max-height: 0;
-                transition:
-                    max-height 0.36s var(--ease-standard),
-                    opacity 0.26s ease;
-                opacity: 0;
-                will-change: max-height, opacity;
             }
-            .drawer.open {
-                max-height: 420px;
-                opacity: 1;
-                overflow-y: auto;
+            .carousel-track-container {
+                overflow: hidden;
+                border-radius: 20px 20px 0 0;
             }
-            .drawer-links {
-                list-style: none;
-                padding: 0.75rem max(1rem, var(--safe-left)) calc(1rem + var(--safe-bottom));
+            .carousel-track {
+                display: flex;
+                transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .carousel-slide {
+                min-width: 100%;
                 display: flex;
                 flex-direction: column;
-                gap: 0.25rem;
             }
-            .drawer-links button {
+            .carousel-media {
                 width: 100%;
-                text-align: left;
-                background: none;
-                border: none;
-                font-family: "DM Sans", sans-serif;
-                font-weight: 500;
-                font-size: 1.05rem;
-                color: var(--text-medium);
-                padding: 0.8rem 1rem;
-                border-radius: 10px;
-                cursor: pointer;
-                min-height: 44px;
-                transition:
-                    color 0.18s var(--ease-standard),
-                    background 0.18s var(--ease-standard);
-            }
-            .drawer-links button:hover,
-            .drawer-links button:active {
-                color: var(--primary-blue);
+                aspect-ratio: 16 / 9;
+                object-fit: cover;
                 background: var(--lighter-blue);
+                display: block;
             }
-            .drawer-links button.active {
+            .carousel-media-count {
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                background: rgba(26, 35, 50, 0.55);
+                color: white;
+                font-size: 0.78rem;
+                font-weight: 600;
+                padding: 0.3rem 0.65rem;
+                border-radius: 20px;
+                z-index: 2;
+                pointer-events: none;
+            }
+            .carousel-media-wrap {
+                position: relative;
+            }
+            .carousel-info {
+                padding: 1.75rem 2rem;
+            }
+            .carousel-info h3 {
+                font-size: 1.5rem;
+                color: var(--text-dark);
+                margin-bottom: 0.75rem;
+            }
+            .carousel-info p {
+                color: var(--text-medium);
+                line-height: 1.7;
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+            .carousel-info p a {
                 color: var(--primary-blue);
+                font-weight: 600;
+                text-decoration: underline;
+                text-underline-offset: 2px;
+            }
+            .carousel-controls {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 1rem;
+                padding: 1rem;
+                border-top: 1px solid var(--border-color);
+            }
+            .carousel-btn {
+                background: var(--primary-blue);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 42px;
+                height: 42px;
+                font-size: 1.2rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+            .carousel-btn:hover {
+                background: var(--dark-blue);
+                transform: scale(1.08);
+            }
+            .carousel-dots {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .carousel-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: var(--border-color);
+                border: none;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+            .carousel-dot.active {
+                background: var(--primary-blue);
+            }
+            .news-empty {
+                padding: 4rem 2rem;
+                text-align: center;
+                color: var(--text-light);
+                font-size: 1.1rem;
+            }
+
+            /* ── JOIN SECTION ── */
+            .join-section {
+                margin-bottom: 3rem;
+            }
+            .join-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+                align-items: start;
+            }
+
+            .join-left {
+                display: flex;
+                flex-direction: column;
+                gap: 1.25rem;
+            }
+            .rules-link-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.6rem;
+                background: var(--lighter-blue);
+                border: 2px solid var(--border-color);
+                border-radius: 12px;
+                padding: 0.875rem 1.25rem;
+                text-decoration: none;
+                color: var(--primary-blue);
+                font-weight: 600;
+                font-size: 1rem;
+                transition: all 0.2s ease;
+                width: fit-content;
+            }
+            .rules-link-btn:hover {
                 background: var(--light-blue);
+                border-color: var(--primary-blue);
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
+
+            .play-now-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.6rem;
+                background: linear-gradient(135deg, #27ae60, #1e8449);
+                color: white;
+                border: none;
+                border-radius: 14px;
+                padding: 1rem 2rem;
+                font-size: 1.2rem;
+                font-weight: 700;
+                font-family: "DM Sans", sans-serif;
+                cursor: pointer;
+                text-decoration: none;
+                transition: all 0.25s ease;
+                box-shadow: 0 4px 15px rgba(39, 174, 96, 0.35);
+                width: fit-content;
+            }
+            .play-now-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(39, 174, 96, 0.45);
+            }
+            .play-now-btn[href="#"] {
+                background: #aaa;
+                cursor: default;
+                box-shadow: none;
+            }
+
+            .agree-gate {
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 16px;
+                padding: 1.5rem;
+                box-shadow: var(--shadow-md);
+            }
+            .agree-gate h4 {
+                font-size: 1rem;
+                color: var(--text-dark);
+                margin-bottom: 1rem;
+            }
+            .agree-checkbox-row {
+                display: flex;
+                align-items: flex-start;
+                gap: 0.75rem;
+                margin-bottom: 1.25rem;
+            }
+            .agree-checkbox-row input[type="checkbox"] {
+                width: 20px;
+                height: 20px;
+                accent-color: var(--primary-blue);
+                flex-shrink: 0;
+                margin-top: 2px;
+                cursor: pointer;
+            }
+            .agree-checkbox-row label {
+                cursor: pointer;
+                color: var(--text-medium);
+                font-size: 0.95rem;
+            }
+            .agree-checkbox-row a {
+                color: var(--primary-blue);
                 font-weight: 600;
             }
 
-            /* ─── CONTENT AREA ─── */
-            .content-shell {
-                position: fixed;
-                top: calc(var(--nav-height) + var(--safe-top) + var(--banner-height));
-                left: 0;
-                right: 0;
-                bottom: 0;
-                overflow: hidden;
-                transition: top 0.42s var(--ease-standard);
+            /* ── SERVER OFFLINE BLOCK ── */
+            .server-offline-block {
+                display: none;
+                background: linear-gradient(135deg, #fff3cd, #ffe5a1);
+                border: 2px solid #ffd54f;
+                border-radius: 16px;
+                padding: 1.5rem;
+                text-align: center;
+                animation: fadeUp 0.4s ease;
             }
-
-            .frame-slot {
-                position: absolute;
-                inset: 0;
-                opacity: 0;
-                transform: translateY(14px) scale(0.99);
-                transition:
-                    opacity 0.4s var(--ease-out),
-                    transform 0.4s var(--ease-out);
-                pointer-events: none;
-                will-change: opacity, transform;
-            }
-            .frame-slot.visible {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-                pointer-events: auto;
-                z-index: 2;
-            }
-            .frame-slot.exit {
-                opacity: 0;
-                transform: translateY(-8px) scale(1.005);
-                pointer-events: none;
-                z-index: 1;
-                transition:
-                    opacity 0.3s var(--ease-standard),
-                    transform 0.3s var(--ease-standard);
-            }
-            .frame-slot iframe {
-                width: 100%;
-                height: 100%;
-                border: none;
+            .server-offline-block.visible {
                 display: block;
-                background: var(--white);
+            }
+            .server-offline-block .offline-icon {
+                font-size: 2.5rem;
+                margin-bottom: 0.5rem;
+            }
+            .server-offline-block h4 {
+                color: #856404;
+                font-size: 1.1rem;
+                margin-bottom: 0.5rem;
+            }
+            .server-offline-block p {
+                color: #856404;
+                font-size: 0.95rem;
+                margin-bottom: 0.75rem;
+            }
+            .offline-countdown {
+                display: inline-block;
+                background: rgba(133, 100, 4, 0.12);
+                border: 1.5px solid #ffd54f;
+                border-radius: 10px;
+                padding: 0.5rem 1.25rem;
+                font-family: "Bebas Neue", sans-serif;
+                font-size: 1.6rem;
+                letter-spacing: 0.08em;
+                color: #856404;
+                margin-top: 0.25rem;
+            }
+            .offline-back-at {
+                display: none;
+                margin-top: 0.5rem;
+                font-size: 0.88rem;
+                color: #856404;
+                opacity: 0.8;
+            }
+            .offline-back-at.visible {
+                display: block;
             }
 
-            /* ─── LOADING SHIMMER ─── */
-            .frame-loader {
-                position: absolute;
-                inset: 0;
-                display: flex;
+            .code-reveal {
+                display: none;
                 flex-direction: column;
+                gap: 1rem;
+                animation: fadeUp 0.4s ease;
+            }
+            .code-reveal.visible {
+                display: flex;
+            }
+
+            .fingerprint-box {
+                background: var(--lighter-blue);
+                border: 2px dashed var(--primary-blue);
+                border-radius: 12px;
+                padding: 1rem 1.25rem;
+            }
+            .fingerprint-box h3 {
+                font-size: 0.8rem;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--text-light);
+                margin-bottom: 0.6rem;
+                font-family: "DM Sans", sans-serif;
+            }
+            .fingerprint-row {
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+            }
+            .fingerprint-value {
+                flex: 1;
+                min-width: 0;
+                font-family: monospace;
+                font-size: 0.85rem;
+                color: var(--text-dark);
+                background: var(--white);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                padding: 0.5rem 0.75rem;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .fingerprint-copy-btn {
+                flex-shrink: 0;
+                display: inline-flex;
                 align-items: center;
                 justify-content: center;
+                gap: 0.4rem;
+                background: var(--primary-blue);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 0.55rem 0.9rem;
+                font-size: 0.85rem;
+                font-weight: 600;
+                font-family: "DM Sans", sans-serif;
+                cursor: pointer;
+                transition:
+                    background 0.18s,
+                    transform 0.15s;
+                white-space: nowrap;
+            }
+            .fingerprint-copy-btn:hover {
+                background: var(--dark-blue);
+                transform: translateY(-1px);
+            }
+            .fingerprint-copy-btn.copied {
+                background: var(--success);
+            }
+
+            @keyframes fadeUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .connection-id-box {
                 background: var(--lighter-blue);
-                gap: 1rem;
-                transition: opacity 0.3s var(--ease-standard);
-                padding: 1rem;
+                border: 2px dashed var(--primary-blue);
+                border-radius: 12px;
+                padding: 1.25rem;
                 text-align: center;
-                z-index: 0;
             }
-            .frame-loader.hidden {
-                opacity: 0;
-                pointer-events: none;
+            .connection-id-box .label {
+                font-size: 0.8rem;
+                font-weight: 700;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--text-light);
+                margin-bottom: 0.4rem;
             }
-            .loader-spinner {
+            .connection-id-box .code-value {
+                font-family: "Bebas Neue", sans-serif;
+                font-size: 2rem;
+                letter-spacing: 0.12em;
+                color: var(--primary-blue);
+            }
+
+            .join-right {
+                display: flex;
+                flex-direction: column;
+                gap: 1.25rem;
+            }
+
+            .downtime-container {
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 14px;
+                overflow: hidden;
+                box-shadow: var(--shadow-sm);
+            }
+            .downtime-header {
+                padding: 1rem 1.25rem;
+                background: var(--lighter-blue);
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                user-select: none;
+                transition: background 0.2s;
+            }
+            .downtime-header:hover {
+                background: var(--light-blue);
+            }
+            .downtime-header h4 {
+                font-size: 1rem;
+                color: var(--text-dark);
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .downtime-arrow {
+                transition: transform 0.3s;
+                font-size: 0.9rem;
+                color: var(--text-medium);
+            }
+            .downtime-container.open .downtime-arrow {
+                transform: rotate(180deg);
+            }
+            .downtime-body {
+                display: none;
+                padding: 1rem 1.25rem;
+                border-top: 1px solid var(--border-color);
+            }
+            .downtime-container.open .downtime-body {
+                display: block;
+            }
+            .downtime-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem;
+                border-radius: 8px;
+                margin-bottom: 0.5rem;
+                background: var(--lighter-blue);
+                border: 1px solid var(--border-color);
+                font-size: 0.9rem;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+            .downtime-empty {
+                color: var(--text-light);
+                font-style: italic;
+                font-size: 0.9rem;
+                padding: 0.5rem 0;
+            }
+
+            .downtime-alert {
+                display: none;
+                background: linear-gradient(135deg, #fff3cd, #ffe5a1);
+                border: 2px solid #ffd54f;
+                border-radius: 14px;
+                padding: 1.25rem;
+                animation: fadeUp 0.4s ease;
+            }
+            .downtime-alert.visible {
+                display: block;
+            }
+            .downtime-alert h4 {
+                color: #856404;
+                margin-bottom: 0.4rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .downtime-alert p {
+                color: #856404;
+                font-size: 0.95rem;
+            }
+
+            .status-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.6rem;
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 999px;
+                padding: 0.6rem 1.1rem;
+                box-shadow: var(--shadow-sm);
+                margin-bottom: 1rem;
+                font-size: 0.95rem;
+            }
+            .status-dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #aaa;
+                flex-shrink: 0;
+                transition: background 0.3s ease;
+            }
+            .status-dot.online {
+                background: var(--success);
+                box-shadow: 0 0 8px rgba(39, 174, 96, 0.5);
+            }
+            .status-dot.offline {
+                background: var(--error);
+            }
+            .status-dot.pending {
+                background: #f6c90e;
+                box-shadow: 0 0 8px rgba(246, 201, 14, 0.5);
+            }
+            .status-label {
+                font-weight: 700;
+                color: var(--text-dark);
+            }
+            .status-players {
+                color: var(--text-medium);
+                font-size: 0.88rem;
+            }
+
+            /* ── INFO CARD (replaces Voice Chat card) ── */
+            .info-card {
+                display: none;
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 14px;
+                padding: 1.5rem;
+                box-shadow: var(--shadow-md);
+            }
+            .info-card.visible {
+                display: block;
+            }
+            .info-card h4 {
+                font-size: 1.1rem;
+                color: var(--text-dark);
+                margin-bottom: 0.6rem;
+            }
+            .info-card p {
+                color: var(--text-medium);
+                font-size: 0.95rem;
+                line-height: 1.7;
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+            .info-card p a {
+                color: var(--primary-blue);
+                font-weight: 600;
+                text-decoration: underline;
+                text-underline-offset: 2px;
+            }
+
+            .spinner {
+                border: 3px solid var(--light-blue);
+                border-top: 3px solid var(--primary-blue);
+                border-radius: 50%;
                 width: 36px;
                 height: 36px;
-                border: 3px solid var(--border-color);
-                border-top-color: var(--primary-blue);
-                border-radius: 50%;
-                animation: spin 0.8s linear infinite;
-                flex-shrink: 0;
+                animation: spin 1s linear infinite;
+                margin: 2rem auto;
             }
             @keyframes spin {
                 to {
                     transform: rotate(360deg);
                 }
             }
-            .loader-text {
-                font-family: "DM Sans", sans-serif;
-                color: var(--text-medium);
-                font-size: 0.88rem;
-                letter-spacing: 0.02em;
+
+            footer {
+                background: var(--text-dark);
+                color: #a0aec0;
+                text-align: center;
+                padding: 2rem;
+                font-size: 0.9rem;
+                margin-top: 2rem;
+            }
+            footer a {
+                color: var(--accent-blue);
+                text-decoration: none;
             }
 
-            /* ─── RIPPLE ─── */
-            .ripple-overlay {
-                position: fixed;
-                inset: 0;
-                pointer-events: none;
-                z-index: 200;
-                overflow: hidden;
-            }
-            .ripple {
-                position: absolute;
-                border-radius: 50%;
-                background: rgba(74, 144, 226, 0.12);
-                transform: scale(0);
-                animation: rippleOut 0.55s var(--ease-standard) forwards;
-            }
-            @keyframes rippleOut {
-                to {
-                    transform: scale(40);
-                    opacity: 0;
+            @media (max-width: 768px) {
+                .join-grid {
+                    grid-template-columns: 1fr;
                 }
-            }
-
-            /* ─── RESPONSIVE BREAKPOINTS ─── */
-            @media (max-width: 900px) {
-                .nav-links button {
-                    font-size: 0.9rem;
-                    padding: 0.4rem 0.65rem;
+                .notif-banner-inner {
+                    padding: 0.75rem 1rem;
+                    gap: 0.6rem;
                 }
-            }
-
-            @media (max-width: 700px) {
-                nav {
-                    padding-left: max(1rem, var(--safe-left));
-                    padding-right: max(1rem, var(--safe-right));
+                .page-content {
+                    padding: 1.25rem;
                 }
-                .nav-links {
-                    display: none;
-                }
-                .hamburger {
-                    display: flex;
-                }
-                .logo img {
-                    height: 34px;
-                }
-                .banner-inner {
-                    padding: 0.65rem 2.75rem;
-                    padding-left: max(2.75rem, calc(var(--safe-left) + 0.75rem));
-                    padding-right: max(2.75rem, calc(var(--safe-right) + 0.75rem));
-                    font-size: 0.88rem;
-                }
-                .banner-btn {
-                    font-size: 0.8rem;
-                    padding: 0.3rem 0.85rem;
-                }
-            }
-
-            @media (max-width: 400px) {
-                .logo img {
-                    height: 28px;
-                }
-                nav {
-                    padding-left: max(0.75rem, var(--safe-left));
-                    padding-right: max(0.75rem, var(--safe-right));
-                }
-                .banner-text {
-                    font-size: 0.82rem;
-                }
-            }
-
-            /* Landscape phones: shrink nav a bit to save vertical space */
-            @media (max-height: 420px) and (orientation: landscape) {
-                :root {
-                    --nav-height: 52px;
-                }
-                .logo img {
-                    height: 30px;
-                }
-            }
-
-            @media (prefers-reduced-motion: reduce) {
-                *,
-                *::before,
-                *::after {
-                    animation-duration: 0.01ms !important;
-                    transition-duration: 0.01ms !important;
+                .section-title {
+                    font-size: 1.9rem;
                 }
             }
         </style>
     </head>
     <body>
-        <nav>
-            <div class="nav-inner">
-                <a href="/" style="display: contents">
-                    <span class="logo" onclick="navigate('/', event)">
-                        <img src="https://allforonesmp.github.io/images/logo.png" alt="AllForOne SMP Logo" />
-                    </span>
-                </a>
-
-                <ul class="nav-links" id="navLinks">
-                    <li><button data-path="/" onclick="navigate('/', event)">Home</button></li>
-                    <li><button data-path="/mods" onclick="navigate('/mods', event)">Mods</button></li>
-                    <li><button data-path="/rules" onclick="navigate('/rules', event)">Rules</button></li>
-                    <li><button data-path="/profile" onclick="navigate('/profile', event)">Profile</button></li>
-                    <li><button data-path="/post" onclick="navigate('/post', event)">Post</button></li>
-                    <li><button data-path="/admin" onclick="navigate('/admin', event)">Admin Page</button></li>
-                    <li><button data-path="/stats" onclick="navigate('/stats', event)">Stats For 🤓's</button></li>
-                </ul>
-                <button
-                    class="hamburger"
-                    id="hamburgerBtn"
-                    aria-label="Open menu"
-                    aria-expanded="false"
-                    onclick="toggleDrawer()">
-                    <span></span><span></span><span></span>
-                </button>
-            </div>
-        </nav>
-
-        <!-- Notification Banner -->
+        <!-- ── NOTIFICATION BANNER ── -->
         <div id="notifBanner">
-            <div class="banner-inner" id="bannerInner">
-                <span class="banner-text" id="bannerText"></span>
-                <a class="banner-btn" id="bannerBtn" href="#" target="_blank" rel="noopener" style="display: none"></a>
-                <button class="banner-close" id="bannerClose" onclick="dismissBanner()" aria-label="Dismiss">✕</button>
+            <div class="notif-banner-inner" id="notifBannerInner">
+                <span class="notif-banner-text" id="notifBannerText"></span>
+                <a
+                    id="notifBannerBtn"
+                    class="notif-banner-btn"
+                    style="display: none"
+                    target="_blank"
+                    rel="noopener"></a>
             </div>
         </div>
 
-        <!-- Mobile Drawer -->
-        <div class="drawer" id="drawer">
-            <ul class="drawer-links" id="drawerLinks">
-                <li><button data-path="/" onclick="navigate('/', event); closeDrawer()">Home</button></li>
-                <li><button data-path="/mods" onclick="navigate('/mods', event); closeDrawer()">Mods</button></li>
-                <li><button data-path="/rules" onclick="navigate('/rules', event); closeDrawer()">Rules</button></li>
-                <li>
-                    <button data-path="/profile" onclick="navigate('/profile', event); closeDrawer()">Profile</button>
-                </li>
-                <li><button data-path="/post" onclick="navigate('/post', event); closeDrawer()">Post</button></li>
-                <li>
-                    <button data-path="/admin" onclick="navigate('/admin', event); closeDrawer()">Admin Page</button>
-                </li>
-                <li>
-                    <button data-path="/stats" onclick="navigate('/stats', event); closeDrawer()">
-                        Stats For 🤓's
-                    </button>
-                </li>
-            </ul>
+        <!-- ── HERO BANNER ── -->
+        <div class="hero-banner">
+            <img id="heroBannerImg" src="https://allforonesmp.github.io/images/banner.png" alt="AllForOne SMP Banner" />
+            <div class="hero-overlay"></div>
         </div>
 
-        <div class="ripple-overlay" id="rippleOverlay"></div>
-        <div class="content-shell" id="contentShell"></div>
+        <!-- ── PAGE CONTENT ── -->
+        <div class="page-content">
+            <section class="news-section">
+                <div class="section-title">Latest News</div>
+                <div class="carousel-wrapper" id="newsCarouselWrapper">
+                    <div id="newsLoadingSpinner"><div class="spinner"></div></div>
+                    <div id="newsCarouselInner" style="display: none">
+                        <div class="carousel-track-container">
+                            <div class="carousel-track" id="carouselTrack"></div>
+                        </div>
+                        <div class="carousel-controls">
+                            <button class="carousel-btn" onclick="carouselPrev()">&#8592;</button>
+                            <div class="carousel-dots" id="carouselDots"></div>
+                            <button class="carousel-btn" onclick="carouselNext()">&#8594;</button>
+                        </div>
+                    </div>
+                    <div id="newsEmpty" class="news-empty" style="display: none">No news yet – check back soon!</div>
+                </div>
+            </section>
 
-        <script>
-            // ── Recursion guard ─────────────────────────────────────────
-            // If this shell is itself running inside one of its own
-            // iframes (i.e. a route page like main.html mistakenly
-            // contains a full copy of this navbar), stop immediately
-            // instead of spawning another nested navbar+iframe forever.
-            (function () {
-                try {
-                    var depth = 0;
-                    var win = window;
-                    while (win !== win.parent) {
-                        try {
-                            // Only counts if the parent frame is running the
-                            // same app (same origin required to introspect it).
-                            if (win.parent.document && win.parent.document.getElementById("contentShell")) {
-                                depth++;
-                            }
-                        } catch (_) {
-                            // Cross-origin parent — can't introspect, so we
-                            // can't confirm nesting; stop counting here.
-                            break;
-                        }
-                        win = win.parent;
-                        if (depth > 2) break; // safety bound on the walk itself
-                    }
-                    if (depth >= 1) {
-                        document.documentElement.innerHTML =
-                            '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#4a5568;text-align:center;padding:2rem;">' +
-                            "This page (" +
-                            window.location.pathname +
-                            ") contains the site navbar and was loaded inside another navbar frame, " +
-                            "which would nest infinitely. Remove the &lt;nav&gt;/iframe-shell markup from this page \u2014 " +
-                            "route pages should only contain their own content." +
-                            "</div>";
-                        throw new Error("AllForOne SMP: blocked recursive navbar nesting");
-                    }
-                } catch (e) {
-                    if (e && e.message && e.message.indexOf("blocked recursive navbar nesting") !== -1) throw e;
-                    // Any other error (e.g. sandboxed iframe with no parent
-                    // access at all) just means we can't check — proceed
-                    // normally rather than breaking legitimate top-level loads.
-                }
-            })();
-        </script>
+            <section class="join-section">
+                <div class="section-title">Join the Server</div>
+
+                <div class="status-pill" id="statusPill">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span class="status-label" id="statusLabel">Checking…</span>
+                    <span class="status-players" id="playerCount"></span>
+                </div>
+
+                <div class="downtime-alert" id="downtimeAlert">
+                    <h4>Upcoming Server Downtime</h4>
+                    <p id="downtimeAlertText">Scheduled maintenance approaching.</p>
+                </div>
+                <div style="margin-bottom: 1rem"></div>
+
+                <div class="join-grid">
+                    <div class="join-left">
+                        <a href="https://allforonesmp.github.io/rules" class="rules-link-btn" target="_blank">
+                            Read the Server Rules
+                        </a>
+
+                        <!-- Shown when server is currently offline -->
+                        <div class="server-offline-block" id="serverOfflineBlock">
+                            <img
+                                src="https://allforonesmp.github.io/images/logo.png"
+                                alt="AllForOne"
+                                width="100"
+                                height="100" />
+                            <h4>Server is Currently Offline</h4>
+                            <p id="serverOfflineText">
+                                The server is undergoing maintenance. The server I.P will be shown as per the time
+                                below:
+                            </p>
+                            <div class="offline-countdown" id="offlineCountdown" style="display: none">Back in —</div>
+                            <div class="offline-back-at" id="offlineBackAt"></div>
+                        </div>
+
+                        <div class="agree-gate" id="agreeGate">
+                            <h4>Access the Join Code</h4>
+                            <div class="agree-checkbox-row">
+                                <input type="checkbox" id="agreeCheck" onchange="toggleCodeReveal()" />
+                                <label for="agreeCheck">
+                                    I have read and agreed to the rules for the
+                                    <a href="https://allforonesmp.github.io/rules" target="_blank">AllForOne SMP</a>.
+                                </label>
+                            </div>
+                            <div class="code-reveal" id="codeReveal">
+                                <!-- Server IP box: hidden entirely when serverIp is empty -->
+                                <div class="connection-id-box" id="serverIpBox" style="display: none">
+                                    <div class="label">Server IP</div>
+                                    <div class="code-value" id="serverIpValue">—</div>
+                                </div>
+                                <div class="fingerprint-box">
+                                    <h3>AutoModpack Server Fingerprint</h3>
+                                    <div class="fingerprint-row">
+                                        <div class="fingerprint-value" id="fingerprintValue">
+                                            aa8356134cab5699365a9d917d8ed6f9359e923e6d6027e6a092b938562e5572
+                                        </div>
+                                        <button
+                                            class="fingerprint-copy-btn"
+                                            id="fingerprintCopyBtn"
+                                            onclick="copyFingerprint()">
+                                            Copy
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="join-right">
+                        <div class="downtime-container" id="downtimeContainer">
+                            <div class="downtime-header" onclick="toggleDowntime()">
+                                <h4>Server Downtime Schedule</h4>
+                                <span class="downtime-arrow">▼</span>
+                            </div>
+                            <div class="downtime-body" id="downtimeBody">
+                                <div id="downtimeList"><div class="downtime-empty">No scheduled downtimes.</div></div>
+                            </div>
+                        </div>
+
+                        <!-- Info card: replaces the old Voice Chat card -->
+                        <div class="info-card" id="infoCard">
+                            <h4 id="infoCardTitle">Server Info</h4>
+                            <p id="infoCardText"></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>
+                AllForOne SMP &copy; 2026 &nbsp;|&nbsp;
+                <a href="https://allforonesmp.github.io/rules">Rules</a> &nbsp;|&nbsp; Built with ❤️
+            </p>
+        </footer>
 
         <!-- Firebase -->
         <script type="module">
@@ -619,8 +895,12 @@
             import {
                 getFirestore,
                 doc,
-                onSnapshot
+                onSnapshot,
+                collection,
+                orderBy,
+                query
             } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+            import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
             const firebaseConfig = {
                 apiKey: "AIzaSyDzQlAqhCeytCLEYafboYGpFu6pY3Kv9WE",
@@ -629,321 +909,595 @@
                 projectId: "allforonemedia-9a7d8",
                 storageBucket: "allforonemedia-9a7d8.firebasestorage.app",
                 messagingSenderId: "892787060584",
-                appId: "1:892787060584:web:e65609062592f9ba96f0dd"
+                appId: "1:892787060584:web:e65609062592f9ba96f0dd",
+                measurementId: "G-JSXKLMBRLC"
             };
+
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
+            const rtdb = getDatabase(app);
 
-            // Listen for banner config from Firestore
-            onSnapshot(doc(db, "serverInfo", "main"), (snap) => {
-                if (!snap.exists()) return;
-                const data = snap.data();
-                window._bannerConfig = data.notificationBanner || null;
-                if (window.applyBanner) window.applyBanner(window._currentPath);
-            });
-        </script>
+            // ─── LINK AUTO-DETECT ───────────────────────────────────────
+            // Turns any bare URL in a plain-text string into a clickable <a> tag.
+            // Escapes HTML first so we never inject markup from stored text.
+            function escapeHtml(str) {
+                const div = document.createElement("div");
+                div.textContent = str == null ? "" : String(str);
+                return div.innerHTML;
+            }
+            function linkify(rawText) {
+                const escaped = escapeHtml(rawText);
+                const urlPattern = /((https?:\/\/)[^\s<]+)/gi;
+                return escaped.replace(urlPattern, (match) => {
+                    let url = match;
+                    // Strip trailing punctuation that's likely not part of the URL
+                    const trailingPunct = /[.,!?;:)\]]+$/;
+                    let trail = "";
+                    const trailMatch = url.match(trailingPunct);
+                    if (trailMatch) {
+                        trail = trailMatch[0];
+                        url = url.slice(0, url.length - trail.length);
+                    }
+                    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>${trail}`;
+                });
+            }
 
-        <script>
-                        const BASE = "https://allforonesmp.github.io";
-            const ROUTES = {
-                "/": BASE + "/main.html",
-                "/mods": BASE + "/mods",
-                "/rules": BASE + "/rules",
-                "/profile": BASE + "/profile",
-                "/post": BASE + "/post",
-                "/admin": BASE + "/admin",
-                "/stats": BASE + "/stats",
+            // ─── NEWS CAROUSEL ──────────────────────────────────────────
+            const NEWS_QUEUE_KEY = "afo_news_queue";
+            let carouselIndex = 0;
+            // slides: flattened list of { newsId, title, description, mediaType, mediaUrl }
+            let slides = [];
+            let newsItems = [];
+
+            /**
+             * Pick the starting slide index for this page load, working at the
+             * news-story level (not the flattened media-slide level) so that a
+             * story with many media items doesn't dominate the shuffle.
+             */
+            function pickStartStoryId(items) {
+                if (items.length === 0) return null;
+                if (items.length === 1) return items[0].id;
+
+                const ids = items.map((i) => i.id);
+
+                let queue = [];
+                try {
+                    const stored = localStorage.getItem(NEWS_QUEUE_KEY);
+                    if (stored) queue = JSON.parse(stored).filter((id) => ids.includes(id));
+                } catch (_) {}
+
+                if (queue.length === 0) {
+                    let lastShown = null;
+                    try {
+                        lastShown = localStorage.getItem(NEWS_QUEUE_KEY + "_last");
+                    } catch (_) {}
+
+                    const shuffled = [...ids];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+                    if (shuffled.length > 1 && shuffled[0] === lastShown) {
+                        shuffled.push(shuffled.shift());
+                    }
+                    queue = shuffled;
+                }
+
+                const chosenId = queue.shift();
+
+                try {
+                    localStorage.setItem(NEWS_QUEUE_KEY, JSON.stringify(queue));
+                    localStorage.setItem(NEWS_QUEUE_KEY + "_last", chosenId);
+                } catch (_) {}
+
+                return chosenId;
+            }
+
+            window.copyFingerprint = function () {
+                const text = document.getElementById("fingerprintValue").textContent.trim();
+                const btn = document.getElementById("fingerprintCopyBtn");
+                navigator.clipboard.writeText(text).then(() => {
+                    const original = btn.textContent;
+                    btn.textContent = "Copied!";
+                    btn.classList.add("copied");
+                    setTimeout(() => {
+                        btn.textContent = original;
+                        btn.classList.remove("copied");
+                    }, 1500);
+                });
             };
-            const PAGE_TITLES = {
-                "/": "AllForOne SMP",
-                "/mods": "Mods | AllForOne SMP",
-                "/rules": "Rules | AllForOne SMP",
-                "/profile": "Profile | AllForOne SMP",
-                "/post": "Post | AllForOne SMP",
-                "/admin": "Admin | AllForOne SMP",
-                "/stats": "🤓 | AllForOne SMP",
-            };
-                        const REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes
-                        const EXIT_DURATION = 320; // must be >= slot exit transition time
 
-                        const shell = document.getElementById("contentShell");
-                        const overlay = document.getElementById("rippleOverlay");
-                        const drawer = document.getElementById("drawer");
-                        const hamburger = document.getElementById("hamburgerBtn");
-                        const notifBanner = document.getElementById("notifBanner");
-                        const bannerInner = document.getElementById("bannerInner");
+            async function loadNews() {
+                try {
+                    const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+                    onSnapshot(q, (snapshot) => {
+                        newsItems = [];
+                        snapshot.forEach((d) => newsItems.push({ id: d.id, ...d.data() }));
+                        renderCarousel();
+                    });
+                } catch (e) {
+                    document.getElementById("newsLoadingSpinner").style.display = "none";
+                    document.getElementById("newsEmpty").style.display = "block";
+                }
+            }
 
-                        let currentPath = null;
-                        let frames = {};
-                        let activeSlot = null;
-                        let refreshTimers = {};
-                        let exitTimeout = null;
-                        let bannerDismissed = false;
-                        let bannerResizeObserver = null;
+            // Build a YouTube embed URL from a variety of link formats, or null if not YouTube
+            function toYouTubeEmbed(url) {
+                if (!url) return null;
+                const patterns = [
+                    /youtu\.be\/([a-zA-Z0-9_-]+)/,
+                    /youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/,
+                    /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
+                    /youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/
+                ];
+                for (const p of patterns) {
+                    const m = url.match(p);
+                    if (m) return `https://www.youtube.com/embed/${m[1]}`;
+                }
+                return null;
+            }
 
-                        window._currentPath = "/";
-                        window._bannerConfig = null;
+            function buildSlideMedia(item) {
+                const media = Array.isArray(item.media) ? item.media : [];
+                if (media.length === 0) {
+                    // Legacy fallback: old single-image field
+                    if (item.imageUrl) return [{ type: "image", url: item.imageUrl }];
+                    return [{ type: "image", url: null }];
+                }
+                return media;
+            }
 
-                        // ── Banner ──────────────────────────────────────────────────
-                        function applyBanner(path) {
-                            const cfg = window._bannerConfig;
-                            const bannerText = document.getElementById("bannerText");
-                            const bannerBtn = document.getElementById("bannerBtn");
-                            const bannerClose = document.getElementById("bannerClose");
+            function renderCarousel() {
+                const spinner = document.getElementById("newsLoadingSpinner");
+                const inner = document.getElementById("newsCarouselInner");
+                const empty = document.getElementById("newsEmpty");
+                const track = document.getElementById("carouselTrack");
+                const dots = document.getElementById("carouselDots");
 
-                            const hide = () => {
-                                notifBanner.classList.remove("visible");
-                                updateBannerHeight(0);
-                            };
+                spinner.style.display = "none";
 
-                            if (!cfg || !cfg.enabled || bannerDismissed) {
-                                hide();
-                                return;
-                            }
+                if (newsItems.length === 0) {
+                    inner.style.display = "none";
+                    empty.style.display = "block";
+                    return;
+                }
+                inner.style.display = "block";
+                empty.style.display = "none";
+                track.innerHTML = "";
+                dots.innerHTML = "";
 
-                            // Check if this page should show the banner
-                            const pages = cfg.pages || [];
-                            if (pages.length > 0 && !pages.includes(path)) {
-                                hide();
-                                return;
-                            }
+                // Flatten: each media item within a story becomes its own slide
+                slides = [];
+                newsItems.forEach((item) => {
+                    const mediaList = buildSlideMedia(item);
+                    mediaList.forEach((m, mIdx) => {
+                        slides.push({
+                            newsId: item.id,
+                            title: item.title || "Untitled",
+                            description: item.description || "",
+                            media: m,
+                            mediaIndex: mIdx,
+                            mediaCount: mediaList.length
+                        });
+                    });
+                });
 
-                            // Apply colours
-                            bannerInner.style.backgroundColor = cfg.bgColor || "#4a90e2";
-                            bannerInner.style.color = cfg.textColor || "#ffffff";
-                            bannerClose.style.color = cfg.textColor || "#ffffff";
-                            bannerText.textContent = cfg.text || "";
+                slides.forEach((slide) => {
+                    const el = document.createElement("div");
+                    el.className = "carousel-slide";
 
-                            // Button
-                            if (cfg.btnLabel && cfg.btnLink) {
-                                bannerBtn.textContent = cfg.btnLabel;
-                                bannerBtn.href = cfg.btnLink;
-                                bannerBtn.style.backgroundColor = cfg.btnBgColor || "rgba(255,255,255,0.25)";
-                                bannerBtn.style.color = cfg.btnTextColor || "#ffffff";
-                                bannerBtn.style.display = "inline-block";
-                            } else {
-                                bannerBtn.style.display = "none";
-                            }
+                    const wrap = document.createElement("div");
+                    wrap.className = "carousel-media-wrap";
 
-                            notifBanner.classList.add("visible");
-                            // Measure real height after layout, and keep it accurate if
-                            // the text wraps differently (e.g. on resize/zoom) by
-                            // observing the inner element while the banner is visible.
-                            requestAnimationFrame(() => {
-                                updateBannerHeight(bannerInner.offsetHeight);
-                            });
-                            observeBannerSize();
-                        }
-                        window.applyBanner = applyBanner;
-
-                        function observeBannerSize() {
-                            if (bannerResizeObserver || typeof ResizeObserver === "undefined") return;
-                            bannerResizeObserver = new ResizeObserver((entries) => {
-                                if (!notifBanner.classList.contains("visible")) return;
-                                for (const entry of entries) {
-                                    updateBannerHeight(entry.contentRect.height);
-                                }
-                            });
-                            bannerResizeObserver.observe(bannerInner);
-                        }
-
-                        function updateBannerHeight(h) {
-                            document.documentElement.style.setProperty("--banner-height", h + "px");
-                        }
-
-                        window.dismissBanner = function () {
-                            bannerDismissed = true;
-                            notifBanner.classList.remove("visible");
-                            updateBannerHeight(0);
-                        };
-
-                        // ── Page title ───────────────────────────────────────────────
-                        function updateTitle(path) {
-                            // Try reading iframe title; fallback to our map.
-                            // Same-origin/cross-origin access can throw — always fall
-                            // back gracefully instead of leaving a stale title.
-                            const frame = frames[path];
-                            let iframeTitle = null;
-                            try {
-                                iframeTitle = frame?.iframe?.contentDocument?.title;
-                            } catch (_) {
-                                iframeTitle = null;
-                            }
-                            document.title = iframeTitle && iframeTitle.trim() ? iframeTitle : PAGE_TITLES[path] || "AllForOne SMP";
-                        }
-
-                        // ── Ripple ───────────────────────────────────────────────────
-                        function spawnRipple(e) {
-                            const r = document.createElement("div");
-                            r.className = "ripple";
-                            const size = 60;
-                            // Use the button's own center when triggered via keyboard/
-                            // synthetic events (no clientX/Y), rather than always
-                            // falling back to viewport center.
-                            let x, y;
-                            if (e && typeof e.clientX === "number" && (e.clientX !== 0 || e.clientY !== 0)) {
-                                x = e.clientX - size / 2;
-                                y = e.clientY - size / 2;
-                            } else if (e && e.target && e.target.getBoundingClientRect) {
-                                const rect = e.target.getBoundingClientRect();
-                                x = rect.left + rect.width / 2 - size / 2;
-                                y = rect.top + rect.height / 2 - size / 2;
-                            } else {
-                                x = window.innerWidth / 2 - size / 2;
-                                y = window.innerHeight / 2 - size / 2;
-                            }
-                            r.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;`;
-                            overlay.appendChild(r);
-                            r.addEventListener("animationend", () => r.remove(), { once: true });
-                        }
-
-                        // ── Frame creation ───────────────────────────────────────────
-                        function getOrCreateFrame(path) {
-                            if (frames[path]) return frames[path];
-
-                            const slot = document.createElement("div");
-                            slot.className = "frame-slot";
-
-                            const loader = document.createElement("div");
-                            loader.className = "frame-loader";
-                            loader.innerHTML = `<div class="loader-spinner"></div><p class="loader-text">Loading…</p>`;
-                            slot.appendChild(loader);
-
+                    if (slide.media.type === "video-file" && slide.media.url) {
+                        const video = document.createElement("video");
+                        video.className = "carousel-media";
+                        video.src = slide.media.url;
+                        video.controls = true;
+                        video.playsInline = true;
+                        video.preload = "metadata";
+                        wrap.appendChild(video);
+                    } else if (slide.media.type === "video-link" && slide.media.url) {
+                        const embedUrl = toYouTubeEmbed(slide.media.url);
+                        if (embedUrl) {
                             const iframe = document.createElement("iframe");
-                            iframe.src = ROUTES[path];
-                            iframe.style.opacity = "0";
-                            iframe.style.transition = "opacity 0.35s var(--ease-standard)";
-                            iframe.setAttribute("loading", "eager");
-                            iframe.setAttribute("title", PAGE_TITLES[path] || "AllForOne SMP");
-
-                            iframe.addEventListener("load", () => {
-                                iframe.style.opacity = "1";
-                                loader.classList.add("hidden");
-                                if (currentPath === path) updateTitle(path);
-                                try {
-                                    iframe.contentWindow.postMessage({ type: "afo-pathname", pathname: path }, "*");
-                                } catch (_) {}
-                            });
-
-                            slot.appendChild(iframe);
-                            shell.appendChild(slot);
-
-                            frames[path] = { slot, iframe, loader };
-                            startRefreshTimer(path);
-                            return frames[path];
+                            iframe.className = "carousel-media";
+                            iframe.src = embedUrl;
+                            iframe.style.border = "0";
+                            iframe.allow =
+                                "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+                            iframe.allowFullscreen = true;
+                            wrap.appendChild(iframe);
+                        } else {
+                            const a = document.createElement("a");
+                            a.className = "carousel-media";
+                            a.href = slide.media.url;
+                            a.target = "_blank";
+                            a.rel = "noopener noreferrer";
+                            a.style.display = "flex";
+                            a.style.alignItems = "center";
+                            a.style.justifyContent = "center";
+                            a.style.background = "var(--light-blue)";
+                            a.style.color = "var(--primary-blue)";
+                            a.style.fontWeight = "600";
+                            a.textContent = "Watch video";
+                            wrap.appendChild(a);
                         }
-
-                        // ── Auto-refresh every 2 minutes (paused while tab hidden) ────
-                        function startRefreshTimer(path) {
-                            if (refreshTimers[path]) clearInterval(refreshTimers[path]);
-                            refreshTimers[path] = setInterval(() => {
-                                if (document.hidden) return; // don't thrash background tabs
-                                const frame = frames[path];
-                                if (!frame) return;
-                                // Only show the loading spinner for a refresh if this is
-                                // the page currently on screen — refreshing a hidden
-                                // frame shouldn't flash a loader nobody sees, but the
-                                // reload should still happen so it's fresh when visited.
-                                if (path === currentPath) {
-                                    frame.iframe.style.opacity = "0";
-                                    frame.loader.classList.remove("hidden");
-                                }
-                                frame.iframe.src = ROUTES[path];
-                            }, REFRESH_INTERVAL);
-                        }
-
-                        function setActiveButtons(path) {
-                            document.querySelectorAll("[data-path]").forEach((btn) => {
-                                btn.classList.toggle("active", btn.getAttribute("data-path") === path);
-                            });
-                        }
-
-                        window.navigate = function (path, e) {
-                            if (!ROUTES[path]) return;
-                            if (path === currentPath) {
-                                closeDrawer();
-                                return;
-                            }
-                            spawnRipple(e);
-                            bannerDismissed = false; // reset dismiss on navigation
-
-                            // Clear any pending cleanup from a previous rapid nav so
-                            // slots don't get stuck mid-transition or removed early.
-                            if (exitTimeout) {
-                                clearTimeout(exitTimeout);
-                                exitTimeout = null;
-                            }
-
-                            const outgoing = activeSlot;
-                            if (outgoing) {
-                                outgoing.classList.remove("visible");
-                                outgoing.classList.add("exit");
-                                exitTimeout = setTimeout(() => {
-                                    outgoing.classList.remove("exit");
-                                    exitTimeout = null;
-                                }, EXIT_DURATION);
-                            }
-
-                            const frame = getOrCreateFrame(path);
-                            // Force reflow before adding "visible" so the enter
-                            // transition reliably fires even if the slot was just
-                            // created and browsers coalesce back-to-back class changes.
-                            void frame.slot.offsetWidth;
-                            requestAnimationFrame(() => {
-                                frame.slot.classList.add("visible");
-                            });
-
-                            activeSlot = frame.slot;
-                            currentPath = path;
-                            window._currentPath = path;
-                            setActiveButtons(path);
-                            updateTitle(path);
-                            applyBanner(path);
+                    } else {
+                        const img = document.createElement("img");
+                        img.className = "carousel-media";
+                        img.src = slide.media.url || "https://via.placeholder.com/1200x675/4A90E2/ffffff?text=News";
+                        img.alt = slide.title;
+                        img.onerror = function () {
+                            this.src = "https://via.placeholder.com/1200x675/4A90E2/ffffff?text=News";
                         };
+                        wrap.appendChild(img);
+                    }
 
-                        // ── Drawer ───────────────────────────────────────────────────
-                        window.toggleDrawer = function () {
-                            const open = drawer.classList.toggle("open");
-                            hamburger.classList.toggle("open", open);
-                            hamburger.setAttribute("aria-expanded", String(open));
-                        };
-                        window.closeDrawer = function () {
-                            if (!drawer.classList.contains("open")) return;
-                            drawer.classList.remove("open");
-                            hamburger.classList.remove("open");
-                            hamburger.setAttribute("aria-expanded", "false");
-                        };
-                        document.addEventListener("click", (e) => {
-                            if (!drawer.contains(e.target) && !hamburger.contains(e.target)) closeDrawer();
-                        });
-                        document.addEventListener("keydown", (e) => {
-                            if (e.key === "Escape") closeDrawer();
-                        });
+                    if (slide.mediaCount > 1) {
+                        const badge = document.createElement("div");
+                        badge.className = "carousel-media-count";
+                        badge.textContent = `${slide.mediaIndex + 1} / ${slide.mediaCount}`;
+                        wrap.appendChild(badge);
+                    }
 
-                        // Recompute banner height on resize/orientation change (text can reflow).
-                        // Debounced so rapid resize events (e.g. dragging a window edge)
-                        // don't spam layout reads.
-                        let resizeRAF = null;
-                        window.addEventListener("resize", () => {
-                            if (!window._bannerConfig) return;
-                            if (resizeRAF) cancelAnimationFrame(resizeRAF);
-                            resizeRAF = requestAnimationFrame(() => {
-                                applyBanner(window._currentPath);
-                                resizeRAF = null;
-                            });
-                        });
+                    el.appendChild(wrap);
 
-                        // Pause background iframe refresh cycles cleanly when the tab
-                        // becomes hidden/visible instead of relying only on the guard
-                        // inside the interval callback — avoids a burst of "catch up"
-                        // reloads firing the instant the tab regains focus.
-                        document.addEventListener("visibilitychange", () => {
-                            if (!document.hidden && currentPath && frames[currentPath]) {
-                                updateTitle(currentPath);
-                            }
-                        });
+                    const info = document.createElement("div");
+                    info.className = "carousel-info";
+                    info.innerHTML = `<h3>${escapeHtml(slide.title)}</h3><p>${linkify(slide.description)}</p>`;
+                    el.appendChild(info);
 
-                        navigate("/", null);
+                    track.appendChild(el);
+                });
+
+                slides.forEach((_, i) => {
+                    const dot = document.createElement("button");
+                    dot.className = "carousel-dot" + (i === 0 ? " active" : "");
+                    dot.onclick = () => goToSlide(i);
+                    dots.appendChild(dot);
+                });
+
+                // Jump to the first slide of the randomly chosen starting story
+                const startStoryId = pickStartStoryId(newsItems);
+                const startIdx = Math.max(
+                    0,
+                    slides.findIndex((s) => s.newsId === startStoryId)
+                );
+                goToSlide(startIdx);
+            }
+
+            function goToSlide(idx) {
+                if (slides.length === 0) return;
+                carouselIndex = (idx + slides.length) % slides.length;
+                document.getElementById("carouselTrack").style.transform = `translateX(-${carouselIndex * 100}%)`;
+                document
+                    .querySelectorAll(".carousel-dot")
+                    .forEach((d, i) => d.classList.toggle("active", i === carouselIndex));
+            }
+
+            window.carouselPrev = () => goToSlide(carouselIndex - 1);
+            window.carouselNext = () => goToSlide(carouselIndex + 1);
+
+            // ─── SERVER STATE ───────────────────────────────────────────
+            let serverData = {};
+            let serverOnline = true;
+            let countdownInterval = null;
+
+            // Downtime is now defined by a start + end date instead of minutes.
+            function checkServerOnlineStatus(downtimes) {
+                const now = new Date();
+                if (!downtimes || downtimes.length === 0) return null;
+
+                for (const dt of downtimes) {
+                    if (!dt.startTimestamp) continue;
+                    const start = new Date(dt.startTimestamp);
+                    const end = dt.endTimestamp ? new Date(dt.endTimestamp) : null;
+
+                    const started = now >= start;
+                    const finished = end ? now >= end : false;
+
+                    if (started && !finished) {
+                        return { downtime: dt, start, end };
+                    }
+                }
+                return null;
+            }
+
+            function formatCountdown(msRemaining) {
+                if (msRemaining < 0) msRemaining = 0;
+
+                const totalMinutes = Math.floor(msRemaining / 60000);
+                const totalHours = Math.floor(totalMinutes / 60);
+                const totalDays = Math.floor(totalHours / 24);
+                // Using average month/year lengths for approximation
+                const totalMonths = Math.floor(totalDays / 30.44);
+                const totalYears = Math.floor(totalDays / 365.25);
+
+                if (totalYears >= 1) {
+                    const remMonths = Math.floor((totalDays - totalYears * 365.25) / 30.44);
+                    return `${totalYears}y ${remMonths}mo`;
+                } else if (totalMonths >= 1) {
+                    const remDays = Math.floor(totalDays - totalMonths * 30.44);
+                    return `${totalMonths}mo ${remDays}d`;
+                } else if (totalDays >= 1) {
+                    const remHours = totalHours % 24;
+                    return `${totalDays}d ${remHours}h`;
+                } else if (totalHours >= 1) {
+                    const remMinutes = totalMinutes % 60;
+                    return `${totalHours}h ${remMinutes}m`;
+                } else {
+                    return `${totalMinutes}m`;
+                }
+            }
+
+            function startCountdown(endTime) {
+                if (countdownInterval) clearInterval(countdownInterval);
+                const el = document.getElementById("offlineCountdown");
+                const backAtEl = document.getElementById("offlineBackAt");
+
+                if (!endTime) {
+                    el.style.display = "none";
+                    backAtEl.classList.remove("visible");
+                    return;
+                }
+
+                const end = new Date(endTime);
+                const backAtTime = end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                backAtEl.textContent = `Expected back at ${backAtTime}`;
+                backAtEl.classList.add("visible");
+
+                el.style.display = "inline-block";
+                function tick() {
+                    const diff = Math.max(0, end - new Date());
+                    el.textContent =
+                        diff > 0 ? `Back in ${formatCountdown(diff)}` : "Should be back online now — refresh the page!";
+                    if (diff <= 0) {
+                        clearInterval(countdownInterval);
+                        backAtEl.classList.remove("visible");
+                    }
+                }
+                tick();
+                countdownInterval = setInterval(tick, 1000);
+            }
+
+            function applyServerOnlineState(activeDowntime) {
+                const offlineBlock = document.getElementById("serverOfflineBlock");
+                const agreeGate = document.getElementById("agreeGate");
+                if (activeDowntime) {
+                    serverOnline = false;
+                    offlineBlock.classList.add("visible");
+                    agreeGate.style.display = "none";
+                    const dt = activeDowntime.downtime;
+                    document.getElementById("serverOfflineText").textContent =
+                        `${dt.label || "Maintenance"}. The server is undergoing maintenance. The server I.P will be shown as per the time below:`;
+                    startCountdown(activeDowntime.end);
+                } else {
+                    serverOnline = true;
+                    offlineBlock.classList.remove("visible");
+                    agreeGate.style.display = "block";
+                    if (countdownInterval) clearInterval(countdownInterval);
+                    document.getElementById("offlineBackAt").classList.remove("visible");
+                }
+            }
+
+            function formatTime(date) {
+                return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            }
+            function formatDateTime(date) {
+                return date.toLocaleString([], {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
+            }
+
+            // ─── JOIN CODE & SERVER INFO ────────────────────────────────
+            async function loadServerInfo() {
+                onSnapshot(doc(db, "serverInfo", "main"), (snap) => {
+                    if (!snap.exists()) return;
+                    serverData = snap.data();
+
+                    // Server IP: hide the whole box if the value is empty
+                    const ipBox = document.getElementById("serverIpBox");
+                    const ipEl = document.getElementById("serverIpValue");
+                    const ip = (serverData.serverIp || "").trim();
+                    if (ip) {
+                        ipEl.textContent = ip;
+                        ipBox.style.display = "block";
+                    } else {
+                        ipBox.style.display = "none";
+                    }
+
+                    const active = checkServerOnlineStatus(serverData.downtimes || []);
+                    applyServerOnlineState(active);
+                    renderDowntimes(serverData.downtimes || []);
+
+                    renderNotifBanner(serverData.notifBanner || null);
+                    renderInfoCard(serverData.infoMessage || null);
+                });
+            }
+
+            // ─── NOTIFICATION BANNER ────────────────────────────────────
+            function renderNotifBanner(banner) {
+                const el = document.getElementById("notifBanner");
+                const inner = document.getElementById("notifBannerInner");
+                const textEl = document.getElementById("notifBannerText");
+                const btnEl = document.getElementById("notifBannerBtn");
+
+                if (!banner || !banner.enabled || !banner.text) {
+                    el.classList.remove("visible");
+                    return;
+                }
+
+                el.classList.add("visible");
+                inner.style.background = banner.bgColor || "#4a90e2";
+                inner.style.color = banner.textColor || "#ffffff";
+                textEl.textContent = banner.text;
+
+                if (banner.btnText && banner.btnLink) {
+                    btnEl.textContent = banner.btnText;
+                    btnEl.href = banner.btnLink;
+                    btnEl.style.display = "inline-flex";
+                } else {
+                    btnEl.style.display = "none";
+                }
+            }
+
+            // ─── INFO CARD (replaces Voice Chat card) ────────────────────
+            function renderInfoCard(info) {
+                const card = document.getElementById("infoCard");
+                const titleEl = document.getElementById("infoCardTitle");
+                const textEl = document.getElementById("infoCardText");
+
+                if (!info || !info.enabled || !(info.text || "").trim()) {
+                    card.classList.remove("visible");
+                    return;
+                }
+
+                titleEl.textContent = info.title || "Server Info";
+                textEl.innerHTML = linkify(info.text);
+                card.classList.add("visible");
+            }
+
+            // ─── DOWNTIMES ──────────────────────────────────────────────
+            function renderDowntimes(downtimes) {
+                const list = document.getElementById("downtimeList");
+                const alert = document.getElementById("downtimeAlert");
+                const alertText = document.getElementById("downtimeAlertText");
+
+                list.innerHTML = "";
+
+                if (!downtimes || downtimes.length === 0) {
+                    list.innerHTML = '<div class="downtime-empty">No scheduled downtimes.</div>';
+                    alert.classList.remove("visible");
+                    return;
+                }
+
+                const now = new Date();
+                let upcomingAlert = null;
+
+                downtimes.forEach((dt) => {
+                    if (!dt.startTimestamp) return;
+                    const item = document.createElement("div");
+                    item.className = "downtime-item";
+
+                    const start = new Date(dt.startTimestamp);
+                    let rangeText = formatDateTime(start);
+                    if (dt.endTimestamp) {
+                        const end = new Date(dt.endTimestamp);
+                        // Same day? show just end time, else full date
+                        const sameDay = start.toDateString() === end.toDateString();
+                        rangeText += sameDay ? ` – ${formatTime(end)}` : ` → ${formatDateTime(end)}`;
+                    }
+
+                    item.innerHTML = `
+                        <span style="font-weight:600;color:var(--text-dark);">${escapeHtml(dt.label || "Maintenance")}</span>
+                        <span style="color:var(--text-medium);">${escapeHtml(rangeText)}</span>`;
+                    list.appendChild(item);
+
+                    const diffHrs = (start - now) / 36e5;
+                    if (diffHrs >= 0 && diffHrs <= 10) upcomingAlert = dt;
+                });
+
+                if (upcomingAlert) {
+                    const start = new Date(upcomingAlert.startTimestamp);
+                    let untilStr = "";
+                    if (upcomingAlert.endTimestamp) {
+                        untilStr = ` until ${formatDateTime(new Date(upcomingAlert.endTimestamp))}`;
+                    }
+                    alertText.textContent = `"${upcomingAlert.label || "Maintenance"}" scheduled at ${formatDateTime(start)}${untilStr}. Please make sure you finish what you're doing!`;
+                    alert.classList.add("visible");
+                    document.getElementById("downtimeContainer").classList.add("open");
+                } else {
+                    alert.classList.remove("visible");
+                }
+            }
+
+            window.toggleCodeReveal = function () {
+                const checked = document.getElementById("agreeCheck").checked;
+                const reveal = document.getElementById("codeReveal");
+                if (checked && serverOnline) {
+                    reveal.classList.add("visible");
+                } else {
+                    reveal.classList.remove("visible");
+                }
+            };
+
+            window.toggleDowntime = function () {
+                document.getElementById("downtimeContainer").classList.toggle("open");
+            };
+
+// ─── LIVE SERVER STATUS PILL ─────────────────────────────────
+            const STALE_THRESHOLD_MS = 10 * 1000; // offline if no heartbeat update in 10s
+            const STATUS_RECHECK_MS = 2 * 1000;    // re-evaluate staleness every 2s for prompt detection
+            let liveStatusData = { state: "offline", lastHeartbeat: null, playersOnline: 0, playerList: [] };
+            let statusRecheckInterval = null;
+
+            function loadLiveStatus() {
+                onSnapshot(doc(db, "serverStatus", "live"), (snap) => {
+                    if (snap.exists()) {
+                        liveStatusData = snap.data();
+                    } else {
+                        liveStatusData = { state: "offline", lastHeartbeat: null, playersOnline: 0, playerList: [] };
+                    }
+                    renderStatusPill();
+                });
+
+                if (statusRecheckInterval) clearInterval(statusRecheckInterval);
+                statusRecheckInterval = setInterval(renderStatusPill, STATUS_RECHECK_MS);
+            }
+
+            function renderStatusPill() {
+                const dot = document.getElementById("statusDot");
+                const label = document.getElementById("statusLabel");
+                const playersEl = document.getElementById("playerCount");
+                if (!dot || !label || !playersEl) return;
+
+                const rawState = liveStatusData.state || "offline";
+
+                let ageMs = Infinity;
+                const hb = liveStatusData.lastHeartbeat;
+                if (hb) {
+                    const hbMillis = typeof hb.toMillis === "function" ? hb.toMillis() : new Date(hb).getTime();
+                    ageMs = Date.now() - hbMillis;
+                }
+                const isStale = ageMs > STALE_THRESHOLD_MS;
+
+                // If there's no heartbeat at all, or it's stale, force offline —
+                // regardless of what "state" says — unless it's mid-transition.
+                let displayState = rawState;
+                if ((isStale || !hb) && rawState !== "stopping" && rawState !== "restarting") {
+                    displayState = "offline";
+                }
+
+                const stateMap = {
+                    online: { dotClass: "online", text: "Online" },
+                    restarting: { dotClass: "pending", text: "Restarting…" },
+                    stopping: { dotClass: "pending", text: "Stopping…" },
+                    offline: { dotClass: "offline", text: "Offline" }
+                };
+                const s = stateMap[displayState] || stateMap.offline;
+
+                dot.className = "status-dot " + s.dotClass;
+                label.textContent = s.text;
+
+                if (displayState === "online") {
+                    const count = liveStatusData.playersOnline || 0;
+                    const names = liveStatusData.playerList || [];
+                    playersEl.textContent = count > 0 ? `${count} online: ${names.join(", ")}` : "No players online";
+                } else {
+                    playersEl.textContent = "";
+                }
+            }
+
+            loadLiveStatus();
+
+            // ─── INIT ─────────────────────────────────────────────────
+            loadNews();
+            loadServerInfo();
         </script>
     </body>
 </html>
