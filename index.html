@@ -524,7 +524,12 @@
                     <li><button data-path="/admin" onclick="navigate('/admin', event)">Admin Page</button></li>
                     <li><button data-path="/stats" onclick="navigate('/stats', event)">Stats For 🤓's</button></li>
                 </ul>
-                <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" onclick="toggleDrawer()">
+                <button
+                    class="hamburger"
+                    id="hamburgerBtn"
+                    aria-label="Open menu"
+                    aria-expanded="false"
+                    onclick="toggleDrawer()">
                     <span></span><span></span><span></span>
                 </button>
             </div>
@@ -545,10 +550,18 @@
                 <li><button data-path="/" onclick="navigate('/', event); closeDrawer()">Home</button></li>
                 <li><button data-path="/mods" onclick="navigate('/mods', event); closeDrawer()">Mods</button></li>
                 <li><button data-path="/rules" onclick="navigate('/rules', event); closeDrawer()">Rules</button></li>
-                <li><button data-path="/profile" onclick="navigate('/profile', event); closeDrawer()">Profile</button></li>
+                <li>
+                    <button data-path="/profile" onclick="navigate('/profile', event); closeDrawer()">Profile</button>
+                </li>
                 <li><button data-path="/post" onclick="navigate('/post', event); closeDrawer()">Post</button></li>
-                <li><button data-path="/admin" onclick="navigate('/admin', event); closeDrawer()">Admin Page</button></li>
-               <li><button data-path="/stats" onclick="navigate('/stats', event); closeDrawer()">Stats For 🤓's</button></li>
+                <li>
+                    <button data-path="/admin" onclick="navigate('/admin', event); closeDrawer()">Admin Page</button>
+                </li>
+                <li>
+                    <button data-path="/stats" onclick="navigate('/stats', event); closeDrawer()">
+                        Stats For 🤓's
+                    </button>
+                </li>
             </ul>
         </div>
 
@@ -583,7 +596,9 @@
                     if (depth >= 1) {
                         document.documentElement.innerHTML =
                             '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#4a5568;text-align:center;padding:2rem;">' +
-                            "This page (" + window.location.pathname + ") contains the site navbar and was loaded inside another navbar frame, " +
+                            "This page (" +
+                            window.location.pathname +
+                            ") contains the site navbar and was loaded inside another navbar frame, " +
                             "which would nest infinitely. Remove the &lt;nav&gt;/iframe-shell markup from this page \u2014 " +
                             "route pages should only contain their own content." +
                             "</div>";
@@ -629,15 +644,15 @@
         </script>
 
         <script>
-            const BASE = "https://allforonesmp.github.io";
+                        const BASE = "https://allforonesmp.github.io";
             const ROUTES = {
                 "/": BASE + "/main.html",
                 "/mods": BASE + "/mods",
                 "/rules": BASE + "/rules",
                 "/profile": BASE + "/profile",
                 "/post": BASE + "/post",
-                "/admin": BASE + "/admin"
-                "/stats": BASE + "/stats"
+                "/admin": BASE + "/admin",
+                "/stats": BASE + "/stats",
             };
             const PAGE_TITLES = {
                 "/": "AllForOne SMP",
@@ -645,290 +660,290 @@
                 "/rules": "Rules | AllForOne SMP",
                 "/profile": "Profile | AllForOne SMP",
                 "/post": "Post | AllForOne SMP",
-                "/admin": "Admin | AllForOne SMP"
-                "/stats": "🤓 | AllForOne SMP"
+                "/admin": "Admin | AllForOne SMP",
+                "/stats": "🤓 | AllForOne SMP",
             };
-            const REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes
-            const EXIT_DURATION = 320; // must be >= slot exit transition time
+                        const REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes
+                        const EXIT_DURATION = 320; // must be >= slot exit transition time
 
-            const shell = document.getElementById("contentShell");
-            const overlay = document.getElementById("rippleOverlay");
-            const drawer = document.getElementById("drawer");
-            const hamburger = document.getElementById("hamburgerBtn");
-            const notifBanner = document.getElementById("notifBanner");
-            const bannerInner = document.getElementById("bannerInner");
+                        const shell = document.getElementById("contentShell");
+                        const overlay = document.getElementById("rippleOverlay");
+                        const drawer = document.getElementById("drawer");
+                        const hamburger = document.getElementById("hamburgerBtn");
+                        const notifBanner = document.getElementById("notifBanner");
+                        const bannerInner = document.getElementById("bannerInner");
 
-            let currentPath = null;
-            let frames = {};
-            let activeSlot = null;
-            let refreshTimers = {};
-            let exitTimeout = null;
-            let bannerDismissed = false;
-            let bannerResizeObserver = null;
+                        let currentPath = null;
+                        let frames = {};
+                        let activeSlot = null;
+                        let refreshTimers = {};
+                        let exitTimeout = null;
+                        let bannerDismissed = false;
+                        let bannerResizeObserver = null;
 
-            window._currentPath = "/";
-            window._bannerConfig = null;
+                        window._currentPath = "/";
+                        window._bannerConfig = null;
 
-            // ── Banner ──────────────────────────────────────────────────
-            function applyBanner(path) {
-                const cfg = window._bannerConfig;
-                const bannerText = document.getElementById("bannerText");
-                const bannerBtn = document.getElementById("bannerBtn");
-                const bannerClose = document.getElementById("bannerClose");
+                        // ── Banner ──────────────────────────────────────────────────
+                        function applyBanner(path) {
+                            const cfg = window._bannerConfig;
+                            const bannerText = document.getElementById("bannerText");
+                            const bannerBtn = document.getElementById("bannerBtn");
+                            const bannerClose = document.getElementById("bannerClose");
 
-                const hide = () => {
-                    notifBanner.classList.remove("visible");
-                    updateBannerHeight(0);
-                };
+                            const hide = () => {
+                                notifBanner.classList.remove("visible");
+                                updateBannerHeight(0);
+                            };
 
-                if (!cfg || !cfg.enabled || bannerDismissed) {
-                    hide();
-                    return;
-                }
+                            if (!cfg || !cfg.enabled || bannerDismissed) {
+                                hide();
+                                return;
+                            }
 
-                // Check if this page should show the banner
-                const pages = cfg.pages || [];
-                if (pages.length > 0 && !pages.includes(path)) {
-                    hide();
-                    return;
-                }
+                            // Check if this page should show the banner
+                            const pages = cfg.pages || [];
+                            if (pages.length > 0 && !pages.includes(path)) {
+                                hide();
+                                return;
+                            }
 
-                // Apply colours
-                bannerInner.style.backgroundColor = cfg.bgColor || "#4a90e2";
-                bannerInner.style.color = cfg.textColor || "#ffffff";
-                bannerClose.style.color = cfg.textColor || "#ffffff";
-                bannerText.textContent = cfg.text || "";
+                            // Apply colours
+                            bannerInner.style.backgroundColor = cfg.bgColor || "#4a90e2";
+                            bannerInner.style.color = cfg.textColor || "#ffffff";
+                            bannerClose.style.color = cfg.textColor || "#ffffff";
+                            bannerText.textContent = cfg.text || "";
 
-                // Button
-                if (cfg.btnLabel && cfg.btnLink) {
-                    bannerBtn.textContent = cfg.btnLabel;
-                    bannerBtn.href = cfg.btnLink;
-                    bannerBtn.style.backgroundColor = cfg.btnBgColor || "rgba(255,255,255,0.25)";
-                    bannerBtn.style.color = cfg.btnTextColor || "#ffffff";
-                    bannerBtn.style.display = "inline-block";
-                } else {
-                    bannerBtn.style.display = "none";
-                }
+                            // Button
+                            if (cfg.btnLabel && cfg.btnLink) {
+                                bannerBtn.textContent = cfg.btnLabel;
+                                bannerBtn.href = cfg.btnLink;
+                                bannerBtn.style.backgroundColor = cfg.btnBgColor || "rgba(255,255,255,0.25)";
+                                bannerBtn.style.color = cfg.btnTextColor || "#ffffff";
+                                bannerBtn.style.display = "inline-block";
+                            } else {
+                                bannerBtn.style.display = "none";
+                            }
 
-                notifBanner.classList.add("visible");
-                // Measure real height after layout, and keep it accurate if
-                // the text wraps differently (e.g. on resize/zoom) by
-                // observing the inner element while the banner is visible.
-                requestAnimationFrame(() => {
-                    updateBannerHeight(bannerInner.offsetHeight);
-                });
-                observeBannerSize();
-            }
-            window.applyBanner = applyBanner;
+                            notifBanner.classList.add("visible");
+                            // Measure real height after layout, and keep it accurate if
+                            // the text wraps differently (e.g. on resize/zoom) by
+                            // observing the inner element while the banner is visible.
+                            requestAnimationFrame(() => {
+                                updateBannerHeight(bannerInner.offsetHeight);
+                            });
+                            observeBannerSize();
+                        }
+                        window.applyBanner = applyBanner;
 
-            function observeBannerSize() {
-                if (bannerResizeObserver || typeof ResizeObserver === "undefined") return;
-                bannerResizeObserver = new ResizeObserver((entries) => {
-                    if (!notifBanner.classList.contains("visible")) return;
-                    for (const entry of entries) {
-                        updateBannerHeight(entry.contentRect.height);
-                    }
-                });
-                bannerResizeObserver.observe(bannerInner);
-            }
+                        function observeBannerSize() {
+                            if (bannerResizeObserver || typeof ResizeObserver === "undefined") return;
+                            bannerResizeObserver = new ResizeObserver((entries) => {
+                                if (!notifBanner.classList.contains("visible")) return;
+                                for (const entry of entries) {
+                                    updateBannerHeight(entry.contentRect.height);
+                                }
+                            });
+                            bannerResizeObserver.observe(bannerInner);
+                        }
 
-            function updateBannerHeight(h) {
-                document.documentElement.style.setProperty("--banner-height", h + "px");
-            }
+                        function updateBannerHeight(h) {
+                            document.documentElement.style.setProperty("--banner-height", h + "px");
+                        }
 
-            window.dismissBanner = function () {
-                bannerDismissed = true;
-                notifBanner.classList.remove("visible");
-                updateBannerHeight(0);
-            };
+                        window.dismissBanner = function () {
+                            bannerDismissed = true;
+                            notifBanner.classList.remove("visible");
+                            updateBannerHeight(0);
+                        };
 
-            // ── Page title ───────────────────────────────────────────────
-            function updateTitle(path) {
-                // Try reading iframe title; fallback to our map.
-                // Same-origin/cross-origin access can throw — always fall
-                // back gracefully instead of leaving a stale title.
-                const frame = frames[path];
-                let iframeTitle = null;
-                try {
-                    iframeTitle = frame?.iframe?.contentDocument?.title;
-                } catch (_) {
-                    iframeTitle = null;
-                }
-                document.title = iframeTitle && iframeTitle.trim() ? iframeTitle : PAGE_TITLES[path] || "AllForOne SMP";
-            }
+                        // ── Page title ───────────────────────────────────────────────
+                        function updateTitle(path) {
+                            // Try reading iframe title; fallback to our map.
+                            // Same-origin/cross-origin access can throw — always fall
+                            // back gracefully instead of leaving a stale title.
+                            const frame = frames[path];
+                            let iframeTitle = null;
+                            try {
+                                iframeTitle = frame?.iframe?.contentDocument?.title;
+                            } catch (_) {
+                                iframeTitle = null;
+                            }
+                            document.title = iframeTitle && iframeTitle.trim() ? iframeTitle : PAGE_TITLES[path] || "AllForOne SMP";
+                        }
 
-            // ── Ripple ───────────────────────────────────────────────────
-            function spawnRipple(e) {
-                const r = document.createElement("div");
-                r.className = "ripple";
-                const size = 60;
-                // Use the button's own center when triggered via keyboard/
-                // synthetic events (no clientX/Y), rather than always
-                // falling back to viewport center.
-                let x, y;
-                if (e && typeof e.clientX === "number" && (e.clientX !== 0 || e.clientY !== 0)) {
-                    x = e.clientX - size / 2;
-                    y = e.clientY - size / 2;
-                } else if (e && e.target && e.target.getBoundingClientRect) {
-                    const rect = e.target.getBoundingClientRect();
-                    x = rect.left + rect.width / 2 - size / 2;
-                    y = rect.top + rect.height / 2 - size / 2;
-                } else {
-                    x = window.innerWidth / 2 - size / 2;
-                    y = window.innerHeight / 2 - size / 2;
-                }
-                r.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;`;
-                overlay.appendChild(r);
-                r.addEventListener("animationend", () => r.remove(), { once: true });
-            }
+                        // ── Ripple ───────────────────────────────────────────────────
+                        function spawnRipple(e) {
+                            const r = document.createElement("div");
+                            r.className = "ripple";
+                            const size = 60;
+                            // Use the button's own center when triggered via keyboard/
+                            // synthetic events (no clientX/Y), rather than always
+                            // falling back to viewport center.
+                            let x, y;
+                            if (e && typeof e.clientX === "number" && (e.clientX !== 0 || e.clientY !== 0)) {
+                                x = e.clientX - size / 2;
+                                y = e.clientY - size / 2;
+                            } else if (e && e.target && e.target.getBoundingClientRect) {
+                                const rect = e.target.getBoundingClientRect();
+                                x = rect.left + rect.width / 2 - size / 2;
+                                y = rect.top + rect.height / 2 - size / 2;
+                            } else {
+                                x = window.innerWidth / 2 - size / 2;
+                                y = window.innerHeight / 2 - size / 2;
+                            }
+                            r.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;`;
+                            overlay.appendChild(r);
+                            r.addEventListener("animationend", () => r.remove(), { once: true });
+                        }
 
-            // ── Frame creation ───────────────────────────────────────────
-            function getOrCreateFrame(path) {
-                if (frames[path]) return frames[path];
+                        // ── Frame creation ───────────────────────────────────────────
+                        function getOrCreateFrame(path) {
+                            if (frames[path]) return frames[path];
 
-                const slot = document.createElement("div");
-                slot.className = "frame-slot";
+                            const slot = document.createElement("div");
+                            slot.className = "frame-slot";
 
-                const loader = document.createElement("div");
-                loader.className = "frame-loader";
-                loader.innerHTML = `<div class="loader-spinner"></div><p class="loader-text">Loading…</p>`;
-                slot.appendChild(loader);
+                            const loader = document.createElement("div");
+                            loader.className = "frame-loader";
+                            loader.innerHTML = `<div class="loader-spinner"></div><p class="loader-text">Loading…</p>`;
+                            slot.appendChild(loader);
 
-                const iframe = document.createElement("iframe");
-                iframe.src = ROUTES[path];
-                iframe.style.opacity = "0";
-                iframe.style.transition = "opacity 0.35s var(--ease-standard)";
-                iframe.setAttribute("loading", "eager");
-                iframe.setAttribute("title", PAGE_TITLES[path] || "AllForOne SMP");
+                            const iframe = document.createElement("iframe");
+                            iframe.src = ROUTES[path];
+                            iframe.style.opacity = "0";
+                            iframe.style.transition = "opacity 0.35s var(--ease-standard)";
+                            iframe.setAttribute("loading", "eager");
+                            iframe.setAttribute("title", PAGE_TITLES[path] || "AllForOne SMP");
 
-                iframe.addEventListener("load", () => {
-                    iframe.style.opacity = "1";
-                    loader.classList.add("hidden");
-                    if (currentPath === path) updateTitle(path);
-                    try {
-                        iframe.contentWindow.postMessage({ type: "afo-pathname", pathname: path }, "*");
-                    } catch (_) {}
-                });
+                            iframe.addEventListener("load", () => {
+                                iframe.style.opacity = "1";
+                                loader.classList.add("hidden");
+                                if (currentPath === path) updateTitle(path);
+                                try {
+                                    iframe.contentWindow.postMessage({ type: "afo-pathname", pathname: path }, "*");
+                                } catch (_) {}
+                            });
 
-                slot.appendChild(iframe);
-                shell.appendChild(slot);
+                            slot.appendChild(iframe);
+                            shell.appendChild(slot);
 
-                frames[path] = { slot, iframe, loader };
-                startRefreshTimer(path);
-                return frames[path];
-            }
+                            frames[path] = { slot, iframe, loader };
+                            startRefreshTimer(path);
+                            return frames[path];
+                        }
 
-            // ── Auto-refresh every 2 minutes (paused while tab hidden) ────
-            function startRefreshTimer(path) {
-                if (refreshTimers[path]) clearInterval(refreshTimers[path]);
-                refreshTimers[path] = setInterval(() => {
-                    if (document.hidden) return; // don't thrash background tabs
-                    const frame = frames[path];
-                    if (!frame) return;
-                    // Only show the loading spinner for a refresh if this is
-                    // the page currently on screen — refreshing a hidden
-                    // frame shouldn't flash a loader nobody sees, but the
-                    // reload should still happen so it's fresh when visited.
-                    if (path === currentPath) {
-                        frame.iframe.style.opacity = "0";
-                        frame.loader.classList.remove("hidden");
-                    }
-                    frame.iframe.src = ROUTES[path];
-                }, REFRESH_INTERVAL);
-            }
+                        // ── Auto-refresh every 2 minutes (paused while tab hidden) ────
+                        function startRefreshTimer(path) {
+                            if (refreshTimers[path]) clearInterval(refreshTimers[path]);
+                            refreshTimers[path] = setInterval(() => {
+                                if (document.hidden) return; // don't thrash background tabs
+                                const frame = frames[path];
+                                if (!frame) return;
+                                // Only show the loading spinner for a refresh if this is
+                                // the page currently on screen — refreshing a hidden
+                                // frame shouldn't flash a loader nobody sees, but the
+                                // reload should still happen so it's fresh when visited.
+                                if (path === currentPath) {
+                                    frame.iframe.style.opacity = "0";
+                                    frame.loader.classList.remove("hidden");
+                                }
+                                frame.iframe.src = ROUTES[path];
+                            }, REFRESH_INTERVAL);
+                        }
 
-            function setActiveButtons(path) {
-                document.querySelectorAll("[data-path]").forEach((btn) => {
-                    btn.classList.toggle("active", btn.getAttribute("data-path") === path);
-                });
-            }
+                        function setActiveButtons(path) {
+                            document.querySelectorAll("[data-path]").forEach((btn) => {
+                                btn.classList.toggle("active", btn.getAttribute("data-path") === path);
+                            });
+                        }
 
-            window.navigate = function (path, e) {
-                if (!ROUTES[path]) return;
-                if (path === currentPath) {
-                    closeDrawer();
-                    return;
-                }
-                spawnRipple(e);
-                bannerDismissed = false; // reset dismiss on navigation
+                        window.navigate = function (path, e) {
+                            if (!ROUTES[path]) return;
+                            if (path === currentPath) {
+                                closeDrawer();
+                                return;
+                            }
+                            spawnRipple(e);
+                            bannerDismissed = false; // reset dismiss on navigation
 
-                // Clear any pending cleanup from a previous rapid nav so
-                // slots don't get stuck mid-transition or removed early.
-                if (exitTimeout) {
-                    clearTimeout(exitTimeout);
-                    exitTimeout = null;
-                }
+                            // Clear any pending cleanup from a previous rapid nav so
+                            // slots don't get stuck mid-transition or removed early.
+                            if (exitTimeout) {
+                                clearTimeout(exitTimeout);
+                                exitTimeout = null;
+                            }
 
-                const outgoing = activeSlot;
-                if (outgoing) {
-                    outgoing.classList.remove("visible");
-                    outgoing.classList.add("exit");
-                    exitTimeout = setTimeout(() => {
-                        outgoing.classList.remove("exit");
-                        exitTimeout = null;
-                    }, EXIT_DURATION);
-                }
+                            const outgoing = activeSlot;
+                            if (outgoing) {
+                                outgoing.classList.remove("visible");
+                                outgoing.classList.add("exit");
+                                exitTimeout = setTimeout(() => {
+                                    outgoing.classList.remove("exit");
+                                    exitTimeout = null;
+                                }, EXIT_DURATION);
+                            }
 
-                const frame = getOrCreateFrame(path);
-                // Force reflow before adding "visible" so the enter
-                // transition reliably fires even if the slot was just
-                // created and browsers coalesce back-to-back class changes.
-                void frame.slot.offsetWidth;
-                requestAnimationFrame(() => {
-                    frame.slot.classList.add("visible");
-                });
+                            const frame = getOrCreateFrame(path);
+                            // Force reflow before adding "visible" so the enter
+                            // transition reliably fires even if the slot was just
+                            // created and browsers coalesce back-to-back class changes.
+                            void frame.slot.offsetWidth;
+                            requestAnimationFrame(() => {
+                                frame.slot.classList.add("visible");
+                            });
 
-                activeSlot = frame.slot;
-                currentPath = path;
-                window._currentPath = path;
-                setActiveButtons(path);
-                updateTitle(path);
-                applyBanner(path);
-            };
+                            activeSlot = frame.slot;
+                            currentPath = path;
+                            window._currentPath = path;
+                            setActiveButtons(path);
+                            updateTitle(path);
+                            applyBanner(path);
+                        };
 
-            // ── Drawer ───────────────────────────────────────────────────
-            window.toggleDrawer = function () {
-                const open = drawer.classList.toggle("open");
-                hamburger.classList.toggle("open", open);
-                hamburger.setAttribute("aria-expanded", String(open));
-            };
-            window.closeDrawer = function () {
-                if (!drawer.classList.contains("open")) return;
-                drawer.classList.remove("open");
-                hamburger.classList.remove("open");
-                hamburger.setAttribute("aria-expanded", "false");
-            };
-            document.addEventListener("click", (e) => {
-                if (!drawer.contains(e.target) && !hamburger.contains(e.target)) closeDrawer();
-            });
-            document.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") closeDrawer();
-            });
+                        // ── Drawer ───────────────────────────────────────────────────
+                        window.toggleDrawer = function () {
+                            const open = drawer.classList.toggle("open");
+                            hamburger.classList.toggle("open", open);
+                            hamburger.setAttribute("aria-expanded", String(open));
+                        };
+                        window.closeDrawer = function () {
+                            if (!drawer.classList.contains("open")) return;
+                            drawer.classList.remove("open");
+                            hamburger.classList.remove("open");
+                            hamburger.setAttribute("aria-expanded", "false");
+                        };
+                        document.addEventListener("click", (e) => {
+                            if (!drawer.contains(e.target) && !hamburger.contains(e.target)) closeDrawer();
+                        });
+                        document.addEventListener("keydown", (e) => {
+                            if (e.key === "Escape") closeDrawer();
+                        });
 
-            // Recompute banner height on resize/orientation change (text can reflow).
-            // Debounced so rapid resize events (e.g. dragging a window edge)
-            // don't spam layout reads.
-            let resizeRAF = null;
-            window.addEventListener("resize", () => {
-                if (!window._bannerConfig) return;
-                if (resizeRAF) cancelAnimationFrame(resizeRAF);
-                resizeRAF = requestAnimationFrame(() => {
-                    applyBanner(window._currentPath);
-                    resizeRAF = null;
-                });
-            });
+                        // Recompute banner height on resize/orientation change (text can reflow).
+                        // Debounced so rapid resize events (e.g. dragging a window edge)
+                        // don't spam layout reads.
+                        let resizeRAF = null;
+                        window.addEventListener("resize", () => {
+                            if (!window._bannerConfig) return;
+                            if (resizeRAF) cancelAnimationFrame(resizeRAF);
+                            resizeRAF = requestAnimationFrame(() => {
+                                applyBanner(window._currentPath);
+                                resizeRAF = null;
+                            });
+                        });
 
-            // Pause background iframe refresh cycles cleanly when the tab
-            // becomes hidden/visible instead of relying only on the guard
-            // inside the interval callback — avoids a burst of "catch up"
-            // reloads firing the instant the tab regains focus.
-            document.addEventListener("visibilitychange", () => {
-                if (!document.hidden && currentPath && frames[currentPath]) {
-                    updateTitle(currentPath);
-                }
-            });
+                        // Pause background iframe refresh cycles cleanly when the tab
+                        // becomes hidden/visible instead of relying only on the guard
+                        // inside the interval callback — avoids a burst of "catch up"
+                        // reloads firing the instant the tab regains focus.
+                        document.addEventListener("visibilitychange", () => {
+                            if (!document.hidden && currentPath && frames[currentPath]) {
+                                updateTitle(currentPath);
+                            }
+                        });
 
-            navigate("/", null);
+                        navigate("/", null);
         </script>
     </body>
 </html>
