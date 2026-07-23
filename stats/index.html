@@ -1,737 +1,778 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Server Stats — AllForOne SMP</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Spectral:wght@700&display=swap" rel="stylesheet">
-<style>
-    :root {
-        --primary-blue: #4a90e2;
-        --light-blue: #e8f4f8;
-        --lighter-blue: #f5fbfd;
-        --dark-blue: #2c5f8d;
-        --accent-blue: #5ba3f5;
-        --text-dark: #1a2332;
-        --text-medium: #4a5568;
-        --text-light: #718096;
-        --border-color: #d4e8f0;
-        --white: #ffffff;
-        --error: #e74c3c;
-        --success: #27ae60;
-        --warning: #f6c90e;
-        --shadow-sm: 0 1px 3px rgba(74, 144, 226, 0.08);
-        --shadow-md: 0 4px 12px rgba(74, 144, 226, 0.12);
-        --shadow-lg: 0 10px 30px rgba(74, 144, 226, 0.15);
-    }
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: "DM Sans", sans-serif;
-        background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
-        color: var(--text-dark);
-        min-height: 100vh;
-        line-height: 1.6;
-    }
-
-    h1, h2, h3, h4, h5, h6 {
-        font-family: "Spectral", serif;
-        font-weight: 700;
-    }
-
-    .page-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem;
-    }
-
-    .page-header {
-        margin-bottom: 2rem;
-    }
-    .page-header h1 {
-        font-family: "Bebas Neue", sans-serif;
-        font-size: 2.6rem;
-        letter-spacing: 0.06em;
-        color: var(--primary-blue);
-        margin-bottom: 0.4rem;
-    }
-    .page-header p {
-        color: var(--text-medium);
-        font-size: 1rem;
-    }
-
-    .section-title {
-        font-family: "Bebas Neue", sans-serif;
-        font-size: 1.8rem;
-        letter-spacing: 0.08em;
-        color: var(--primary-blue);
-        margin-bottom: 1.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    .section-title::after {
-        content: "";
-        flex: 1;
-        height: 2px;
-        background: linear-gradient(to right, var(--primary-blue), transparent);
-    }
-
-    .status-strip {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        background: var(--white);
-        border: 2px solid var(--border-color);
-        border-radius: 999px;
-        padding: 0.7rem 1.25rem;
-        box-shadow: var(--shadow-sm);
-        margin-bottom: 2rem;
-        width: fit-content;
-        flex-wrap: wrap;
-    }
-    .status-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: #aaa;
-        flex-shrink: 0;
-        transition: background 0.3s ease;
-    }
-    .status-dot.online {
-        background: var(--success);
-        box-shadow: 0 0 8px rgba(39, 174, 96, 0.5);
-    }
-    .status-dot.offline {
-        background: var(--error);
-    }
-    .status-dot.pending {
-        background: var(--warning);
-        box-shadow: 0 0 8px rgba(246, 201, 14, 0.5);
-    }
-    .status-strip .status-label {
-        font-weight: 700;
-    }
-    .status-strip .status-meta {
-        color: var(--text-light);
-        font-size: 0.88rem;
-        border-left: 1px solid var(--border-color);
-        padding-left: 0.75rem;
-    }
-
-    .stat-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1.25rem;
-        margin-bottom: 2.5rem;
-    }
-    .stat-card {
-        background: var(--white);
-        border: 2px solid var(--border-color);
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: var(--shadow-sm);
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-        transition: box-shadow 0.2s ease, transform 0.2s ease;
-    }
-    .stat-card:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-2px);
-    }
-    .stat-card-label {
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--text-light);
-    }
-    .stat-card-value {
-        font-family: "Bebas Neue", sans-serif;
-        font-size: 2.4rem;
-        letter-spacing: 0.03em;
-        color: var(--text-dark);
-        line-height: 1;
-        display: flex;
-        align-items: baseline;
-        gap: 0.4rem;
-    }
-    .stat-card-value .unit {
-        font-family: "DM Sans", sans-serif;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--text-light);
-    }
-    .stat-card-sub {
-        font-size: 0.85rem;
-        color: var(--text-medium);
-    }
-
-    .meter-track {
-        width: 100%;
-        height: 8px;
-        background: var(--lighter-blue);
-        border-radius: 999px;
-        overflow: hidden;
-        border: 1px solid var(--border-color);
-    }
-    .meter-fill {
-        height: 100%;
-        border-radius: 999px;
-        background: linear-gradient(90deg, var(--primary-blue), var(--accent-blue));
-        transition: width 0.5s ease, background 0.3s ease;
-    }
-    .meter-fill.warn {
-        background: linear-gradient(90deg, var(--warning), #f39c12);
-    }
-    .meter-fill.danger {
-        background: linear-gradient(90deg, var(--error), #c0392b);
-    }
-
-    .players-card {
-        background: var(--white);
-        border: 2px solid var(--border-color);
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: var(--shadow-sm);
-        margin-bottom: 2.5rem;
-    }
-    .players-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        margin-bottom: 1rem;
-    }
-    .players-card-header h3 {
-        font-size: 1.1rem;
-        color: var(--text-dark);
-    }
-    .players-card-header .count {
-        font-family: "Bebas Neue", sans-serif;
-        font-size: 1.4rem;
-        color: var(--primary-blue);
-    }
-    .player-chip-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.6rem;
-    }
-    .player-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: var(--lighter-blue);
-        border: 1px solid var(--border-color);
-        border-radius: 999px;
-        padding: 0.45rem 0.9rem;
-        font-size: 0.9rem;
-        color: var(--text-dark);
-        font-weight: 500;
-    }
-    .player-chip .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--success);
-    }
-    .players-empty {
-        color: var(--text-light);
-        font-style: italic;
-        font-size: 0.95rem;
-    }
-
-    .graph-section {
-        margin-bottom: 2.5rem;
-    }
-    .graph-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-    }
-    .graph-card {
-        background: var(--white);
-        border: 2px solid var(--border-color);
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: var(--shadow-sm);
-    }
-    .graph-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-    .graph-card-header h3 {
-        font-size: 1rem;
-        color: var(--text-dark);
-    }
-    .graph-legend {
-        display: flex;
-        gap: 1rem;
-        font-size: 0.8rem;
-        color: var(--text-medium);
-    }
-    .graph-legend span {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-    .legend-swatch {
-        width: 10px;
-        height: 10px;
-        border-radius: 2px;
-        display: inline-block;
-    }
-    .graph-canvas-wrap {
-        position: relative;
-        height: 220px;
-    }
-    .range-toggle {
-        display: flex;
-        gap: 0.4rem;
-        margin-bottom: 1.5rem;
-    }
-    .range-btn {
-        background: var(--white);
-        border: 2px solid var(--border-color);
-        border-radius: 10px;
-        padding: 0.5rem 1rem;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--text-medium);
-        cursor: pointer;
-        font-family: "DM Sans", sans-serif;
-        transition: all 0.18s ease;
-    }
-    .range-btn:hover {
-        border-color: var(--primary-blue);
-        color: var(--primary-blue);
-    }
-    .range-btn.active {
-        background: var(--primary-blue);
-        border-color: var(--primary-blue);
-        color: white;
-    }
-
-    .graph-empty {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 220px;
-        color: var(--text-light);
-        font-style: italic;
-        font-size: 0.9rem;
-    }
-
-    .stale-banner {
-        display: none;
-        background: linear-gradient(135deg, #fff3cd, #ffe5a1);
-        border: 2px solid var(--warning);
-        border-radius: 14px;
-        padding: 1.1rem 1.4rem;
-        margin-bottom: 2rem;
-        color: #856404;
-        font-size: 0.92rem;
-        font-weight: 500;
-    }
-    .stale-banner.visible {
-        display: block;
-    }
-
-    footer {
-        background: var(--text-dark);
-        color: #a0aec0;
-        text-align: center;
-        padding: 2rem;
-        font-size: 0.9rem;
-        margin-top: 2rem;
-    }
-    footer a {
-        color: var(--accent-blue);
-        text-decoration: none;
-    }
-
-    @media (max-width: 900px) {
-        .stat-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .graph-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-    @media (max-width: 560px) {
-        .stat-grid {
-            grid-template-columns: 1fr;
-        }
-        .page-content {
-            padding: 1.25rem;
-        }
-        .page-header h1 {
-            font-size: 2rem;
-        }
-    }
-</style>
-</head>
-<body>
-
-<div class="page-content">
-
-    <div class="page-header">
-        <h1>Server Stats</h1>
-        <p>Live vitals for the AllForOne SMP host, updated every few seconds.</p>
-    </div>
-
-    <div class="stale-banner" id="staleBanner">
-        The dashboard hasn't heard from the server in a while. Numbers below may be out of date.
-    </div>
-
-    <div class="status-strip">
-        <div class="status-dot pending" id="statusDot"></div>
-        <span class="status-label" id="statusLabel">Connecting…</span>
-        <span class="status-meta" id="statusMeta">—</span>
-    </div>
-
-    <div class="stat-grid">
-        <div class="stat-card">
-            <div class="stat-card-label">Uptime</div>
-            <div class="stat-card-value" id="uptimeValue">—</div>
-            <div class="stat-card-sub" id="uptimeSub">Service uptime</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card-label">Players Online</div>
-            <div class="stat-card-value" id="playersValue">—<span class="unit" id="playersMax"></span></div>
-            <div class="stat-card-sub" id="playersSub">—</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card-label">CPU Usage</div>
-            <div class="stat-card-value" id="cpuValue">—<span class="unit">%</span></div>
-            <div class="meter-track"><div class="meter-fill" id="cpuMeter" style="width:0%"></div></div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card-label">Memory Usage</div>
-            <div class="stat-card-value" id="ramValue">—<span class="unit">%</span></div>
-            <div class="meter-track"><div class="meter-fill" id="ramMeter" style="width:0%"></div></div>
-            <div class="stat-card-sub" id="ramSub">—</div>
-        </div>
-    </div>
-
-    <div class="players-card">
-        <div class="players-card-header">
-            <h3>Who's Online</h3>
-            <span class="count" id="playersCountBadge">0</span>
-        </div>
-        <div class="player-chip-list" id="playerChipList">
-            <span class="players-empty">No players online right now.</span>
-        </div>
-    </div>
-
-    <div class="graph-section">
-        <div class="section-title">History</div>
-
-        <div class="range-toggle">
-            <button class="range-btn active" data-hours="1">Last hour</button>
-            <button class="range-btn" data-hours="24">Last 24h</button>
-            <button class="range-btn" data-hours="168">Last 7 days</button>
-        </div>
-
-        <div class="graph-grid">
-            <div class="graph-card">
-                <div class="graph-card-header">
-                    <h3>CPU &amp; Memory</h3>
-                    <div class="graph-legend">
-                        <span><span class="legend-swatch" style="background:var(--primary-blue)"></span>CPU %</span>
-                        <span><span class="legend-swatch" style="background:var(--accent-blue)"></span>RAM %</span>
-                    </div>
-                </div>
-                <div class="graph-canvas-wrap">
-                    <canvas id="cpuRamChart"></canvas>
-                    <div class="graph-empty" id="cpuRamEmpty" style="display:none;">No history data yet.</div>
-                </div>
-            </div>
-
-            <div class="graph-card">
-                <div class="graph-card-header">
-                    <h3>Network Throughput</h3>
-                    <div class="graph-legend">
-                        <span><span class="legend-swatch" style="background:var(--success)"></span>Down</span>
-                        <span><span class="legend-swatch" style="background:var(--warning)"></span>Up</span>
-                    </div>
-                </div>
-                <div class="graph-canvas-wrap">
-                    <canvas id="netChart"></canvas>
-                    <div class="graph-empty" id="netEmpty" style="display:none;">No history data yet.</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="graph-grid" style="margin-top:1.5rem; grid-template-columns: 1fr;">
-            <div class="graph-card">
-                <div class="graph-card-header">
-                    <h3>Players Online</h3>
-                </div>
-                <div class="graph-canvas-wrap" style="height:160px;">
-                    <canvas id="playersChart"></canvas>
-                    <div class="graph-empty" id="playersEmpty" style="display:none;">No history data yet.</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<footer>
-    AllForOne SMP &middot; stats served from a self-hosted API over <a href="https://tailscale.com" target="_blank" rel="noopener">Tailscale Funnel</a>
-</footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
-<script>
-(function () {
-    'use strict';
-
-    // ---------------------------------------------------------------------
-    // CONFIG
-    // ---------------------------------------------------------------------
-    const STATS_API_BASE = 'https://desktop-nvjfv1m.tail1b131d.ts.net';
-    const POLL_INTERVAL_MS = 10 * 1000;      // how often to refresh "latest"
-    const STALE_THRESHOLD_MS = 3 * 60 * 1000; // flag stale if no update in 3 min
-
-    let currentRangeHours = 1;
-    let lastSuccessAt = null;
-    let charts = { cpuRam: null, net: null, players: null };
-
-    // ---------------------------------------------------------------------
-    // HELPERS
-    // ---------------------------------------------------------------------
-    function formatUptime(sec) {
-        if (sec == null) return '—';
-        const d = Math.floor(sec / 86400);
-        const h = Math.floor((sec % 86400) / 3600);
-        const m = Math.floor((sec % 3600) / 60);
-        if (d > 0) return `${d}d ${h}h`;
-        if (h > 0) return `${h}h ${m}m`;
-        return `${m}m ${sec % 60}s`;
-    }
-
-    function meterClass(pct) {
-        if (pct >= 90) return 'danger';
-        if (pct >= 70) return 'warn';
-        return '';
-    }
-
-    function setStatus(state, label, meta) {
-        const dot = document.getElementById('statusDot');
-        dot.className = 'status-dot ' + state;
-        document.getElementById('statusLabel').textContent = label;
-        document.getElementById('statusMeta').textContent = meta;
-    }
-
-    function setStaleBanner(visible) {
-        document.getElementById('staleBanner').classList.toggle('visible', visible);
-    }
-
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    // ---------------------------------------------------------------------
-    // RENDER: current stats
-    // ---------------------------------------------------------------------
-    function renderLatest(data) {
-        // uptime: API sends uptime.systemSeconds / uptime.serviceSeconds
-        const uptimeSec = data.uptime?.systemSeconds ?? data.uptime?.serviceSeconds ?? null;
-        document.getElementById('uptimeValue').textContent = formatUptime(uptimeSec);
-
-        // cpu: API sends cpu.percent (object), not a plain number
-        const cpu = data.cpu?.percent ?? 0;
-        document.getElementById('cpuValue').innerHTML = `${cpu}<span class="unit">%</span>`;
-        const cpuMeter = document.getElementById('cpuMeter');
-        cpuMeter.style.width = Math.min(100, cpu) + '%';
-        cpuMeter.className = 'meter-fill ' + meterClass(cpu);
-
-        // memory: API sends memory.usedPercent / memory.usedGB / memory.totalGB
-        const mem = data.memory || {};
-        const ramPct = mem.usedPercent ?? 0;
-        document.getElementById('ramValue').innerHTML = `${ramPct}<span class="unit">%</span>`;
-        const ramMeter = document.getElementById('ramMeter');
-        ramMeter.style.width = Math.min(100, ramPct) + '%';
-        ramMeter.className = 'meter-fill ' + meterClass(ramPct);
-        if (mem.usedGB != null && mem.totalGB != null) {
-            document.getElementById('ramSub').textContent =
-                `${mem.usedGB.toFixed(1)} GB / ${mem.totalGB.toFixed(1)} GB`;
-        }
-
-        // players: shape unchanged
-        const players = data.players || {};
-        const count = players.count;
-        const max = players.max; // not present in current payload; stays undefined, which is fine
-        document.getElementById('playersValue').innerHTML =
-            (count == null ? '—' : count) + (max != null ? `<span class="unit">/${max}</span>` : '');
-        document.getElementById('playersCountBadge').textContent = count == null ? '?' : count;
-
-        const names = players.names;
-        const chipList = document.getElementById('playerChipList');
-        if (names == null) {
-            document.getElementById('playersSub').textContent = 'Player data unavailable';
-            chipList.innerHTML = '<span class="players-empty">Player data is temporarily unavailable.</span>';
-        } else if (names.length === 0) {
-            document.getElementById('playersSub').textContent = '0 players exploring the world';
-            chipList.innerHTML = '<span class="players-empty">No players online right now.</span>';
-        } else {
-            document.getElementById('playersSub').textContent =
-                `${names.length} player${names.length === 1 ? '' : 's'} exploring the world`;
-            chipList.innerHTML = names.map(
-                (n) => `<span class="player-chip"><span class="dot"></span>${escapeHtml(n)}</span>`
-            ).join('');
-        }
-
-        lastSuccessAt = Date.now();
-        setStatus('online', 'Reporting Live', data.rconConnected ? 'RCON connected' : 'RCON unavailable');
-        setStaleBanner(false);
-    }
-
-    // ---------------------------------------------------------------------
-    // RENDER: history charts
-    // ---------------------------------------------------------------------
-    function buildChart(canvasId, datasets, emptyElId) {
-        const canvas = document.getElementById(canvasId);
-        const empty = document.getElementById(emptyElId);
-        const hasData = datasets.some((d) => d.data.length > 0);
-
-        canvas.style.display = hasData ? 'block' : 'none';
-        empty.style.display = hasData ? 'none' : 'flex';
-        if (!hasData) return null;
-
-        return new Chart(canvas, {
-            type: 'line',
-            data: { datasets },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                interaction: { mode: 'index', intersect: false },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: { tooltipFormat: 'PP p' },
-                        grid: { display: false },
-                        ticks: { color: '#718096', maxTicksLimit: 6 },
-                    },
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: '#e8f4f8' },
-                        ticks: { color: '#718096' },
-                    },
-                },
-                plugins: { legend: { display: false } },
-                elements: { point: { radius: 0 }, line: { borderWidth: 2, tension: 0.25 } },
-            },
-        });
-    }
-
-    function renderHistory(rows) {
-        if (charts.cpuRam) charts.cpuRam.destroy();
-        if (charts.net) charts.net.destroy();
-        if (charts.players) charts.players.destroy();
-
-        // cpu/memory: nested shape, same as /api/live (cpu.percent, memory.usedPercent)
-        const cpuData = rows
-            .filter((r) => r.cpu?.percent != null)
-            .map((r) => ({ x: r.ts, y: r.cpu.percent }));
-        const ramData = rows
-            .filter((r) => r.memory?.usedPercent != null)
-            .map((r) => ({ x: r.ts, y: r.memory.usedPercent }));
-        charts.cpuRam = buildChart('cpuRamChart', [
-            { data: cpuData, borderColor: '#4a90e2', backgroundColor: 'transparent' },
-            { data: ramData, borderColor: '#5ba3f5', backgroundColor: 'transparent' },
-        ], 'cpuRamEmpty');
-
-        const downData = rows.filter((r) => r.network && r.network.downKbps != null).map((r) => ({ x: r.ts, y: r.network.downKbps }));
-        const upData = rows.filter((r) => r.network && r.network.upKbps != null).map((r) => ({ x: r.ts, y: r.network.upKbps }));
-        charts.net = buildChart('netChart', [
-            { data: downData, borderColor: '#27ae60', backgroundColor: 'transparent' },
-            { data: upData, borderColor: '#f6c90e', backgroundColor: 'transparent' },
-        ], 'netEmpty');
-
-        const playerData = rows.filter((r) => r.players && r.players.count != null).map((r) => ({ x: r.ts, y: r.players.count }));
-        charts.players = buildChart('playersChart', [
-            { data: playerData, borderColor: '#2c5f8d', backgroundColor: 'rgba(74,144,226,0.08)', fill: true },
-        ], 'playersEmpty');
-    }
-
-    // ---------------------------------------------------------------------
-    // DATA FETCHING
-    // ---------------------------------------------------------------------
-    async function fetchLatest() {
-        try {
-            const res = await fetch(`${STATS_API_BASE}/api/live`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const json = await res.json();
-            if (json.data) {
-                renderLatest(json.data);
-            } else {
-                setStatus('pending', 'Waiting for first report', '—');
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Server Stats — AllForOne SMP</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Spectral:wght@700&display=swap"
+            rel="stylesheet" />
+        <style>
+            :root {
+                --primary-blue: #4a90e2;
+                --light-blue: #e8f4f8;
+                --lighter-blue: #f5fbfd;
+                --dark-blue: #2c5f8d;
+                --accent-blue: #5ba3f5;
+                --text-dark: #1a2332;
+                --text-medium: #4a5568;
+                --text-light: #718096;
+                --border-color: #d4e8f0;
+                --white: #ffffff;
+                --error: #e74c3c;
+                --success: #27ae60;
+                --warning: #f6c90e;
+                --shadow-sm: 0 1px 3px rgba(74, 144, 226, 0.08);
+                --shadow-md: 0 4px 12px rgba(74, 144, 226, 0.12);
+                --shadow-lg: 0 10px 30px rgba(74, 144, 226, 0.15);
             }
-        } catch (err) {
-            console.error('[stats] fetchLatest failed:', err);
-            setStatus('offline', 'Reporting Offline', 'Could not reach the stats API');
-        }
-        checkStale();
-    }
 
-    async function fetchHistory(hours) {
-        try {
-            const res = await fetch(`${STATS_API_BASE}/api/history?hours=${hours}`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const json = await res.json();
-            renderHistory(json.data || []);
-        } catch (err) {
-            console.error('[stats] fetchHistory failed:', err);
-            renderHistory([]);
-        }
-    }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-    function checkStale() {
-        if (lastSuccessAt && Date.now() - lastSuccessAt > STALE_THRESHOLD_MS) {
-            setStaleBanner(true);
-        }
-    }
+            body {
+                font-family: "DM Sans", sans-serif;
+                background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
+                color: var(--text-dark);
+                min-height: 100vh;
+                line-height: 1.6;
+            }
 
-    // ---------------------------------------------------------------------
-    // RANGE TOGGLE
-    // ---------------------------------------------------------------------
-    document.querySelectorAll('.range-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.range-btn').forEach((b) => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentRangeHours = parseInt(btn.dataset.hours, 10);
-            fetchHistory(currentRangeHours);
-        });
-    });
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
+                font-family: "Spectral", serif;
+                font-weight: 700;
+            }
 
-    // ---------------------------------------------------------------------
-    // INIT
-    // ---------------------------------------------------------------------
-    fetchLatest();
-    fetchHistory(currentRangeHours);
-    setInterval(fetchLatest, POLL_INTERVAL_MS);
-    setInterval(() => fetchHistory(currentRangeHours), 60 * 1000);
-    setInterval(checkStale, 30 * 1000);
-})();
-</script>
+            .page-content {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 2rem;
+            }
 
-</body>
+            .page-header {
+                margin-bottom: 2rem;
+            }
+            .page-header h1 {
+                font-family: "Bebas Neue", sans-serif;
+                font-size: 2.6rem;
+                letter-spacing: 0.06em;
+                color: var(--primary-blue);
+                margin-bottom: 0.4rem;
+            }
+            .page-header p {
+                color: var(--text-medium);
+                font-size: 1rem;
+            }
+
+            .section-title {
+                font-family: "Bebas Neue", sans-serif;
+                font-size: 1.8rem;
+                letter-spacing: 0.08em;
+                color: var(--primary-blue);
+                margin-bottom: 1.25rem;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            .section-title::after {
+                content: "";
+                flex: 1;
+                height: 2px;
+                background: linear-gradient(to right, var(--primary-blue), transparent);
+            }
+
+            .status-strip {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 999px;
+                padding: 0.7rem 1.25rem;
+                box-shadow: var(--shadow-sm);
+                margin-bottom: 2rem;
+                width: fit-content;
+                flex-wrap: wrap;
+            }
+            .status-dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #aaa;
+                flex-shrink: 0;
+                transition: background 0.3s ease;
+            }
+            .status-dot.online {
+                background: var(--success);
+                box-shadow: 0 0 8px rgba(39, 174, 96, 0.5);
+            }
+            .status-dot.offline {
+                background: var(--error);
+            }
+            .status-dot.pending {
+                background: var(--warning);
+                box-shadow: 0 0 8px rgba(246, 201, 14, 0.5);
+            }
+            .status-strip .status-label {
+                font-weight: 700;
+            }
+            .status-strip .status-meta {
+                color: var(--text-light);
+                font-size: 0.88rem;
+                border-left: 1px solid var(--border-color);
+                padding-left: 0.75rem;
+            }
+
+            .stat-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1.25rem;
+                margin-bottom: 2.5rem;
+            }
+            .stat-card {
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 16px;
+                padding: 1.5rem;
+                box-shadow: var(--shadow-sm);
+                display: flex;
+                flex-direction: column;
+                gap: 0.6rem;
+                transition:
+                    box-shadow 0.2s ease,
+                    transform 0.2s ease;
+            }
+            .stat-card:hover {
+                box-shadow: var(--shadow-md);
+                transform: translateY(-2px);
+            }
+            .stat-card-label {
+                font-size: 0.78rem;
+                font-weight: 700;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: var(--text-light);
+            }
+            .stat-card-value {
+                font-family: "Bebas Neue", sans-serif;
+                font-size: 2.4rem;
+                letter-spacing: 0.03em;
+                color: var(--text-dark);
+                line-height: 1;
+                display: flex;
+                align-items: baseline;
+                gap: 0.4rem;
+            }
+            .stat-card-value .unit {
+                font-family: "DM Sans", sans-serif;
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--text-light);
+            }
+            .stat-card-sub {
+                font-size: 0.85rem;
+                color: var(--text-medium);
+            }
+
+            .meter-track {
+                width: 100%;
+                height: 8px;
+                background: var(--lighter-blue);
+                border-radius: 999px;
+                overflow: hidden;
+                border: 1px solid var(--border-color);
+            }
+            .meter-fill {
+                height: 100%;
+                border-radius: 999px;
+                background: linear-gradient(90deg, var(--primary-blue), var(--accent-blue));
+                transition:
+                    width 0.5s ease,
+                    background 0.3s ease;
+            }
+            .meter-fill.warn {
+                background: linear-gradient(90deg, var(--warning), #f39c12);
+            }
+            .meter-fill.danger {
+                background: linear-gradient(90deg, var(--error), #c0392b);
+            }
+
+            .players-card {
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 16px;
+                padding: 1.5rem;
+                box-shadow: var(--shadow-sm);
+                margin-bottom: 2.5rem;
+            }
+            .players-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                margin-bottom: 1rem;
+            }
+            .players-card-header h3 {
+                font-size: 1.1rem;
+                color: var(--text-dark);
+            }
+            .players-card-header .count {
+                font-family: "Bebas Neue", sans-serif;
+                font-size: 1.4rem;
+                color: var(--primary-blue);
+            }
+            .player-chip-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.6rem;
+            }
+            .player-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: var(--lighter-blue);
+                border: 1px solid var(--border-color);
+                border-radius: 999px;
+                padding: 0.45rem 0.9rem;
+                font-size: 0.9rem;
+                color: var(--text-dark);
+                font-weight: 500;
+            }
+            .player-chip .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--success);
+            }
+            .players-empty {
+                color: var(--text-light);
+                font-style: italic;
+                font-size: 0.95rem;
+            }
+
+            .graph-section {
+                margin-bottom: 2.5rem;
+            }
+            .graph-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+            }
+            .graph-card {
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 16px;
+                padding: 1.5rem;
+                box-shadow: var(--shadow-sm);
+            }
+            .graph-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+            .graph-card-header h3 {
+                font-size: 1rem;
+                color: var(--text-dark);
+            }
+            .graph-legend {
+                display: flex;
+                gap: 1rem;
+                font-size: 0.8rem;
+                color: var(--text-medium);
+            }
+            .graph-legend span {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+            }
+            .legend-swatch {
+                width: 10px;
+                height: 10px;
+                border-radius: 2px;
+                display: inline-block;
+            }
+            .graph-canvas-wrap {
+                position: relative;
+                height: 220px;
+            }
+            .range-toggle {
+                display: flex;
+                gap: 0.4rem;
+                margin-bottom: 1.5rem;
+            }
+            .range-btn {
+                background: var(--white);
+                border: 2px solid var(--border-color);
+                border-radius: 10px;
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--text-medium);
+                cursor: pointer;
+                font-family: "DM Sans", sans-serif;
+                transition: all 0.18s ease;
+            }
+            .range-btn:hover {
+                border-color: var(--primary-blue);
+                color: var(--primary-blue);
+            }
+            .range-btn.active {
+                background: var(--primary-blue);
+                border-color: var(--primary-blue);
+                color: white;
+            }
+
+            .graph-empty {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 220px;
+                color: var(--text-light);
+                font-style: italic;
+                font-size: 0.9rem;
+            }
+
+            .stale-banner {
+                display: none;
+                background: linear-gradient(135deg, #fff3cd, #ffe5a1);
+                border: 2px solid var(--warning);
+                border-radius: 14px;
+                padding: 1.1rem 1.4rem;
+                margin-bottom: 2rem;
+                color: #856404;
+                font-size: 0.92rem;
+                font-weight: 500;
+            }
+            .stale-banner.visible {
+                display: block;
+            }
+
+            footer {
+                background: var(--text-dark);
+                color: #a0aec0;
+                text-align: center;
+                padding: 2rem;
+                font-size: 0.9rem;
+                margin-top: 2rem;
+            }
+            footer a {
+                color: var(--accent-blue);
+                text-decoration: none;
+            }
+
+            @media (max-width: 900px) {
+                .stat-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+                .graph-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            @media (max-width: 560px) {
+                .stat-grid {
+                    grid-template-columns: 1fr;
+                }
+                .page-content {
+                    padding: 1.25rem;
+                }
+                .page-header h1 {
+                    font-size: 2rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="page-content">
+            <div class="page-header">
+                <h1>Server Stats</h1>
+                <p>Live vitals for the AllForOne SMP host, updated every few seconds.</p>
+            </div>
+
+            <div class="stale-banner" id="staleBanner">
+                The dashboard hasn't heard from the server in a while. Numbers below may be out of date.
+            </div>
+
+            <div class="status-strip">
+                <div class="status-dot pending" id="statusDot"></div>
+                <span class="status-label" id="statusLabel">Connecting…</span>
+                <span class="status-meta" id="statusMeta">—</span>
+            </div>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-card-label">Uptime</div>
+                    <div class="stat-card-value" id="uptimeValue">—</div>
+                    <div class="stat-card-sub" id="uptimeSub">Service uptime</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-label">Players Online</div>
+                    <div class="stat-card-value" id="playersValue">—<span class="unit" id="playersMax"></span></div>
+                    <div class="stat-card-sub" id="playersSub">—</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-label">CPU Usage</div>
+                    <div class="stat-card-value" id="cpuValue">—<span class="unit">%</span></div>
+                    <div class="meter-track"><div class="meter-fill" id="cpuMeter" style="width: 0%"></div></div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-label">Memory Usage</div>
+                    <div class="stat-card-value" id="ramValue">—<span class="unit">%</span></div>
+                    <div class="meter-track"><div class="meter-fill" id="ramMeter" style="width: 0%"></div></div>
+                    <div class="stat-card-sub" id="ramSub">—</div>
+                </div>
+            </div>
+
+            <div class="players-card">
+                <div class="players-card-header">
+                    <h3>Who's Online</h3>
+                    <span class="count" id="playersCountBadge">0</span>
+                </div>
+                <div class="player-chip-list" id="playerChipList">
+                    <span class="players-empty">No players online right now.</span>
+                </div>
+            </div>
+
+            <div class="graph-section">
+                <div class="section-title">History</div>
+
+                <div class="range-toggle">
+                    <button class="range-btn active" data-hours="1">Last hour</button>
+                    <button class="range-btn" data-hours="24">Last 24h</button>
+                    <button class="range-btn" data-hours="168">Last 7 days</button>
+                </div>
+
+                <div class="graph-grid">
+                    <div class="graph-card">
+                        <div class="graph-card-header">
+                            <h3>CPU &amp; Memory</h3>
+                            <div class="graph-legend">
+                                <span
+                                    ><span class="legend-swatch" style="background: var(--primary-blue)"></span>CPU
+                                    %</span
+                                >
+                                <span
+                                    ><span class="legend-swatch" style="background: var(--accent-blue)"></span>RAM
+                                    %</span
+                                >
+                            </div>
+                        </div>
+                        <div class="graph-canvas-wrap">
+                            <canvas id="cpuRamChart"></canvas>
+                            <div class="graph-empty" id="cpuRamEmpty" style="display: none">No history data yet.</div>
+                        </div>
+                    </div>
+
+                    <div class="graph-card">
+                        <div class="graph-card-header">
+                            <h3>Network Throughput</h3>
+                            <div class="graph-legend">
+                                <span><span class="legend-swatch" style="background: var(--success)"></span>Down</span>
+                                <span><span class="legend-swatch" style="background: var(--warning)"></span>Up</span>
+                            </div>
+                        </div>
+                        <div class="graph-canvas-wrap">
+                            <canvas id="netChart"></canvas>
+                            <div class="graph-empty" id="netEmpty" style="display: none">No history data yet.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="graph-grid" style="margin-top: 1.5rem; grid-template-columns: 1fr">
+                    <div class="graph-card">
+                        <div class="graph-card-header">
+                            <h3>Players Online</h3>
+                        </div>
+                        <div class="graph-canvas-wrap" style="height: 160px">
+                            <canvas id="playersChart"></canvas>
+                            <div class="graph-empty" id="playersEmpty" style="display: none">No history data yet.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            AllForOne SMP &middot; stats served from a self-hosted API over
+            <a href="https://tailscale.com" target="_blank" rel="noopener">Tailscale Funnel</a>
+        </footer>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+        <script>
+            (function () {
+                "use strict";
+
+                // ---------------------------------------------------------------------
+                // CONFIG
+                // ---------------------------------------------------------------------
+                const STATS_API_BASE = "https://desktop-nvjfv1m.tail1b131d.ts.net";
+                const POLL_INTERVAL_MS = 10 * 1000; // how often to refresh "latest"
+                const STALE_THRESHOLD_MS = 3 * 60 * 1000; // flag stale if no update in 3 min
+
+                let currentRangeHours = 1;
+                let lastSuccessAt = null;
+                let charts = { cpuRam: null, net: null, players: null };
+
+                // ---------------------------------------------------------------------
+                // HELPERS
+                // ---------------------------------------------------------------------
+                function formatUptime(sec) {
+                    if (sec == null) return "—";
+                    const d = Math.floor(sec / 86400);
+                    const h = Math.floor((sec % 86400) / 3600);
+                    const m = Math.floor((sec % 3600) / 60);
+                    if (d > 0) return `${d}d ${h}h`;
+                    if (h > 0) return `${h}h ${m}m`;
+                    return `${m}m ${sec % 60}s`;
+                }
+
+                function meterClass(pct) {
+                    if (pct >= 90) return "danger";
+                    if (pct >= 70) return "warn";
+                    return "";
+                }
+
+                function setStatus(state, label, meta) {
+                    const dot = document.getElementById("statusDot");
+                    dot.className = "status-dot " + state;
+                    document.getElementById("statusLabel").textContent = label;
+                    document.getElementById("statusMeta").textContent = meta;
+                }
+
+                function setStaleBanner(visible) {
+                    document.getElementById("staleBanner").classList.toggle("visible", visible);
+                }
+
+                function escapeHtml(str) {
+                    const div = document.createElement("div");
+                    div.textContent = str;
+                    return div.innerHTML;
+                }
+
+                // ---------------------------------------------------------------------
+                // RENDER: current stats
+                // ---------------------------------------------------------------------
+                function renderLatest(data) {
+                    // uptime: API sends uptime.systemSeconds / uptime.serviceSeconds
+                    const uptimeSec = data.uptime?.systemSeconds ?? data.uptime?.serviceSeconds ?? null;
+                    document.getElementById("uptimeValue").textContent = formatUptime(uptimeSec);
+
+                    // cpu: API sends cpu.percent (object), not a plain number
+                    const cpu = data.cpu?.percent ?? 0;
+                    document.getElementById("cpuValue").innerHTML = `${cpu}<span class="unit">%</span>`;
+                    const cpuMeter = document.getElementById("cpuMeter");
+                    cpuMeter.style.width = Math.min(100, cpu) + "%";
+                    cpuMeter.className = "meter-fill " + meterClass(cpu);
+
+                    // memory: API sends memory.usedPercent / memory.usedGB / memory.totalGB
+                    const mem = data.memory || {};
+                    const ramPct = mem.usedPercent ?? 0;
+                    document.getElementById("ramValue").innerHTML = `${ramPct}<span class="unit">%</span>`;
+                    const ramMeter = document.getElementById("ramMeter");
+                    ramMeter.style.width = Math.min(100, ramPct) + "%";
+                    ramMeter.className = "meter-fill " + meterClass(ramPct);
+                    if (mem.usedGB != null && mem.totalGB != null) {
+                        document.getElementById("ramSub").textContent =
+                            `${mem.usedGB.toFixed(1)} GB / ${mem.totalGB.toFixed(1)} GB`;
+                    }
+
+                    // players: shape unchanged
+                    const players = data.players || {};
+                    const count = players.count;
+                    const max = players.max; // not present in current payload; stays undefined, which is fine
+                    document.getElementById("playersValue").innerHTML =
+                        (count == null ? "—" : count) + (max != null ? `<span class="unit">/${max}</span>` : "");
+                    document.getElementById("playersCountBadge").textContent = count == null ? "?" : count;
+
+                    const names = players.names;
+                    const chipList = document.getElementById("playerChipList");
+                    if (names == null) {
+                        document.getElementById("playersSub").textContent = "Player data unavailable";
+                        chipList.innerHTML =
+                            '<span class="players-empty">Player data is temporarily unavailable.</span>';
+                    } else if (names.length === 0) {
+                        document.getElementById("playersSub").textContent = "0 players exploring the world";
+                        chipList.innerHTML = '<span class="players-empty">No players online right now.</span>';
+                    } else {
+                        document.getElementById("playersSub").textContent =
+                            `${names.length} player${names.length === 1 ? "" : "s"} exploring the world`;
+                        chipList.innerHTML = names
+                            .map((n) => `<span class="player-chip"><span class="dot"></span>${escapeHtml(n)}</span>`)
+                            .join("");
+                    }
+
+                    lastSuccessAt = Date.now();
+                    setStatus("online", "Reporting Live", data.rconConnected ? "RCON connected" : "RCON unavailable");
+                    setStaleBanner(false);
+                }
+
+                // ---------------------------------------------------------------------
+                // RENDER: history charts
+                // ---------------------------------------------------------------------
+                function buildChart(canvasId, datasets, emptyElId) {
+                    const canvas = document.getElementById(canvasId);
+                    const empty = document.getElementById(emptyElId);
+                    const hasData = datasets.some((d) => d.data.length > 0);
+
+                    canvas.style.display = hasData ? "block" : "none";
+                    empty.style.display = hasData ? "none" : "flex";
+                    if (!hasData) return null;
+
+                    return new Chart(canvas, {
+                        type: "line",
+                        data: { datasets },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: false,
+                            interaction: { mode: "index", intersect: false },
+                            scales: {
+                                x: {
+                                    type: "time",
+                                    time: { tooltipFormat: "PP p" },
+                                    grid: { display: false },
+                                    ticks: { color: "#718096", maxTicksLimit: 6 }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: "#e8f4f8" },
+                                    ticks: { color: "#718096" }
+                                }
+                            },
+                            plugins: { legend: { display: false } },
+                            elements: { point: { radius: 0 }, line: { borderWidth: 2, tension: 0.25 } }
+                        }
+                    });
+                }
+
+                function renderHistory(rows) {
+                    if (charts.cpuRam) charts.cpuRam.destroy();
+                    if (charts.net) charts.net.destroy();
+                    if (charts.players) charts.players.destroy();
+
+                    // cpu/memory: nested shape, same as /api/live (cpu.percent, memory.usedPercent)
+                    const cpuData = rows
+                        .filter((r) => r.cpu?.percent != null)
+                        .map((r) => ({ x: r.ts, y: r.cpu.percent }));
+                    const ramData = rows
+                        .filter((r) => r.memory?.usedPercent != null)
+                        .map((r) => ({ x: r.ts, y: r.memory.usedPercent }));
+                    charts.cpuRam = buildChart(
+                        "cpuRamChart",
+                        [
+                            { data: cpuData, borderColor: "#4a90e2", backgroundColor: "transparent" },
+                            { data: ramData, borderColor: "#5ba3f5", backgroundColor: "transparent" }
+                        ],
+                        "cpuRamEmpty"
+                    );
+
+                    const downData = rows
+                        .filter((r) => r.network && r.network.downKbps != null)
+                        .map((r) => ({ x: r.ts, y: r.network.downKbps }));
+                    const upData = rows
+                        .filter((r) => r.network && r.network.upKbps != null)
+                        .map((r) => ({ x: r.ts, y: r.network.upKbps }));
+                    charts.net = buildChart(
+                        "netChart",
+                        [
+                            { data: downData, borderColor: "#27ae60", backgroundColor: "transparent" },
+                            { data: upData, borderColor: "#f6c90e", backgroundColor: "transparent" }
+                        ],
+                        "netEmpty"
+                    );
+
+                    const playerData = rows
+                        .filter((r) => r.players && r.players.count != null)
+                        .map((r) => ({ x: r.ts, y: r.players.count }));
+                    charts.players = buildChart(
+                        "playersChart",
+                        [
+                            {
+                                data: playerData,
+                                borderColor: "#2c5f8d",
+                                backgroundColor: "rgba(74,144,226,0.08)",
+                                fill: true
+                            }
+                        ],
+                        "playersEmpty"
+                    );
+                }
+
+                // ---------------------------------------------------------------------
+                // DATA FETCHING
+                // ---------------------------------------------------------------------
+                async function fetchLatest() {
+                    try {
+                        const res = await fetch(`${STATS_API_BASE}/api/live`);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const json = await res.json();
+                        if (json.data) {
+                            renderLatest(json.data);
+                        } else {
+                            setStatus("pending", "Waiting for first report", "—");
+                        }
+                    } catch (err) {
+                        console.error("[stats] fetchLatest failed:", err);
+                        setStatus("offline", "Reporting Offline", "Could not reach the stats API");
+                    }
+                    checkStale();
+                }
+
+                async function fetchHistory(hours) {
+                    try {
+                        const res = await fetch(`${STATS_API_BASE}/api/history?hours=${hours}`);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const json = await res.json();
+                        renderHistory(json.data || []);
+                    } catch (err) {
+                        console.error("[stats] fetchHistory failed:", err);
+                        renderHistory([]);
+                    }
+                }
+
+                function checkStale() {
+                    if (lastSuccessAt && Date.now() - lastSuccessAt > STALE_THRESHOLD_MS) {
+                        setStaleBanner(true);
+                    }
+                }
+
+                // ---------------------------------------------------------------------
+                // RANGE TOGGLE
+                // ---------------------------------------------------------------------
+                document.querySelectorAll(".range-btn").forEach((btn) => {
+                    btn.addEventListener("click", () => {
+                        document.querySelectorAll(".range-btn").forEach((b) => b.classList.remove("active"));
+                        btn.classList.add("active");
+                        currentRangeHours = parseInt(btn.dataset.hours, 10);
+                        fetchHistory(currentRangeHours);
+                    });
+                });
+
+                // ---------------------------------------------------------------------
+                // INIT
+                // ---------------------------------------------------------------------
+                // Run initial calls immediately
+                fetchLatest();
+                fetchHistory(currentRangeHours);
+
+                // Set up the recurring intervals
+                setInterval(fetchLatest, 2000); // 2 seconds
+                setInterval(() => fetchHistory(currentRangeHours), 60 * 1000); // 1 minute
+                setInterval(checkStale, 30 * 1000); // 30 seconds
+            })();
+        </script>
+    </body>
 </html>
