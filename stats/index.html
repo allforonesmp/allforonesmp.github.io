@@ -551,28 +551,33 @@
     // RENDER: current stats
     // ---------------------------------------------------------------------
     function renderLatest(data) {
-        document.getElementById('uptimeValue').textContent = formatUptime(data.uptimeSec);
+        // uptime: API sends uptime.systemSeconds / uptime.serviceSeconds
+        const uptimeSec = data.uptime?.systemSeconds ?? data.uptime?.serviceSeconds ?? null;
+        document.getElementById('uptimeValue').textContent = formatUptime(uptimeSec);
 
-        const cpu = data.cpu ?? 0;
+        // cpu: API sends cpu.percent (object), not a plain number
+        const cpu = data.cpu?.percent ?? 0;
         document.getElementById('cpuValue').innerHTML = `${cpu}<span class="unit">%</span>`;
         const cpuMeter = document.getElementById('cpuMeter');
         cpuMeter.style.width = Math.min(100, cpu) + '%';
         cpuMeter.className = 'meter-fill ' + meterClass(cpu);
 
-        const ram = data.ram || {};
-        const ramPct = ram.percentUsed ?? 0;
+        // memory: API sends memory.usedPercent / memory.usedGB / memory.totalGB
+        const mem = data.memory || {};
+        const ramPct = mem.usedPercent ?? 0;
         document.getElementById('ramValue').innerHTML = `${ramPct}<span class="unit">%</span>`;
         const ramMeter = document.getElementById('ramMeter');
         ramMeter.style.width = Math.min(100, ramPct) + '%';
         ramMeter.className = 'meter-fill ' + meterClass(ramPct);
-        if (ram.usedMB != null && ram.totalMB != null) {
+        if (mem.usedGB != null && mem.totalGB != null) {
             document.getElementById('ramSub').textContent =
-                `${(ram.usedMB / 1024).toFixed(1)} GB / ${(ram.totalMB / 1024).toFixed(1)} GB`;
+                `${mem.usedGB.toFixed(1)} GB / ${mem.totalGB.toFixed(1)} GB`;
         }
 
+        // players: shape unchanged
         const players = data.players || {};
         const count = players.count;
-        const max = players.max;
+        const max = players.max; // not present in current payload; stays undefined, which is fine
         document.getElementById('playersValue').innerHTML =
             (count == null ? '—' : count) + (max != null ? `<span class="unit">/${max}</span>` : '');
         document.getElementById('playersCountBadge').textContent = count == null ? '?' : count;
@@ -594,7 +599,7 @@
         }
 
         lastSuccessAt = Date.now();
-        setStatus('online', 'Reporting Live', data.players && data.players.count != null ? 'RCON connected' : 'RCON unavailable');
+        setStatus('online', 'Reporting Live', data.rconConnected ? 'RCON connected' : 'RCON unavailable');
         setStaleBanner(false);
     }
 
@@ -642,8 +647,13 @@
         if (charts.net) charts.net.destroy();
         if (charts.players) charts.players.destroy();
 
-        const cpuData = rows.filter((r) => r.cpu != null).map((r) => ({ x: r.ts, y: r.cpu }));
-        const ramData = rows.filter((r) => r.ram && r.ram.percentUsed != null).map((r) => ({ x: r.ts, y: r.ram.percentUsed }));
+        // cpu/memory: nested shape, same as /api/live (cpu.percent, memory.usedPercent)
+        const cpuData = rows
+            .filter((r) => r.cpu?.percent != null)
+            .map((r) => ({ x: r.ts, y: r.cpu.percent }));
+        const ramData = rows
+            .filter((r) => r.memory?.usedPercent != null)
+            .map((r) => ({ x: r.ts, y: r.memory.usedPercent }));
         charts.cpuRam = buildChart('cpuRamChart', [
             { data: cpuData, borderColor: '#4a90e2', backgroundColor: 'transparent' },
             { data: ramData, borderColor: '#5ba3f5', backgroundColor: 'transparent' },
@@ -667,7 +677,7 @@
     // ---------------------------------------------------------------------
     async function fetchLatest() {
         try {
-            const res = await fetch(`${STATS_API_BASE}/latest`);
+            const res = await fetch(`${STATS_API_BASE}/api/live`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             if (json.data) {
@@ -684,7 +694,7 @@
 
     async function fetchHistory(hours) {
         try {
-            const res = await fetch(`${STATS_API_BASE}/history?hours=${hours}`);
+            const res = await fetch(`${STATS_API_BASE}/api/history?hours=${hours}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             renderHistory(json.data || []);
