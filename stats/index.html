@@ -331,6 +331,10 @@
                 border-color: var(--primary-blue);
                 color: white;
             }
+            .range-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
 
             .graph-empty {
                 display: flex;
@@ -340,6 +344,39 @@
                 color: var(--text-light);
                 font-style: italic;
                 font-size: 0.9rem;
+            }
+
+            /* Loading overlay shown over a graph card while its history fetch is in flight */
+            .graph-loading {
+                display: none;
+                position: absolute;
+                inset: 0;
+                align-items: center;
+                justify-content: center;
+                gap: 0.6rem;
+                background: rgba(255, 255, 255, 0.85);
+                border-radius: 10px;
+                color: var(--text-medium);
+                font-size: 0.9rem;
+                font-weight: 600;
+                z-index: 2;
+            }
+            .graph-loading.visible {
+                display: flex;
+            }
+            .spinner {
+                width: 16px;
+                height: 16px;
+                border: 2.5px solid var(--border-color);
+                border-top-color: var(--primary-blue);
+                border-radius: 50%;
+                animation: spin 0.7s linear infinite;
+                flex-shrink: 0;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
             }
 
             .stale-banner {
@@ -472,6 +509,7 @@
                             </div>
                         </div>
                         <div class="graph-canvas-wrap">
+                            <div class="graph-loading" id="cpuLoading"><span class="spinner"></span>Loading…</div>
                             <canvas id="cpuChart"></canvas>
                             <div class="graph-empty" id="cpuEmpty" style="display: none">No history data yet.</div>
                         </div>
@@ -488,6 +526,7 @@
                             </div>
                         </div>
                         <div class="graph-canvas-wrap">
+                            <div class="graph-loading" id="ramLoading"><span class="spinner"></span>Loading…</div>
                             <canvas id="ramChart"></canvas>
                             <div class="graph-empty" id="ramEmpty" style="display: none">No history data yet.</div>
                         </div>
@@ -504,6 +543,7 @@
                             </div>
                         </div>
                         <div class="graph-canvas-wrap">
+                            <div class="graph-loading" id="netLoading"><span class="spinner"></span>Loading…</div>
                             <canvas id="netChart"></canvas>
                             <div class="graph-empty" id="netEmpty" style="display: none">No history data yet.</div>
                         </div>
@@ -514,6 +554,7 @@
                             <h3>Players Online</h3>
                         </div>
                         <div class="graph-canvas-wrap">
+                            <div class="graph-loading" id="playersLoading"><span class="spinner"></span>Loading…</div>
                             <canvas id="playersChart"></canvas>
                             <div class="graph-empty" id="playersEmpty" style="display: none">No history data yet.</div>
                         </div>
@@ -621,13 +662,14 @@
                 // CONFIG
                 // ---------------------------------------------------------------------
                 const STATS_API_BASE = "https://desktop-nvjfv1m.tail1b131d.ts.net";
-                const LIVE_POLL_MS = 1 * 1000; // how often to refresh "latest" (matches reporter's 1s push interval)
+                const LIVE_POLL_MS = 1 * 1000; // how often to refresh "latest" (matches reporter's 5s push interval)
                 const HISTORY_POLL_MS = 60 * 1000; // how often to refresh history charts
                 const STALE_THRESHOLD_MS = 3 * 60 * 1000; // flag stale if no update in 3 min
 
                 let currentRangeHours = 1;
                 let lastSuccessAt = null;
                 let charts = { cpu: null, ram: null, net: null, players: null };
+                let historyRequestSeq = 0; // guards against a slow older request overwriting a newer one
 
                 // ---------------------------------------------------------------------
                 // HELPERS
@@ -663,6 +705,14 @@
                     const div = document.createElement("div");
                     div.textContent = str;
                     return div.innerHTML;
+                }
+
+                function setHistoryLoading(visible) {
+                    ["cpuLoading", "ramLoading", "netLoading", "playersLoading"].forEach((id) => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.toggle("visible", visible);
+                    });
+                    document.querySelectorAll(".range-btn").forEach((b) => (b.disabled = visible));
                 }
 
                 // ---------------------------------------------------------------------
@@ -852,14 +902,22 @@
                 }
 
                 async function fetchHistory(hours) {
+                    // Tag this request so a slow, superseded fetch can't clobber a newer one's
+                    // result or hide the loading state after a fresher click already resolved.
+                    const seq = ++historyRequestSeq;
+                    setHistoryLoading(true);
                     try {
                         const res = await fetch(`${STATS_API_BASE}/api/history?hours=${hours}`);
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
                         const json = await res.json();
+                        if (seq !== historyRequestSeq) return; // a newer range was selected meanwhile
                         renderHistory(json.data || []);
                     } catch (err) {
                         console.error("[stats] fetchHistory failed:", err);
+                        if (seq !== historyRequestSeq) return;
                         renderHistory([]);
+                    } finally {
+                        if (seq === historyRequestSeq) setHistoryLoading(false);
                     }
                 }
 
