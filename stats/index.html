@@ -457,12 +457,24 @@
                 <div class="graph-grid">
                     <div class="graph-card">
                         <div class="graph-card-header">
-                            <h3>CPU &amp; Memory</h3>
+                            <h3>CPU Usage</h3>
                             <div class="graph-legend">
                                 <span
                                     ><span class="legend-swatch" style="background: var(--primary-blue)"></span>CPU
                                     %</span
                                 >
+                            </div>
+                        </div>
+                        <div class="graph-canvas-wrap">
+                            <canvas id="cpuChart"></canvas>
+                            <div class="graph-empty" id="cpuEmpty" style="display: none">No history data yet.</div>
+                        </div>
+                    </div>
+
+                    <div class="graph-card">
+                        <div class="graph-card-header">
+                            <h3>Memory Usage</h3>
+                            <div class="graph-legend">
                                 <span
                                     ><span class="legend-swatch" style="background: var(--accent-blue)"></span>RAM
                                     %</span
@@ -470,11 +482,13 @@
                             </div>
                         </div>
                         <div class="graph-canvas-wrap">
-                            <canvas id="cpuRamChart"></canvas>
-                            <div class="graph-empty" id="cpuRamEmpty" style="display: none">No history data yet.</div>
+                            <canvas id="ramChart"></canvas>
+                            <div class="graph-empty" id="ramEmpty" style="display: none">No history data yet.</div>
                         </div>
                     </div>
+                </div>
 
+                <div class="graph-grid" style="margin-top: 1.5rem">
                     <div class="graph-card">
                         <div class="graph-card-header">
                             <h3>Network Throughput</h3>
@@ -488,14 +502,12 @@
                             <div class="graph-empty" id="netEmpty" style="display: none">No history data yet.</div>
                         </div>
                     </div>
-                </div>
 
-                <div class="graph-grid" style="margin-top: 1.5rem; grid-template-columns: 1fr">
                     <div class="graph-card">
                         <div class="graph-card-header">
                             <h3>Players Online</h3>
                         </div>
-                        <div class="graph-canvas-wrap" style="height: 160px">
+                        <div class="graph-canvas-wrap">
                             <canvas id="playersChart"></canvas>
                             <div class="graph-empty" id="playersEmpty" style="display: none">No history data yet.</div>
                         </div>
@@ -509,8 +521,8 @@
             <a href="https://tailscale.com" target="_blank" rel="noopener">Tailscale Funnel</a>
         </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
         <script>
             (function () {
                 "use strict";
@@ -519,12 +531,13 @@
                 // CONFIG
                 // ---------------------------------------------------------------------
                 const STATS_API_BASE = "https://desktop-nvjfv1m.tail1b131d.ts.net";
-                const POLL_INTERVAL_MS = 10 * 1000; // how often to refresh "latest"
+                const LIVE_POLL_MS = 5 * 1000; // how often to refresh "latest" (matches reporter's 5s push interval)
+                const HISTORY_POLL_MS = 60 * 1000; // how often to refresh history charts
                 const STALE_THRESHOLD_MS = 3 * 60 * 1000; // flag stale if no update in 3 min
 
                 let currentRangeHours = 1;
                 let lastSuccessAt = null;
-                let charts = { cpuRam: null, net: null, players: null };
+                let charts = { cpu: null, ram: null, net: null, players: null };
 
                 // ---------------------------------------------------------------------
                 // HELPERS
@@ -659,24 +672,31 @@
                 }
 
                 function renderHistory(rows) {
-                    if (charts.cpuRam) charts.cpuRam.destroy();
+                    if (!Array.isArray(rows)) rows = [];
+
+                    if (charts.cpu) charts.cpu.destroy();
+                    if (charts.ram) charts.ram.destroy();
                     if (charts.net) charts.net.destroy();
                     if (charts.players) charts.players.destroy();
 
-                    // cpu/memory: nested shape, same as /api/live (cpu.percent, memory.usedPercent)
+                    // cpu: nested shape, same as /api/live (cpu.percent)
                     const cpuData = rows
                         .filter((r) => r.cpu?.percent != null)
                         .map((r) => ({ x: r.ts, y: r.cpu.percent }));
+                    charts.cpu = buildChart(
+                        "cpuChart",
+                        [{ data: cpuData, borderColor: "#4a90e2", backgroundColor: "transparent" }],
+                        "cpuEmpty"
+                    );
+
+                    // memory: nested shape, same as /api/live (memory.usedPercent)
                     const ramData = rows
                         .filter((r) => r.memory?.usedPercent != null)
                         .map((r) => ({ x: r.ts, y: r.memory.usedPercent }));
-                    charts.cpuRam = buildChart(
-                        "cpuRamChart",
-                        [
-                            { data: cpuData, borderColor: "#4a90e2", backgroundColor: "transparent" },
-                            { data: ramData, borderColor: "#5ba3f5", backgroundColor: "transparent" }
-                        ],
-                        "cpuRamEmpty"
+                    charts.ram = buildChart(
+                        "ramChart",
+                        [{ data: ramData, borderColor: "#5ba3f5", backgroundColor: "transparent" }],
+                        "ramEmpty"
                     );
 
                     const downData = rows
@@ -769,8 +789,8 @@
                 fetchHistory(currentRangeHours);
 
                 // Set up the recurring intervals
-                setInterval(fetchLatest, 2000); // 2 seconds
-                setInterval(() => fetchHistory(currentRangeHours), 60 * 1000); // 1 minute
+                setInterval(fetchLatest, LIVE_POLL_MS);
+                setInterval(() => fetchHistory(currentRangeHours), HISTORY_POLL_MS);
                 setInterval(checkStale, 30 * 1000); // 30 seconds
             })();
         </script>
