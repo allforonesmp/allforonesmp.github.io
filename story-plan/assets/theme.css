@@ -94,6 +94,12 @@
     box-sizing: border-box;
 }
 
+/* Author display rules on .app and .auth-root must not override the HTML
+   hidden attribute; otherwise both empty shells appear before boot. */
+[hidden] {
+    display: none !important;
+}
+
 html,
 body {
     height: 100%;

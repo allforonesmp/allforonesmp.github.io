@@ -78,6 +78,7 @@ const NAV = [
 ];
 
 let driver = null;
+let bootStarted = false;
 let currentCleanup = null;
 let lastActivitySeen = Number(localStorage.getItem("afo_sp_activity_seen") || 0);
 let syncBound = false;
@@ -86,6 +87,10 @@ let syncBound = false;
    Boot
    ------------------------------------------------------------------------- */
 async function boot() {
+    // Module scripts can run after parsing but before DOMContentLoaded; guard
+    // both startup paths so they cannot initialize the app twice.
+    if (bootStarted) return;
+    bootStarted = true;
     const bootEl = document.getElementById("boot");
     const authEl = document.getElementById("auth-root");
 
