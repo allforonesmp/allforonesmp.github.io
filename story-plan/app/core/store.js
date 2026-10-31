@@ -97,14 +97,29 @@ const unsubs = [];
    ------------------------------------------------------------------------- */
 function loadCache() {
     const cached = loadJSON(CACHE_KEY, null);
+    let migrated = false;
     if (cached && cached.data) {
         for (const c of COLLECTIONS) {
             const rows = cached.data[c];
-            if (Array.isArray(rows)) state.data[c] = rows;
+            if (Array.isArray(rows)) {
+                state.data[c] = rows.map((row) => {
+                    const data = row?.data;
+                    if (!data || typeof data !== "object" || Array.isArray(data) || !(data.key || data.name || data.title)) return row;
+                    // Migrate entries cached from the old `{ id, data }` API
+                    // response shape so records use their real app key again.
+                    migrated = true;
+                    const remoteId = row.remoteId || row.id || (row.key !== data.key ? row.key : "");
+                    const normalized = { ...row, ...data, key: data.key || row.key, ...(remoteId ? { remoteId } : {}) };
+                    delete normalized.data;
+                    delete normalized.id;
+                    return normalized;
+                });
+            }
         }
         state.demoPresent = Object.values(state.data)
             .flat()
             .some((r) => r && r.demo);
+        if (migrated) persistCache();
     }
 }
 
