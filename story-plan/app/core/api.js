@@ -27,9 +27,14 @@ const SDK_TIMEOUT_MS = 15000;
 
 export function normalizeDoc(doc) {
     if (!doc || typeof doc !== "object") return null;
-    const out = { ...doc };
-    out.id = String(doc.id || doc._id || doc.documentId || doc.uid || "");
+    const payload = doc.data && typeof doc.data === "object" && !Array.isArray(doc.data) ? doc.data : null;
+    const out = payload ? { ...doc, ...payload } : { ...doc };
+    // BreadBackend may return documents as { id, data: { key, name, ... } }.
+    // Keep the backend document id distinct from the app's stable local key.
+    const remoteId = doc.id || doc._id || doc.documentId || doc.uid || payload?.id || payload?._id || payload?.documentId || payload?.uid;
+    out.id = String(remoteId || "");
     if (!out.id) return null;
+    delete out.data;
     for (const key of ["createdAt", "updatedAt"]) {
         const v = out[key];
         if (v && typeof v === "object") {
