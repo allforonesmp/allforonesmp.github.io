@@ -332,20 +332,34 @@ export const store = {
                 }),
             );
             let merged = 0;
+            const failedCollections = [];
             for (const [collection, rows] of results) {
-                if (!rows) continue;
+                if (!rows) {
+                    failedCollections.push(collection);
+                    continue;
+                }
                 merged += mergeRemote(collection, rows);
             }
-            state.sync = { status: "online", pending: queue.length, lastSync: new Date().toISOString(), error: null };
+            state.sync = failedCollections.length
+                ? {
+                      status: "offline",
+                      pending: queue.length,
+                      lastSync: state.sync.lastSync,
+                      error: `Could not load ${failedCollections.join(", ")} from the backend.`,
+                  }
+                : { status: "online", pending: queue.length, lastSync: new Date().toISOString(), error: null };
             state.demoPresent = Object.values(state.data)
                 .flat()
                 .some((r) => r && r.demo);
             persistCache();
             bus.emit("change", { type: "*", action: "pull", merged });
             bus.emit("sync", state.sync);
+            if (failedCollections.length || queue.length) scheduleRetry();
+            else clearTimeout(retryTimer);
         } catch (err) {
             state.sync = { ...state.sync, status: "offline", error: err.message || "Backend unreachable", pending: queue.length };
             bus.emit("sync", state.sync);
+            scheduleRetry();
         }
     },
 
@@ -393,13 +407,12 @@ export const store = {
                 state.sync.pending = queue.length;
             } catch (err) {
                 failed = true;
-                // Drop operations the backend will never accept (validation) after 3 tries.
+                // Keep failed writes queued. In particular, authentication or
+                // rule errors must never silently discard locally saved work;
+                // once credentials/rules are fixed, a retry can sync it.
                 op.attempts = (op.attempts || 0) + 1;
-                if (op.attempts >= 4 || /validation|invalid|forbidden|unauthor/i.test(err.message || "")) {
-                    console.warn("[store] dropping unsyncable op", op, err);
-                    queue.shift();
-                }
                 state.sync.error = err.message || "Could not save to the backend";
+                console.warn("[store] save remains queued for retry", op, err);
                 break;
             }
         }
@@ -418,9 +431,10 @@ export const store = {
         }
     },
 
-    retry() {
+    async retry() {
         clearTimeout(retryTimer);
-        this.flush();
+        await this.pull();
+        await this.flush();
     },
 
     queueSize() {
@@ -653,6 +667,7 @@ function scheduleRetry() {
     clearTimeout(retryTimer);
     retryTimer = setTimeout(() => {
         if (queue.length) store.flush();
+        else store.pull();
     }, 20000);
     bus.emit("sync", state.sync);
 }
