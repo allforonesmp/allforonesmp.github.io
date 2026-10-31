@@ -41,6 +41,16 @@
             <div class="noscript">Story Plan needs JavaScript enabled to open the archive.</div>
         </noscript>
 
+        <script>
+            // If the module graph is blocked (for example, a missing file or
+            // an unsupported/static-host configuration), don't leave users
+            // staring at the boot animation with an otherwise blank page.
+            window.setTimeout(() => {
+                const boot = document.getElementById("boot");
+                if (!boot || boot.classList.contains("gone")) return;
+                boot.innerHTML = `<div class="boot-fail"><h2>Story Plan didn’t start</h2><p>The app could not finish loading. Check your connection, then reload. If this keeps happening, contact the site administrator.</p><button class="btn primary" onclick="location.reload()">Reload</button></div>`;
+            }, 25000);
+        </script>
         <script type="module" src="./app/main.js"></script>
     </body>
 </html>
