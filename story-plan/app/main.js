@@ -301,7 +301,7 @@ function renderSidebar() {
 function syncStateMeta() {
     const s = state.sync;
     if (state.driverKind === "local") return { icon: "cloudOff", label: "Local only", cls: "warn", title: "Offline local mode — data stays in this browser" };
-    if (s.status === "offline") return { icon: "cloudOff", label: `${s.pending || 0} unsynced`, cls: "err", title: s.error || "Backend unreachable — retrying" };
+    if (s.status === "offline") return { icon: "cloudOff", label: s.pending ? `${s.pending} unsynced` : "Offline", cls: "err", title: s.error || "Backend unreachable — retrying" };
     if (s.status === "syncing") return { icon: "refresh", label: "Saving…", cls: "", title: "Syncing with BreadBackend" };
     if (s.status === "online") return { icon: "cloud", label: "Synced", cls: "ok", title: `Last synced ${s.lastSync ? timeAgo(s.lastSync) : "just now"}` };
     return { icon: "database", label: "Ready", cls: "", title: "Archive ready" };
