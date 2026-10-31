@@ -75,7 +75,7 @@ export function mount(root, ctx) {
                 return hay.toLowerCase().includes(q);
             });
         }
-        list.sort((a, b) => (b.importance || 0) - (a.importance || 0) || a.title.localeCompare(b.title));
+        list.sort((a, b) => (b.importance || 0) - (a.importance || 0) || String(a.title || a.name || "").localeCompare(String(b.title || b.name || "")));
         root.querySelector("[data-sec-count]").textContent = `${list.length} of ${currentRecords().length}`;
         if (!list.length) {
             grid.innerHTML = emptyState({
@@ -148,7 +148,7 @@ function secretCard(s) {
             <span class="row gap-4">${statusPill(s.status)}${canonBadge(s.canon)}</span>
             ${importanceBars(s.importance)}
         </div>
-        <h4>${esc(s.title)}</h4>
+        <h4>${esc(s.title || s.name || "Untitled secret")}</h4>
         <p class="clamp-2">${esc(s.description || "No public-facing description yet.")}</p>
         <div class="secret-knowledge-bar" title="${holders} know, ${suspects} suspect">
             <span style="width:${Math.round((holders / total) * 100)}%" class="skb-known"></span>
@@ -175,7 +175,7 @@ function openSecret(key, refresh, ctx) {
     const relatedMysteries = (s.relatedMysteryIds || []).map((id) => store.get("mysteries", id)).filter(Boolean);
 
     openDrawer({
-        title: s.title,
+        title: s.title || s.name || "Untitled secret",
         subtitle: `Secret · ${(SECRET_STATUS.find((x) => x.value === s.status) || {}).label || s.status}`,
         width: "min(680px, 96vw)",
         body: `<div class="drawer-record">
@@ -257,7 +257,7 @@ function openSecret(key, refresh, ctx) {
 }
 
 function openKnowledgeForm(s, refresh, ctx) {
-    const characters = store.all("characters").sort((a, b) => a.name.localeCompare(b.name));
+    const characters = store.all("characters").sort((a, b) => String(a.name || a.username || "").localeCompare(String(b.name || b.username || "")));
     openModal({
         title: "Record a knowledge change",
         subtitle: "This updates the knowledge matrix and preserves the change in the secret's history.",

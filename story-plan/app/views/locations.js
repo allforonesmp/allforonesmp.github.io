@@ -162,7 +162,7 @@ function mountDirectory(root, ctx) {
         if (dirState.type) list = list.filter((l) => l.type === dirState.type);
         if (dirState.condition) list = list.filter((l) => l.condition === dirState.condition);
         if (q) list = list.filter((l) => `${l.name} ${l.region || ""} ${l.description || ""} ${l.historicalImportance || ""}`.toLowerCase().includes(q));
-        if (dirState.sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
+        if (dirState.sort === "name") list.sort((a, b) => String(a.name || a.title || "").localeCompare(String(b.name || b.title || "")));
         else if (dirState.sort === "events") list.sort((a, b) => eventsAtLocation(b.key).length - eventsAtLocation(a.key).length);
         else list.sort((a, b) => (b.importance || 0) - (a.importance || 0));
         root.querySelector("[data-loc-count]").textContent = `${list.length} of ${store.all("locations").length}`;

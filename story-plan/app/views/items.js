@@ -136,7 +136,7 @@ function mountDirectory(root, ctx) {
         if (dirState.type) list = list.filter((i) => i.type === dirState.type);
         if (dirState.status) list = list.filter((i) => i.status === dirState.status);
         if (q) list = list.filter((i) => `${i.name} ${i.description || ""} ${i.origin || ""} ${i.significance || ""}`.toLowerCase().includes(q));
-        if (dirState.sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
+        if (dirState.sort === "name") list.sort((a, b) => String(a.name || a.title || "").localeCompare(String(b.name || b.title || "")));
         else if (dirState.sort === "recent") list.sort((a, b) => (b.discovered || "").localeCompare(a.discovered || ""));
         else list.sort((a, b) => (b.importance || 0) - (a.importance || 0));
         root.querySelector("[data-item-count]").textContent = `${list.length} of ${store.all("items").length}`;
@@ -169,7 +169,7 @@ function addPreviousOwner(it, ctx) {
     openModal({
         title: "Add a past owner",
         subtitle: "Preserved in the ownership chain alongside the current keeper.",
-        body: `<div class="field"><label>Character</label><select class="input" data-po-char><option value="">Select…</option>${store.all("characters").sort((a, b) => a.name.localeCompare(b.name)).map((c) => `<option value="${esc(c.key)}">${esc(c.name)}</option>`).join("")}</select></div>
+        body: `<div class="field"><label>Character</label><select class="input" data-po-char><option value="">Select…</option>${store.all("characters").sort((a, b) => String(a.name || a.username || "").localeCompare(String(b.name || b.username || ""))).map((c) => `<option value="${esc(c.key)}">${esc(c.name || c.username || "Unnamed character")}</option>`).join("")}</select></div>
                <div class="row gap-8"><div class="field grow"><label>From</label><input class="input" type="date" data-po-from /></div><div class="field grow"><label>To</label><input class="input" type="date" data-po-to /></div></div>
                <div class="field"><label>How it changed hands</label><input class="input" data-po-note placeholder="Gift, theft, duel, inheritance…" /></div>`,
         foot: `<button class="btn ghost" data-cancel>Cancel</button><button class="btn primary" data-save>Add owner</button>`,
@@ -194,7 +194,7 @@ function transferItem(it, ctx) {
     openModal({
         title: "Transfer ownership",
         subtitle: "The current keeper moves into the preserved chain and the new keeper takes over.",
-        body: `<div class="field"><label>New owner</label><select class="input" data-t-owner><option value="">Leave owner unknown / lost</option>${store.all("characters").sort((a, b) => a.name.localeCompare(b.name)).map((c) => `<option value="${esc(c.key)}" ${repo.ownerId === c.key ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></div>
+        body: `<div class="field"><label>New owner</label><select class="input" data-t-owner><option value="">Leave owner unknown / lost</option>${store.all("characters").sort((a, b) => String(a.name || a.username || "").localeCompare(String(b.name || b.username || ""))).map((c) => `<option value="${esc(c.key)}" ${repo.ownerId === c.key ? "selected" : ""}>${esc(c.name || c.username || "Unnamed character")}</option>`).join("")}</select></div>
                <div class="field"><label>Date of transfer</label><input class="input" type="date" data-t-date /></div>
                <div class="field"><label>How it changed hands</label><input class="input" data-t-note placeholder="Stolen in the Redwater vault raid…" /></div>`,
         foot: `<button class="btn ghost" data-cancel>Cancel</button><button class="btn primary" data-save>Transfer</button>`,

@@ -56,7 +56,7 @@ export const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
 export const unique = (arr) => Array.from(new Set(arr.filter((v) => v !== null && v !== undefined && v !== "")));
 
-export const byName = (a, b) => (a.name || "").localeCompare(b.name || "");
+export const byName = (a, b) => String(a?.name || a?.title || a?.username || "").localeCompare(String(b?.name || b?.title || b?.username || ""));
 
 export function sortBy(arr, key, dir = "asc") {
     const mul = dir === "desc" ? -1 : 1;

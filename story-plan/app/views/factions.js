@@ -230,7 +230,7 @@ function mountDirectory(root, ctx) {
         if (dirState.sort === "members") list.sort((a, b) => charactersInFaction(b.key).length - charactersInFaction(a.key).length);
         else if (dirState.sort === "importance") list.sort((a, b) => (b.importance || 0) - (a.importance || 0));
         else if (dirState.sort === "founded") list.sort((a, b) => (a.founded || "9999").localeCompare(b.founded || "9999"));
-        else list.sort((a, b) => a.name.localeCompare(b.name));
+        else list.sort((a, b) => String(a.name || a.title || "").localeCompare(String(b.name || b.title || "")));
         grid.innerHTML = list.length
             ? list.map((f) => factionCard(f)).join("")
             : emptyState({ icon: "factions", title: "No factions found", text: "Create a faction or clear the filters.", action: `<button class="btn sm primary" data-new-faction>${icon("plus")} New faction</button>` });

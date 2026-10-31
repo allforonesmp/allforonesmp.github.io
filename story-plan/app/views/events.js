@@ -41,7 +41,7 @@ export function render(ctx) {
         <div class="toolbar">
             <div class="filter-input">${icon("search")}<input data-ev-search placeholder="Search title, summary, cause, outcome…" value="${esc(state.query)}" /></div>
             <select class="filter-sel" data-ev-category><option value="">All categories</option>${EVENT_CATEGORIES.map((c) => `<option value="${c.value}">${c.label}</option>`).join("")}</select>
-            <select class="filter-sel" data-ev-character><option value="">Any character</option>${store.all("characters").sort((a, b) => a.name.localeCompare(b.name)).map((c) => `<option value="${c.key}">${c.name}</option>`).join("")}</select>
+            <select class="filter-sel" data-ev-character><option value="">Any character</option>${store.all("characters").sort((a, b) => String(a.name || a.username || "").localeCompare(String(b.name || b.username || ""))).map((c) => `<option value="${c.key}">${esc(c.name || c.username || "Unnamed character")}</option>`).join("")}</select>
             <select class="filter-sel" data-ev-faction><option value="">Any faction</option>${store.all("factions").map((f) => `<option value="${f.key}">${f.name}</option>`).join("")}</select>
             <select class="filter-sel" data-ev-storyline><option value="">Any storyline</option>${store.all("storylines").map((s) => `<option value="${s.key}">${s.name}</option>`).join("")}</select>
             <select class="filter-sel" data-ev-canon><option value="">Any canon</option>${CANON.map((c) => `<option value="${c.value}">${c.label}</option>`).join("")}</select>
