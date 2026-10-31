@@ -69,7 +69,7 @@ export function render(ctx) {
                     <option value="">All characters</option>
                     ${store
                         .all("characters")
-                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .sort((a, b) => String(a.name || a.username || "").localeCompare(String(b.name || b.username || "")))
                         .map((c) => `<option value="${esc(c.key)}">${esc(c.name)}</option>`)
                         .join("")}
                 </select>

@@ -221,7 +221,7 @@ export function mysteryCard(m) {
             <span class="status ${esc(m.status)}">${esc(statusLabel)}</span>
             ${importanceBars(m.importance)}
         </div>
-        <h3>${esc(m.title)}</h3>
+        <h3>${esc(m.title || m.name || "Untitled mystery")}</h3>
         <p class="clamp-3">${esc(m.description || "")}</p>
         <div class="mystery-stats">
             <span>${icon("info")} ${(m.clues || []).length} clues</span>
@@ -236,12 +236,12 @@ export function factionCard(f) {
     const members = (f.memberIds || []).map((id) => store.get("characters", id)).filter(Boolean);
     return `<a class="faction-card hoverable" href="#/factions/${esc(f.key)}" data-link style="--fcolor:${esc(f.color || "#d7b878")}">
         <div class="faction-banner">
-            <div class="faction-crest">${f.logoUrl ? `<img src="${esc(safeUrl(f.logoUrl))}" alt="">` : esc(initials(f.name))}</div>
+            <div class="faction-crest">${f.logoUrl ? `<img src="${esc(safeUrl(f.logoUrl))}" alt="">` : esc(initials(f.name || f.title || ""))}</div>
             <div class="faction-banner-fade"></div>
             ${statusPill(f.status, (FACTION_STATUS.find((x) => x.value === f.status) || {}).label)}
         </div>
         <div class="faction-body">
-            <h3>${esc(f.name)}</h3>
+            <h3>${esc(f.name || f.title || "Unnamed faction")}</h3>
             <div class="faction-motto">${esc(f.tagline || "No motto recorded")}</div>
             <div class="faction-meta">
                 <span>${icon("crown")} ${esc(leader ? leader.name : "No leader")}</span>
@@ -261,7 +261,7 @@ export function locationCard(l) {
             <span class="location-type">${esc((LOCATION_TYPES.find((t) => t.value === l.type) || {}).label || l.type)}</span>
         </div>
         <div class="location-body">
-            <h3>${esc(l.name)}</h3>
+            <h3>${esc(l.name || l.title || "Unnamed location")}</h3>
             <div class="mono tiny dim">${esc(l.coords || "Coordinates unknown")}</div>
             <p class="clamp-2">${esc(l.description || "")}</p>
             <div class="row wrap gap-4" style="margin-top:8px">
@@ -277,7 +277,7 @@ export function itemCard(it) {
     return `<a class="item-card hoverable" href="#/items/${esc(it.key)}" data-link>
         <div class="item-glyph">${it.imageUrl ? `<img src="${esc(safeUrl(it.imageUrl))}" alt="">` : icon("items")}</div>
         <div class="item-body">
-            <h3>${esc(it.name)}</h3>
+            <h3>${esc(it.name || it.title || "Unnamed item")}</h3>
             <div class="tiny dim">${esc((it.type || "artefact").replace(/^./, (c) => c.toUpperCase()))}</div>
             <p class="clamp-2">${esc(it.description || "")}</p>
             <div class="row wrap gap-4" style="margin-top:8px">

@@ -151,7 +151,7 @@ export const store = {
         return this.all(type, { includeArchived: true })
             .filter((r) => !r.archived)
             .map((r) => ({ value: r.key, label: r[field] || r.name || r.title || "Untitled" }))
-            .sort((a, b) => a.label.localeCompare(b.label));
+            .sort((a, b) => String(a.label ?? "").localeCompare(String(b.label ?? "")));
     },
 
     count(type, opts) {

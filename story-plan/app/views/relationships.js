@@ -55,7 +55,7 @@ export function render() {
             </select>
             <select class="filter-sel" data-rel-character>
                 <option value="">Any character</option>
-                ${store.all("characters").sort((a, b) => a.name.localeCompare(b.name)).map((c) => `<option value="${c.key}">${c.name}</option>`).join("")}
+                ${store.all("characters").sort((a, b) => String(a.name || a.username || "").localeCompare(String(b.name || b.username || ""))).map((c) => `<option value="${c.key}">${esc(c.name || c.username || "Unnamed character")}</option>`).join("")}
             </select>
             <span class="spacer"></span>
             <span class="result-count" data-rel-count></span>
