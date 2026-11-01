@@ -17,6 +17,8 @@
    so the backend can be swapped by replacing this driver.
    ========================================================================= */
 
+import { SCHEMAS } from "./schema.js";
+
 export const BACKEND = {
     baseUrl: "https://kaidaz18.duckdns.org",
     projectSlug: "allforone-story-plan",
@@ -35,6 +37,7 @@ export function normalizeDoc(doc) {
     out.id = String(remoteId || "");
     if (!out.id) return null;
     delete out.data;
+    expandDottedFields(out);
     for (const key of ["createdAt", "updatedAt"]) {
         const v = out[key];
         if (v && typeof v === "object") {
@@ -43,6 +46,67 @@ export function normalizeDoc(doc) {
         }
     }
     return out;
+}
+
+function expandDottedFields(record) {
+    for (const [path, value] of Object.entries(record)) {
+        if (!path.includes(".")) continue;
+        const parts = path.split(".").filter(Boolean);
+        if (parts.length < 2) continue;
+        let target = record;
+        for (const part of parts.slice(0, -1)) {
+            if (!target[part] || typeof target[part] !== "object" || Array.isArray(target[part])) target[part] = {};
+            target = target[part];
+        }
+        const leaf = parts[parts.length - 1];
+        if (target[leaf] === undefined) target[leaf] = value;
+        delete record[path];
+    }
+}
+
+function arrayValue(value, type) {
+    if (Array.isArray(value)) return value;
+    if (value == null || value === "") return [];
+    if (typeof value === "string") {
+        const text = value.trim();
+        if (!text) return [];
+        try {
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) return parsed;
+        } catch (err) {}
+        if (type === "repeater" || type === "images") return [];
+        return text.split(type === "tags" || type === "refs" ? /\s*,\s*/ : /\r?\n/).map((x) => x.trim()).filter(Boolean);
+    }
+    return typeof value === "object" ? Object.values(value) : [];
+}
+
+function normalizeSchemaFields(collection, record, fields = SCHEMAS[collection]?.flatMap((s) => s.fields) || []) {
+    const getPath = (path) => path.split(".").reduce((value, part) => value?.[part], record);
+    const setPath = (path, value) => {
+        const parts = path.split(".");
+        const leaf = parts.pop();
+        const parent = parts.reduce((node, part) => {
+            if (!node[part] || typeof node[part] !== "object" || Array.isArray(node[part])) node[part] = {};
+            return node[part];
+        }, record);
+        parent[leaf] = value;
+    };
+    for (const field of fields) {
+        const value = getPath(field.key);
+        if (["tags", "list", "refs", "repeater", "images"].includes(field.type)) {
+            const normalized = arrayValue(value, field.type);
+            setPath(field.key, normalized);
+            if (field.type === "repeater" && field.fields) {
+                for (const item of normalized) if (item && typeof item === "object") normalizeSchemaFields(collection, item, field.fields);
+            }
+        }
+    }
+    return record;
+}
+
+function normalizeCollectionDoc(collection, doc) {
+    const record = normalizeDoc(doc);
+    return record ? normalizeSchemaFields(collection, record) : null;
 }
 
 function normalizeList(res) {
@@ -154,19 +218,19 @@ export class RemoteDriver {
     async list(name) {
         const results = await this.col(name).get({ limit: 1000, orderBy: "createdAt", order: "asc" });
         return normalizeList(results)
-            .map(normalizeDoc)
+            .map((doc) => normalizeCollectionDoc(name, doc))
             .filter(Boolean);
     }
 
     async create(name, doc) {
         const res = await this.col(name).create(doc);
-        const normalized = normalizeDoc(res?.doc || res?.data || res);
+        const normalized = normalizeCollectionDoc(name, res?.doc || res);
         return normalized || { ...doc };
     }
 
     async update(name, id, patch) {
         const res = await this.col(name).update(id, patch);
-        return normalizeDoc(res?.doc || res?.data || res) || { id, ...patch };
+        return normalizeCollectionDoc(name, res?.doc || res) || { id, ...patch };
     }
 
     async remove(name, id) {
@@ -183,7 +247,8 @@ export class RemoteDriver {
     subscribe(name, cb) {
         try {
             return this.col(name).subscribe((event) => {
-                cb({ action: event?.action || event?.type || "update", doc: normalizeDoc(event?.doc || event?.data) });
+                const rawDoc = event?.doc || (event?.data?.id || event?.data?._id ? event.data : event);
+                cb({ action: event?.action || event?.type || "update", doc: normalizeCollectionDoc(name, rawDoc) });
             });
         } catch (err) {
             console.warn("[api] subscribe failed", name, err);

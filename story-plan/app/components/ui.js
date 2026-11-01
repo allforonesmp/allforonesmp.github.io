@@ -343,8 +343,8 @@ function selectHtml({ path, value, options, placeholder = "— None —", sm = f
     </select>`;
 }
 
-function textareaHtml({ path, value, rows = 4, placeholder = "" }) {
-    return `<textarea class="textarea" rows="${rows}" data-key="${path}" data-type="textarea" placeholder="${esc(placeholder)}">${esc(value || "")}</textarea>`;
+function textareaHtml({ path, value, rows = 4, placeholder = "", dataType = "textarea" }) {
+    return `<textarea class="textarea" rows="${rows}" data-key="${path}" data-type="${dataType}" placeholder="${esc(placeholder)}">${esc(value || "")}</textarea>`;
 }
 
 function inputHtml({ path, value, type = "text", placeholder = "", full = false }) {
@@ -486,7 +486,7 @@ function renderFieldInner(field, path, value, compact = false) {
             control = attributesHtml({ path, value });
             break;
         case "list":
-            control = textareaHtml({ path, value: Array.isArray(value) ? value.join("\n") : value || "", rows: compact ? 2 : 3, placeholder: "One per line" });
+            control = textareaHtml({ path, value: Array.isArray(value) ? value.join("\n") : value || "", rows: compact ? 2 : 3, placeholder: "One per line", dataType: "list" });
             break;
         case "tags":
             control = `<input class="input ${compact ? "sm" : ""}" data-key="${path}" data-type="tags" value="${esc(Array.isArray(value) ? value.join(", ") : value || "")}" placeholder="${esc(field.placeholder || "Comma separated")}" />`;
@@ -612,6 +612,7 @@ export function openEntityForm({ type, record = null, defaults = {}, onSaved = n
             };
 
             const saveDraft = debounce(() => {
+                if (!store.canWriteOnline()) return;
                 try {
                     localStorage.setItem(draftKey, JSON.stringify({ savedAt: new Date().toISOString(), data: working }));
                 } catch (err) {}
@@ -631,6 +632,7 @@ export function openEntityForm({ type, record = null, defaults = {}, onSaved = n
                 if (key && t.dataset.type) {
                     let value = t.value;
                     if (t.dataset.type === "tags") value = value.split(",").map((s) => s.trim()).filter(Boolean);
+                    else if (t.dataset.type === "list") value = value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
                     else if (t.dataset.type === "number") value = Number(value);
                     else if (t.dataset.type === "bool") value = t.checked;
                     setPath(working, key, value);
