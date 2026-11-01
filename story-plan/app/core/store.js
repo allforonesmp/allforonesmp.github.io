@@ -102,7 +102,7 @@ function loadCache() {
         for (const c of COLLECTIONS) {
             const rows = cached.data[c];
             if (Array.isArray(rows)) {
-                state.data[c] = rows.map((row) => {
+                const normalizedRows = rows.map((row) => {
                     const data = row?.data;
                     if (!data || typeof data !== "object" || Array.isArray(data) || !(data.key || data.name || data.title)) return row;
                     // Migrate entries cached from the old `{ id, data }` API
@@ -114,6 +114,26 @@ function loadCache() {
                     delete normalized.id;
                     return normalized;
                 });
+                const deduped = new Map();
+                for (const row of normalizedRows) {
+                    if (!row?.key) {
+                        deduped.set(Symbol(), row);
+                        continue;
+                    }
+                    const existing = deduped.get(row.key);
+                    if (!existing) deduped.set(row.key, row);
+                    else {
+                        migrated = true;
+                        const rowIsNewer = new Date(row.updatedAt || 0) >= new Date(existing.updatedAt || 0);
+                        deduped.set(row.key, {
+                            ...(rowIsNewer ? existing : row),
+                            ...(rowIsNewer ? row : existing),
+                            key: row.key,
+                            remoteId: (rowIsNewer ? row.remoteId : existing.remoteId) || existing.remoteId || row.remoteId,
+                        });
+                    }
+                }
+                state.data[c] = [...deduped.values()];
             }
         }
         state.demoPresent = Object.values(state.data)
@@ -129,6 +149,18 @@ function persistCache() {
     saveJSON(CACHE_KEY, { savedAt: new Date().toISOString(), data: slim });
 }
 
+function assertOnlineWrites() {
+    if (!driver || driver.kind !== "remote") {
+        throw new Error("Saving is disabled without a connection to the shared archive. Reconnect, then use Resync before saving.");
+    }
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        throw new Error("You appear to be offline. Reconnect to Wi-Fi or mobile data before saving; no changes were stored.");
+    }
+    if (state.sync.status === "offline") {
+        throw new Error(state.sync.error ? `The shared archive is unreachable: ${state.sync.error} Saving is disabled until it reconnects.` : "The shared archive is offline. Resync before saving.");
+    }
+}
+
 loadCache();
 
 /* -------------------------------------------------------------------------
@@ -137,6 +169,12 @@ loadCache();
 export const store = {
     get state() {
         return state;
+    },
+
+    canWriteOnline() {
+        if (!driver || driver.kind !== "remote") return false;
+        if (typeof navigator !== "undefined" && navigator.onLine === false) return false;
+        return state.sync.status !== "offline";
     },
 
     /* ---------------------------------------------------------------- reads */
@@ -175,6 +213,7 @@ export const store = {
 
     /* --------------------------------------------------------------- writes */
     save(type, record, { silent = false, activity } = {}) {
+        assertOnlineWrites();
         if (!COLLECTIONS.includes(type)) throw new Error(`Unknown collection ${type}`);
         const now = new Date().toISOString();
         const exists = record.key ? this.get(type, record.key) : null;
@@ -229,6 +268,7 @@ export const store = {
     },
 
     remove(type, { key, cleanup = true } = {}) {
+        assertOnlineWrites();
         const row = this.get(type, key);
         if (!row) return false;
         state.data[type] = state.data[type].filter((r) => r.key !== key);
@@ -268,6 +308,7 @@ export const store = {
 
     /* ------------------------------------------------------------- activity */
     log({ action, type, key, message }) {
+        assertOnlineWrites();
         const row = {
             key: uid("act"),
             action,
@@ -531,6 +572,7 @@ export const store = {
 
     /* --------------------------------------------------------------- demo */
     async seedDemo(builder) {
+        assertOnlineWrites();
         const dataset = builder();
         const created = [];
         for (const [collection, rows] of Object.entries(dataset)) {
@@ -549,6 +591,7 @@ export const store = {
     },
 
     async removeDemo() {
+        assertOnlineWrites();
         const removed = [];
         for (const collection of COLLECTIONS) {
             const rows = [...(state.data[collection] || [])].filter((r) => r.demo);
@@ -581,6 +624,7 @@ export const store = {
     },
 
     async importData(payload, { mode = "merge" } = {}) {
+        assertOnlineWrites();
         if (!payload || !payload.data) throw new Error("That file does not contain a Story Plan archive.");
         const incoming = payload.data;
         let count = 0;
@@ -623,6 +667,7 @@ export const store = {
     },
 
     async clearAll({ keepDemo = false } = {}) {
+        assertOnlineWrites();
         for (const c of COLLECTIONS) {
             if (c === "access") continue;
             const keep = keepDemo ? (state.data[c] || []).filter((r) => r.demo) : [];
@@ -702,10 +747,24 @@ function mergeRemote(collection, rows) {
                 list.push(incoming);
                 merged++;
             }
-        } else if (!pending) {
+        } else if (pending) {
+            // A create may have reached the server even if its response was
+            // lost. Reattach the remote ID without replacing the newer local
+            // draft so the queued retry updates that document instead of
+            // creating a duplicate.
+            const pendingOp = queue.find((q) => q.type === collection && q.key === key);
+            if (pendingOp?.op === "upsert" && !list[idx].remoteId && incoming.remoteId) {
+                list[idx].remoteId = incoming.remoteId;
+                merged++;
+            }
+        } else {
+            if (!list[idx].remoteId && incoming.remoteId) {
+                list[idx].remoteId = incoming.remoteId;
+                merged++;
+            }
             const localTime = new Date(list[idx].updatedAt || 0).getTime();
             const remoteTime = new Date(incoming.updatedAt || 0).getTime();
-            if (remoteTime >= localTime && JSON.stringify(list[idx]) !== JSON.stringify(incoming)) {
+            if (remoteTime > localTime && JSON.stringify(list[idx]) !== JSON.stringify(incoming)) {
                 list[idx] = { ...list[idx], ...incoming };
                 merged++;
             }
@@ -795,8 +854,12 @@ function purgeReferences(deletedType, deletedKey) {
 
 // Retry when the browser comes back online.
 if (typeof window !== "undefined") {
+    window.addEventListener("offline", () => {
+        state.sync = { ...state.sync, status: "offline", error: "No network connection. Reconnect before saving.", pending: queue.length };
+        bus.emit("sync", state.sync);
+    });
     window.addEventListener("online", () => {
-        if (queue.length) setTimeout(() => store.flush(), 800);
+        setTimeout(() => store.retry(), 800);
     });
     window.addEventListener("storage", (e) => {
         if (e.key === QUEUE_KEY) {

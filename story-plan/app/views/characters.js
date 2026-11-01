@@ -138,7 +138,12 @@ function renderProfile(ctx) {
     const suspects = secretsSuspectedBy(c.key);
     const unaware = secretsUnknownTo(c.key);
     const mysteries = mysteriesInvolving(c.key);
-    const journey = c.journey || [];
+    const journey = Array.isArray(c.journey) ? c.journey : [];
+    const nicknames = Array.isArray(c.nicknames)
+        ? c.nicknames
+        : typeof c.nicknames === "string"
+          ? c.nicknames.split(/[,\r\n]/).map((name) => name.trim()).filter(Boolean)
+          : [];
     const stats = [
         { label: "Events", value: events.length, icon: "events" },
         { label: "Relationships", value: rels.length, icon: "relationships" },
@@ -162,7 +167,7 @@ function renderProfile(ctx) {
                         ${statusPill(c.status)}
                         ${canonBadge(c.canon)}
                         ${importanceBars(c.importance || 0)}
-                        ${(c.nicknames || []).slice(0, 2).map((n) => `<span class="chip gold">“${esc(n)}”</span>`).join("")}
+                        ${nicknames.slice(0, 2).map((n) => `<span class="chip gold">“${esc(n)}”</span>`).join("")}
                     </div>
                     <h2 class="char-name display">${esc(c.name)}</h2>
                     <div class="char-username mono">@${esc(c.username || "unknown")}${c.age ? ` · age ${esc(c.age)}` : ""}${c.occupation ? ` · ${esc(c.occupation)}` : ""}</div>
@@ -262,10 +267,23 @@ function overviewPanel(c) {
     const s = c.strengths || {};
     const w = c.weaknesses || {};
     const m = c.motivations || {};
-    const pList = (title, items, cls = "") =>
-        items && items.length
-            ? `<div class="trait-block ${cls}"><div class="trait-title">${esc(title)}</div><ul class="dot-list">${items.map((i) => `<li>${icon("chevronRight")}<span>${esc(i)}</span></li>`).join("")}</ul></div>`
+    const pList = (title, items, cls = "") => {
+        let list = Array.isArray(items) ? items : [];
+        if (typeof items === "string" && items.trim()) {
+            try {
+                const parsed = JSON.parse(items);
+                list = Array.isArray(parsed) ? parsed : items.split(/[,\r\n]+/);
+            } catch (err) {
+                list = items.split(/[,\r\n]+/);
+            }
+        } else if (items && typeof items === "object") {
+            list = Object.values(items);
+        }
+        list = list.map((value) => String(value ?? "").trim()).filter(Boolean);
+        return list.length
+            ? `<div class="trait-block ${cls}"><div class="trait-title">${esc(title)}</div><ul class="dot-list">${list.map((i) => `<li>${icon("chevronRight")}<span>${esc(i)}</span></li>`).join("")}</ul></div>`
             : "";
+    };
     return `<div class="profile-sections">
         <section class="panel">
             <div class="panel-head"><h3>${icon("user")} Character overview</h3></div>
