@@ -557,12 +557,28 @@ export const store = {
         bus.emit("sync", state.sync);
 
         let failed = false;
-        while (queue.length) {
+        let needsReconcile = false;
+        let lastError = null;
+        let lastStatus = 0;
+        // One bad record used to `break` the loop and leave EVERY later change
+        // stuck as "queued". Try each op at most once per pass instead.
+        const passSize = queue.length;
+        let attempted = 0;
+
+        while (queue.length && attempted < passSize) {
             const op = queue[0];
             const local = this.get(op.type, op.key);
+            attempted++;
             try {
                 if (op.op === "delete") {
-                    if (local?.remoteId || op.remoteId) await driver.remove(op.type, local?.remoteId || op.remoteId);
+                    if (local?.remoteId || op.remoteId) {
+                        try {
+                            await driver.remove(op.type, local?.remoteId || op.remoteId);
+                        } catch (err) {
+                            if (!isNotFound(err)) throw err;
+                            // Already gone in the cloud — nothing left to do.
+                        }
+                    }
                 } else {
                     if (!local) {
                         queue.shift();
@@ -570,7 +586,21 @@ export const store = {
                     }
                     const payload = payloadFor(local);
                     if (local.remoteId) {
-                        await driver.update(op.type, local.remoteId, payload);
+                        try {
+                            await driver.update(op.type, local.remoteId, payload);
+                        } catch (err) {
+                            if (!isNotFound(err)) throw err;
+                            // Stale remoteId: the cloud document was removed.
+                            // Recreate it instead of blocking the whole queue.
+                            delete local.remoteId;
+                            const created = await driver.create(op.type, payload);
+                            if (created?.id) {
+                                local.remoteId = created.id;
+                                persistCache();
+                            } else {
+                                needsReconcile = true;
+                            }
+                        }
                     } else {
                         const created = await driver.create(op.type, payload);
                         if (created?.id) {
@@ -579,6 +609,11 @@ export const store = {
                                 target.remoteId = created.id;
                                 persistCache();
                             }
+                        } else {
+                            // Create succeeded but the backend did not return
+                            // its id. Don't retry it (that duplicates the doc);
+                            // a pull matches by `key` and attaches remoteId.
+                            needsReconcile = true;
                         }
                     }
                 }
@@ -586,13 +621,19 @@ export const store = {
                 state.sync.pending = queue.length;
             } catch (err) {
                 failed = true;
-                // Keep failed writes queued. In particular, authentication or
-                // rule errors must never silently discard locally saved work;
-                // once credentials/rules are fixed, a retry can sync it.
                 op.attempts = (op.attempts || 0) + 1;
-                state.sync.writeError = err.message || "Could not save to the cloud";
+                lastError = describeWriteError(err);
+                lastStatus = errorStatusOf(err);
+                state.sync.writeError = lastError;
                 console.warn("[store] save remains queued for retry", op, err);
-                break;
+                // Auth / rules denials affect every write; stop this pass
+                // instead of firing the remaining requests pointlessly.
+                if (lastStatus === 401 || lastStatus === 403) break;
+                // Any other single-record failure must not block the rest of
+                // the queue: rotate it to the back and carry on.
+                queue.shift();
+                queue.push(op);
+                state.sync.pending = queue.length;
             }
         }
         saveJSON(QUEUE_KEY, queue);
@@ -600,13 +641,18 @@ export const store = {
         setSync({
             status: summarizeSync(),
             writeStatus: failed ? "failed" : "ok",
-            writeError: failed ? state.sync.writeError : null,
+            writeError: failed ? lastError : null,
             lastWrite: failed ? state.sync.lastWrite : new Date().toISOString(),
             lastSync: failed ? state.sync.lastSync : new Date().toISOString(),
-            error: failed ? state.sync.writeError : state.sync.readError,
+            error: failed ? lastError : state.sync.readError,
         });
         bus.emit("sync", state.sync);
-        if (failed) scheduleRetry();
+        if (failed) {
+            bus.emit("sync-write-error", { message: lastError, status: lastStatus, pending: queue.length });
+            scheduleRetry();
+        } else if (needsReconcile) {
+            this.pull();
+        }
     },
 
     async retry() {
@@ -837,6 +883,34 @@ function payloadFor(record) {
     const out = { ...record, key: record.key };
     delete out.remoteId;
     return out;
+}
+
+function errorStatusOf(err) {
+    return Number(err?.status || err?.statusCode || err?.response?.status || 0) || 0;
+}
+
+function isNotFound(err) {
+    if (errorStatusOf(err) === 404) return true;
+    return /not found|does not exist|no (such )?document|missing document/i.test(
+        String(err?.message || err?.error || ""),
+    );
+}
+
+/** Turn the SDK's thrown object ({ status, error }) into something a writer
+ *  can actually act on. The generic "Could not save" hid 401/403/CORS. */
+function describeWriteError(err) {
+    const status = errorStatusOf(err);
+    const raw = String(err?.message || err?.error || err?.detail || err?.code || "");
+    if (status === 401) return "Your cloud session expired. Sign in again to send queued changes (401).";
+    if (status === 403) return "The cloud refused this write — check the project's Rules in the BreadBackend dashboard (403).";
+    if (status === 404) return "The cloud document could not be found (404).";
+    const networkish =
+        !status &&
+        (err?.name === "TypeError" ||
+            /failed to fetch|fetch failed|load failed|network|cors|offline|timed out|timeout/i.test(raw));
+    if (networkish) return "The cloud did not answer this write (network or CORS block). Changes stay queued (network).";
+    if (status) return `The cloud rejected this write (HTTP ${status})${raw ? `: ${raw}` : ""}.`;
+    return raw || "Could not save to the cloud.";
 }
 
 function enqueue(op) {
