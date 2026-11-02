@@ -29,7 +29,7 @@
 .inline-warn svg { width: 14px; height: 14px; flex: 0 0 auto; }
 .status-inline { text-transform: capitalize; }
 .status-inline.online, .status-inline.synced { color: #93dcae; }
-.status-inline.offline, .status-inline.local { color: #ecc286; }
+.status-inline.offline, .status-inline.local, .status-inline.partial, .status-inline.failed, .status-inline.unknown { color: #ecc286; }
 .status-inline.syncing { color: var(--blue); }
 .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; vertical-align: middle; border: 1px solid rgba(255, 255, 255, 0.14); }
 .cat-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }

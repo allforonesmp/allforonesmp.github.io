@@ -15,7 +15,10 @@
             rel="stylesheet" />
         <link rel="stylesheet" href="./assets/theme.css" />
         <link rel="stylesheet" href="./assets/views.css" />
-        <script src="https://kaidaz18.duckdns.org/sdk/bread-client.js" defer></script>
+        <!-- The archive is on a different host from this static site. Safari
+             content blockers / ITP can block this script; flag it so boot can
+             fail fast and offer offline mode instead of waiting 20 seconds. -->
+        <script src="https://kaidaz18.duckdns.org/sdk/bread-client.js" defer onerror="window.__afoSdkFailed = true"></script>
     </head>
     <body>
         <div id="boot" class="boot">
@@ -49,7 +52,7 @@
                 const boot = document.getElementById("boot");
                 if (!boot || boot.classList.contains("gone")) return;
                 boot.innerHTML = `<div class="boot-fail"><h2>Story Plan didn’t start</h2><p>The app could not finish loading. Check your connection, then reload. If this keeps happening, contact the site administrator.</p><button class="btn primary" onclick="location.reload()">Reload</button></div>`;
-            }, 25000);
+            }, 40000);
         </script>
         <script type="module" src="./app/main.js"></script>
     </body>

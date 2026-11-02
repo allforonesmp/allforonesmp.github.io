@@ -44,10 +44,17 @@ export function render() {
                     <div class="meta-list" style="margin-top:12px">
                         <div><span>Project</span><b class="mono">allforone-story-plan</b></div>
                         <div><span>Sync</span><b class="status-inline ${esc(sync.status || "idle")}">${esc(sync.status || "idle")}${sync.pending ? ` · ${sync.pending} queued` : ""}</b></div>
+                        <div><span>Reading data</span><b class="status-inline ${esc(sync.readStatus || "unknown")}">${esc(sync.readStatus || "unknown")}</b></div>
+                        <div><span>Saving changes</span><b class="status-inline ${esc(sync.writeStatus || "unknown")}">${esc(sync.writeStatus || "unknown")}${sync.pending ? ` · ${sync.pending} queued` : ""}</b></div>
+                        <div><span>Live updates</span><b>${sync.realtime === false ? "Polling only" : "Connected"}</b></div>
+                        <div><span>Last pulled</span><b>${esc(sync.lastPull ? fmtDate(sync.lastPull) : "never")}</b></div>
                         <div><span>Last synced</span><b>${esc(sync.lastSync ? fmtDate(sync.lastSync) : "never")}</b></div>
                         <div><span>Records</span><b>${total}</b></div>
                     </div>
-                    ${sync.error ? `<div class="inline-warn">${icon("alert")} ${esc(sync.error)} <button class="btn xs" data-retry>Retry</button></div>` : ""}
+                    ${sync.failedCollections?.length ? `<div class="inline-warn">${icon("info")} Could not load: ${esc(sync.failedCollections.join(", "))}. Other collections are up to date.</div>` : ""}
+                    ${sync.truncatedCollections?.length ? `<div class="inline-warn">${icon("info")} Only part of ${esc(sync.truncatedCollections.join(", "))} could be paged. Those collections were not reconciled against this device.</div>` : ""}
+                    ${sync.writeError ? `<div class="inline-warn">${icon("alert")} ${esc(sync.writeError)} — ${esc(sync.pending || 0)} change(s) are saved on this device and will retry.</div>` : ""}
+                    ${sync.error && !sync.writeError ? `<div class="inline-warn">${icon("alert")} ${esc(sync.error)} <button class="btn xs" data-retry>Retry</button></div>` : ""}
                     <div class="row gap-6" style="margin-top:14px">
                         <button class="btn sm" data-retry>${icon("refresh")} Sync now</button>
                         <button class="btn sm ghost" data-signout>${icon("logout")} Sign out</button>
@@ -150,10 +157,14 @@ export function mount(root, ctx) {
     root.querySelector("[data-signout]")?.addEventListener("click", () =>
         confirmDialog({
             title: "Sign out?",
-            message: "Your local cache stays on this device, but you will need your email and password to return.",
+            message: "Your cached archive, queued changes and saved drafts will be removed from this device. Anything already in the cloud stays there.",
+            detail: store.state.sync.pending ? `You have ${store.state.sync.pending} unsynced change(s). Sync before signing out or they will be lost.` : "",
             confirmLabel: "Sign out",
             danger: false,
-            onConfirm: () => store.signOut(),
+            onConfirm: async () => {
+                await store.signOut();
+                location.reload();
+            },
         }),
     );
 

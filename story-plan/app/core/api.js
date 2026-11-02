@@ -25,7 +25,16 @@ export const BACKEND = {
     apiKey: "pk_live_WSjs9Lo5AzuzTyfAzP9vUZPE",
 };
 
-const SDK_TIMEOUT_MS = 15000;
+// iOS Safari can take a while to fetch a cross-origin SDK on a cold mobile
+// connection. Give it longer, but fail fast when the <script> itself errors
+// (content blockers / ITP / DNS) instead of leaving the boot spinner up.
+const SDK_TIMEOUT_MS = 20000;
+
+function isNetworkFailure(err, message = "") {
+    if (err?.status === 0 || err?.statusCode === 0) return true;
+    if (err?.name === "TypeError" || err?.code === "ECONNABORTED") return true;
+    return /failed to fetch|fetch failed|network|load failed|timed out|timeout|cors|offline|dns|could not connect/i.test(String(message || ""));
+}
 
 export function normalizeDoc(doc) {
     if (!doc || typeof doc !== "object") return null;
@@ -129,12 +138,14 @@ function waitForSdk(timeout = SDK_TIMEOUT_MS) {
     return new Promise((resolve) => {
         if (typeof window === "undefined") return resolve(null);
         if (window.BreadClient) return resolve(window.BreadClient);
+        // index.html sets this flag from the SDK <script> onerror handler.
+        if (window.__afoSdkFailed) return resolve(null);
         const started = Date.now();
         const timer = setInterval(() => {
             if (window.BreadClient) {
                 clearInterval(timer);
                 resolve(window.BreadClient);
-            } else if (Date.now() - started > timeout) {
+            } else if (window.__afoSdkFailed || Date.now() - started > timeout) {
                 clearInterval(timer);
                 resolve(null);
             }
@@ -149,6 +160,16 @@ export class RemoteDriver {
         this.sdkAvailable = false;
         this._collections = new Map();
         this.ready = false;
+        // `reachable` is about the backend host, not about being signed in.
+        // `me()` updates it so the shell can tell "logged out" apart from
+        // "cloud unreachable" — the two look identical when a cookie is
+        // blocked on iOS Safari.
+        this.reachable = null;
+        this.lastMeError = null;
+        this.realtimeFailed = false;
+        // Collections whose results had to be cut short. The store must not
+        // treat a truncated list as the full truth and delete local copies.
+        this.listTruncated = new Set();
     }
 
     async init() {
@@ -174,11 +195,21 @@ export class RemoteDriver {
         return this._collections.get(name);
     }
 
-    async login(email, password) {
+    async login(email, password, { remember = true } = {}) {
         if (!this.client) throw new Error("Backend not initialised");
         try {
-            const res = await this.client.auth.login(String(email).trim().toLowerCase(), password);
-            return res?.user || (await this.me())?.user || { email };
+            await this.client.auth.login(String(email).trim().toLowerCase(), password, { remember });
+            // Never fabricate a user from the typed email address. If the
+            // session cannot be read back, the app would otherwise continue
+            // with a half-authenticated user, pull whatever collections the
+            // backend allows, and show "offline" while data trickles in.
+            const verified = await this.me();
+            if (!verified?.user) {
+                throw new Error(
+                    "Signed in, but this browser could not keep the session. On iPhone or iPad, allow cross-site tracking for this site (or disable content blockers) and try again.",
+                );
+            }
+            return verified.user;
         } catch (err) {
             throw new Error(errorMessage(err, "Those credentials were not accepted."));
         }
@@ -197,8 +228,16 @@ export class RemoteDriver {
         if (!this.client) return null;
         try {
             const res = await this.client.auth.me();
+            this.reachable = true;
+            this.lastMeError = null;
             return res?.user ? res : null;
         } catch (err) {
+            const message = errorMessage(err, "");
+            this.lastMeError = message;
+            // A 401/403 still proves the backend answered; a fetch failure
+            // means the device cannot reach it at all.
+            this.reachable = !isNetworkFailure(err, message);
+            if (!this.reachable) console.warn("[api] backend unreachable during session check", message);
             return null;
         }
     }
@@ -216,16 +255,66 @@ export class RemoteDriver {
     }
 
     async list(name) {
-        const results = await this.col(name).get({ limit: 1000, orderBy: "createdAt", order: "asc" });
-        return normalizeList(results)
-            .map((doc) => normalizeCollectionDoc(name, doc))
-            .filter(Boolean);
+        // Two cross-device traps in the old single request:
+        //   • `limit: 1000` silently truncated larger collections, so devices
+        //     could legitimately see different subsets of the archive.
+        //   • `orderBy: "createdAt"` makes Firestore-style backends omit any
+        //     document that has no createdAt field.
+        // Page through with an offset where the SDK supports it, and sort
+        // locally instead. If offset is ignored, stop rather than looping.
+        const PAGE = 500;
+        const MAX_PAGES = 20;
+        const out = [];
+        const seen = new Set();
+        let complete = false;
+        let truncated = false;
+        this.listTruncated.delete(name);
+        for (let page = 0; page < MAX_PAGES; page++) {
+            const opts = { limit: PAGE };
+            if (page) opts.offset = page * PAGE;
+            const res = await this.col(name).get(opts);
+            const docs = normalizeList(res);
+            let added = 0;
+            for (const raw of docs) {
+                const record = normalizeCollectionDoc(name, raw);
+                if (!record) continue;
+                const marker = String(record.id || record.key || "");
+                if (marker && seen.has(marker)) continue;
+                if (marker) seen.add(marker);
+                out.push(record);
+                added++;
+            }
+            const total =
+                typeof res?.total === "number"
+                    ? res.total
+                    : typeof res?.pagination?.total === "number"
+                      ? res.pagination.total
+                      : null;
+            if (docs.length < PAGE || (total !== null && out.length >= total) || res?.hasMore === false) {
+                complete = true;
+                break;
+            }
+            if (!added) {
+                truncated = true;
+                break;
+            }
+        }
+        if (!complete) truncated = true;
+        if (truncated) {
+            this.listTruncated.add(name);
+            console.warn(`[api] ${name} could not be fully paged; treating the result as partial.`);
+        }
+        out.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+        return out;
     }
 
     async create(name, doc) {
         const res = await this.col(name).create(doc);
         const normalized = normalizeCollectionDoc(name, res?.doc || res);
-        return normalized || { ...doc };
+        // Without a remote id the queued write would be retried as another
+        // create and produce duplicate records on every other device.
+        if (!normalized?.id) throw new Error("The cloud accepted the record but did not return its ID. Retrying.");
+        return normalized;
     }
 
     async update(name, id, patch) {
@@ -248,9 +337,16 @@ export class RemoteDriver {
         try {
             return this.col(name).subscribe((event) => {
                 const rawDoc = event?.doc || (event?.data?.id || event?.data?._id ? event.data : event);
-                cb({ action: event?.action || event?.type || "update", doc: normalizeCollectionDoc(name, rawDoc) });
+                cb({
+                    action: String(event?.action || event?.type || "update").toLowerCase(),
+                    doc: normalizeCollectionDoc(name, rawDoc),
+                    raw: rawDoc,
+                });
             });
         } catch (err) {
+            // Realtime sockets are commonly dropped/blocked on iOS. Record it
+            // so the store knows it cannot rely on subscriptions alone.
+            this.realtimeFailed = true;
             console.warn("[api] subscribe failed", name, err);
             return () => {};
         }
