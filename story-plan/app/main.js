@@ -85,6 +85,7 @@ let syncBound = false;
 let reconnectWatchStarted = false;
 let lastReconnectAttempt = 0;
 let reconnecting = false;
+let lastWriteErrorToast = "";
 
 /* -------------------------------------------------------------------------
    Boot
@@ -290,16 +291,43 @@ function startApp({ offline = false } = {}) {
     app.classList.toggle("collapsed", Boolean(store.prefs().sidebarCollapsed));
     renderSidebar();
     renderTopbar();
+    if (!document.getElementById("sync-warning")) {
+        const host = document.createElement("div");
+        host.id = "sync-warning";
+        host.hidden = true;
+        document.getElementById("topbar")?.after(host);
+        host.addEventListener("click", (e) => {
+            if (e.target.closest("[data-sync-retry]")) {
+                toast("Retrying sync…", "info", { timeout: 1800 });
+                store.retry();
+            } else if (e.target.closest("[data-sync-signin]")) {
+                openReauth();
+            } else if (e.target.closest("[data-sync-details]")) {
+                const chip = document.querySelector("[data-sync-chip]");
+                if (chip) openSyncPanel(chip);
+            }
+        });
+    }
     bindShell();
     if (!syncBound) {
         bus.on("change", debounce(() => {
             renderSidebar();
             updateSyncChip();
         }, 180));
-        bus.on("sync", updateSyncChip);
+        bus.on("sync", () => {
+            updateSyncChip();
+            updateSyncWarning();
+            if (!state.sync.writeError) lastWriteErrorToast = "";
+        });
+        bus.on("sync-write-error", ({ message, pending }) => {
+            if (!message || message === lastWriteErrorToast) return;
+            lastWriteErrorToast = message;
+            toast(`${message} ${pending} change(s) are safe on this device.`, "error", { timeout: 8000 });
+        });
         bus.on("storage-error", () => toast("Local storage is full. Export a backup and remove large images.", "error", { timeout: 7000 }));
         syncBound = true;
     }
+    updateSyncWarning();
     if (offline) {
         // Put the banner outside #view so router replacement doesn't remove it.
         const topbar = document.getElementById("topbar");
@@ -460,6 +488,60 @@ function updateSyncChip() {
     btn.title = meta.title;
     btn.setAttribute("aria-label", meta.title);
     btn.innerHTML = `${icon(meta.icon)}<span class="sync-label hide-sm">${esc(meta.label)}</span>`;
+}
+
+/* A persistent, readable failure banner. On iPhone the chip's text label is
+   hidden, so "queued" was the only clue and the underlying 401/403/network
+   error was invisible unless you knew to tap the icon. */
+function updateSyncWarning() {
+    const host = document.getElementById("sync-warning");
+    if (!host) return;
+    const s = state.sync;
+    const show =
+        state.driverKind !== "local" &&
+        s.pending > 0 &&
+        (Boolean(s.writeError) || s.readStatus === "failed");
+    if (!show) {
+        host.hidden = true;
+        host.innerHTML = "";
+        return;
+    }
+    const message = s.writeError || s.readError || "The cloud has not accepted these changes yet.";
+    const needsSignIn = /401|session expired/i.test(message);
+    host.hidden = false;
+    host.innerHTML = `
+        <div class="banner err" style="margin:14px 22px 0">
+            <span>${icon("alert")}</span>
+            <div><b>${s.pending} change(s) are saved on this device but not reaching the cloud.</b>
+                <div class="tiny" style="margin-top:5px;opacity:.85">${esc(message)}</div>
+            </div>
+            <div class="b-actions">
+                <button class="btn sm" data-sync-retry>${icon("refresh")} Retry</button>
+                ${needsSignIn ? `<button class="btn sm ghost" data-sync-signin>${icon("lock")} Sign in again</button>` : ""}
+                <button class="btn sm ghost" data-sync-details>Details</button>
+            </div>
+        </div>`;
+}
+
+/* Re-authenticate WITHOUT clearing the local cache or the queued changes.
+   A normal sign-out would delete exactly the edits we are trying to rescue. */
+function openReauth() {
+    if (document.getElementById("afo-reauth")) return;
+    const host = document.createElement("div");
+    host.id = "afo-reauth";
+    host.className = "auth-root";
+    document.body.appendChild(host);
+    renderAuth(host, {
+        notice: "Your cloud session expired. Sign in again — the changes on this device are safe and will be sent afterwards.",
+        onLogin: async (email, password, opts = {}) => {
+            const user = await driver.login(email, password, opts);
+            state.user = user;
+            localStorage.setItem("afo_sp_verified_session", JSON.stringify({ email: user?.email, at: Date.now() }));
+            host.remove();
+            toast("Signed in again — sending queued changes…", "success", { timeout: 3000 });
+            await store.retry();
+        },
+    });
 }
 
 /* On a phone the label is hidden by CSS, so the icon alone has to be

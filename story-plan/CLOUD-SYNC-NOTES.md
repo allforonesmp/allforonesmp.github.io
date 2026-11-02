@@ -12,6 +12,68 @@ other 12 collections were merged and realtime events kept arriving. The chip als
 had no `.ok/.warn/.err` CSS and hid its text label on small screens, so on an
 iPhone the only visible clue was a bare icon with a slash.
 
+## Follow-up: "everything just says queued" (Chrome on iPhone, also Safari)
+
+`queued` means the edit was saved in this browser's `localStorage` but the
+`POST`/`PATCH` to BreadBackend has not been accepted yet. Chrome and Safari on
+iOS have **separate** `localStorage`, so a queue in Chrome is not visible to
+Safari; the reason Safari also shows nothing is that those writes never reached
+the shared archive.
+
+Digging into the real `bread-client.js` and the published AFO Backend guide
+showed several ways a write can fail while reads keep working:
+
+- **Create response envelopes.** The backend has returned documents wrapped in
+  `{ document }`, `{ record }`, `{ data }` or `{ doc }`. The previous
+  `create()` only looked at `res.doc` and then **threw** when no id was found —
+  that stuck the first queued op forever, and `flush()` broke on the first
+  failure, so every later change stayed "queued" too.
+- **Expired bearer token.** The SDK stores `bread_auth_<slug>` in localStorage
+  but never refreshes it. A 401 makes every POST/PATCH fail while GETs with the
+  public `x-api-key` still work.
+- **Access rules / CORS.** The backend guide states writes require a bearer
+  token and that a denied request usually means the project's **Rules** need
+  adjusting; CORS must allow the site origin plus `PATCH`/`POST` and the
+  `Authorization` / `x-api-key` headers. A 403 or a fetch/CORS TypeError would
+  produce exactly this symptom.
+- **Stale `remoteId`.** A cached id for a document that was deleted remotely
+  makes `PATCH` return 404, which also blocked the queue.
+
+`/api/health` on the backend returned `{"ok":true}`, so the server itself was
+up when this was investigated. The client cannot tell whether a 403 (rules),
+401 (session) or CORS block is the cause without seeing the error — the app now
+shows it.
+
+### What changed in this follow-up
+
+- `normalizeDoc()` / `normalizeList()` unwrap all known single-document
+  envelopes; `create()` recovers an id by looking the record up by its `key`,
+  and no longer throws (which was creating infinite retries and duplicates).
+- All SDK calls go through `_withRefresh()`: a 401 triggers `auth.refresh()`
+  and one retry. `me()` accepts the profile directly, under `user` or `data`.
+- `flush()` no longer stops at the first failure: a single bad record is
+  rotated to the back so the rest of the queue still syncs. Auth/rules failures
+  (401/403) still short-circuit because they affect every write.
+- 404 on `PATCH` recreates the document; 404 on `DELETE` is treated as done.
+- Errors are translated into plain language (401 → "sign in again", 403 →
+  "check project Rules", network → "network/CORS block") and surfaced as a
+  **persistent banner** plus a toast, not just a hidden chip label.
+- A **Sign in again** action re-authenticates without clearing the local cache
+  or queue, then immediately retries the sync.
+- 6 more regression checks (`npm test` now runs 15).
+
+### On the phone
+
+1. Tap the cloud chip → **Details** (or read the red banner) to see the exact
+   error, failed collections and last successful sync.
+2. `401 / session expired` → tap **Sign in again** in the banner. Your queued
+   edits stay on the device and are sent afterwards.
+3. `403 / Rules` → the archive owner must allow writes for these collections in
+   the BreadBackend dashboard (default rules are `allow: "never"`).
+4. `network / CORS` → the backend must allow `https://allforonesmp.github.io`
+   with `POST`, `PATCH`, `DELETE` and the `Authorization`, `x-api-key`,
+   `Content-Type` headers. This cannot be fixed from GitHub Pages alone.
+
 ## Issues found
 
 1. **Reads and writes shared a single "offline" flag.** A partial read failure
@@ -94,11 +156,20 @@ last pull, last sync, realtime status, SDK status and session error.
 
 These cannot be fully solved from a static GitHub Pages client:
 
+- **CORS and project Rules (most likely cause of stuck writes).** The backend
+  must allow origin `https://allforonesmp.github.io` for `POST`, `PATCH` and
+  `DELETE` (plus the `OPTIONS` preflight) and the `Authorization`,
+  `x-api-key`, `Content-Type` headers. Its Rules editor defaults to
+  `read/write: allow "never"`, so every collection the app writes to
+  (`characters`, `events`, `activity`, `access`, …) needs an explicit allow
+  rule. A 403 here is invisible to the client beyond the error text.
 - **Cross-site sessions on iOS.** The archive lives at
   `kaidaz18.duckdns.org` while the site is on `allforonesmp.github.io`. Safari's
   ITP blocks third-party cookies by default. Prefer a token-based session stored
   in first-party storage, or serve the backend under the same site (a custom
-  domain / proxy) so the session is first-party.
+  domain / proxy) so the session is first-party. The SDK does store its bearer
+  token in localStorage, but it never refreshes it; the client now calls
+  `auth.refresh()` on a 401.
 - **Server timestamps / revisions.** Have the backend assign `updatedAt` (or a
   version/ETag) and reject stale updates; otherwise device clock skew and
   last-writer-wins can still clobber edits between devices.

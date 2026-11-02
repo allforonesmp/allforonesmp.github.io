@@ -23,6 +23,7 @@ globalThis.localStorage = {
 // at module load time.
 const { store, state, clearLocalData } = await import("../app/core/store.js");
 const { LocalDriver, RemoteDriver } = await import("../app/core/api.js");
+const { bus } = await import("../app/core/util.js");
 
 const user = { email: "writer@example.com" };
 const T0 = "2026-01-01T00:00:00.000Z";
@@ -205,6 +206,132 @@ const log = (name) => console.log("  ok -", name);
     assert.equal(state.sync.readStatus, "partial");
     assert.ok(state.sync.truncatedCollections.includes("characters"));
     log("truncated reads are merged but never reconciled");
+}
+
+/* 10. create() wrapped in { document: ... } must not leave the queue stuck. */
+{
+    const rows = [];
+    const rd = new RemoteDriver();
+    rd.client = {
+        auth: { refresh: async () => ({ token: "t" }) },
+        collection: () => ({
+            create: async (data) => {
+                rows.push({ id: "srv_1", data });
+                return { document: { id: "srv_1", data: { ...data } } };
+            },
+            get: async () => ({ documents: rows }),
+        }),
+    };
+    const created = await rd.create("characters", { key: "wrapped_1", name: "Wrapped" });
+    assert.equal(created.id, "srv_1");
+    assert.equal(created.key, "wrapped_1");
+    log("create response wrapped in { document } attaches the remote id");
+}
+
+/* 11. A create with no id is recovered by looking the record up by key. */
+{
+    const rows = [];
+    const rd = new RemoteDriver();
+    rd.client = {
+        auth: { refresh: async () => ({ token: "t" }) },
+        collection: () => ({
+            create: async (data) => {
+                rows.push({ id: "srv_77", data });
+                return { ok: true };
+            },
+            get: async () => ({ documents: rows }),
+        }),
+    };
+    const created = await rd.create("characters", { key: "k77", name: "No id returned" });
+    assert.equal(created.id, "srv_77");
+    log("create with no id is recovered from a list lookup");
+}
+
+/* 12. One failing write must not block all the other queued changes. */
+{
+    const d = new FakeDriver();
+    const origCreate = d.create.bind(d);
+    d.create = async (name, doc) => {
+        if (doc.key === "bad") {
+            const err = new Error("boom");
+            err.status = 500;
+            throw err;
+        }
+        return origCreate(name, doc);
+    };
+    await reset(d);
+    store.save("characters", { key: "bad", name: "Bad" });
+    store.save("characters", { key: "good", name: "Good" });
+    await store.flush();
+    assert.ok(d.rows.characters.some((r) => r.key === "good"), "later write still synced");
+    assert.equal(state.sync.pending, 1, "only the failing op remains queued");
+    assert.match(state.sync.writeError, /HTTP 500/);
+    log("a single failing write no longer blocks the whole queue");
+}
+
+/* 13. Auth failures are reported in plain language and emitted to the UI. */
+{
+    const d = new FakeDriver();
+    d.create = async () => {
+        const err = { status: 401, error: "unauthorized" };
+        throw err;
+    };
+    let event = null;
+    const off = bus.on("sync-write-error", (e) => { event = e; });
+    await reset(d);
+    store.save("characters", { key: "auth_1", name: "Auth" });
+    await store.flush();
+    off();
+    assert.match(state.sync.writeError, /session expired/i);
+    assert.match(event?.message || "", /session expired/i);
+    assert.ok(state.sync.pending > 0, "failed writes stay queued");
+    log("401 write failures produce an actionable error instead of silence");
+}
+
+/* 14. A stale remoteId (404 on PATCH) is recreated instead of blocking. */
+{
+    const d = new FakeDriver();
+    d.rows.characters = [{ id: "docA", key: "char_a", name: "Alpha", updatedAt: T0 }];
+    const origUpdate = d.update.bind(d);
+    d.update = async (name, id, patch) => {
+        if (!(d.rows[name] || []).some((r) => r.id === id)) {
+            const err = new Error("not found");
+            err.status = 404;
+            throw err;
+        }
+        return origUpdate(name, id, patch);
+    };
+    await reset(d);
+    d.rows.characters = [];
+    store.save("characters", { ...store.get("characters", "char_a"), name: "Alpha II" });
+    await store.flush();
+    assert.ok(d.rows.characters.some((r) => r.key === "char_a" && r.name === "Alpha II"));
+    assert.equal(state.sync.pending, 0);
+    log("stale remote ids are recreated on a 404");
+}
+
+/* 15. /auth/me shapes and token refresh. */
+{
+    const rd = new RemoteDriver();
+    let calls = 0;
+    let refreshed = 0;
+    rd.client = {
+        auth: {
+            me: async () => {
+                calls++;
+                if (calls === 1) {
+                    const err = { status: 401, error: "expired" };
+                    throw err;
+                }
+                return { id: "u1", email: user.email };
+            },
+            refresh: async () => { refreshed++; return { token: "new" }; },
+        },
+    };
+    const session = await rd.me();
+    assert.equal(session?.user?.email, user.email, "direct user object accepted");
+    assert.equal(refreshed, 1, "401 triggered one token refresh");
+    log("me() accepts unwrapped profiles and refreshes expired tokens");
 }
 
 console.log("\nAll cloud-sync regression checks passed.");
