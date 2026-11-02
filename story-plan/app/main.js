@@ -2,7 +2,7 @@
    AllForOne Story Plan — application shell, routing and session handling
    ========================================================================= */
 
-import { store, state, COLLECTIONS } from "./core/store.js";
+import { store, state, COLLECTIONS, clearLocalData } from "./core/store.js";
 import { createRemoteDriver, LocalDriver } from "./core/api.js";
 import { renderAuth, renderAccessDenied, renderBackendError } from "./core/auth.js";
 import { buildDemo } from "./core/demo.js";
@@ -82,6 +82,9 @@ let bootStarted = false;
 let currentCleanup = null;
 let lastActivitySeen = Number(localStorage.getItem("afo_sp_activity_seen") || 0);
 let syncBound = false;
+let reconnectWatchStarted = false;
+let lastReconnectAttempt = 0;
+let reconnecting = false;
 
 /* -------------------------------------------------------------------------
    Boot
@@ -94,35 +97,103 @@ async function boot() {
     const bootEl = document.getElementById("boot");
     const authEl = document.getElementById("auth-root");
 
+    let verified = null;
+    try {
+        verified = JSON.parse(localStorage.getItem("afo_sp_verified_session") || "null");
+    } catch (err) {}
+    const offlineAvailable = Boolean(verified?.email);
+
+    const cloudUnavailable = (message, { allowOffline = offlineAvailable } = {}) => {
+        bootEl.classList.add("gone");
+        if (allowOffline) {
+            // Previously this was gated on `!navigator.onLine`. On iOS Safari
+            // that flag is unreliable, and a blocked third-party SDK script is
+            // not an offline network at all — so the offline option never
+            // appeared even though a verified session and cache were present.
+            showAuth(authEl, {
+                allowOffline: true,
+                error: message,
+                notice: "The cloud could not be reached from this device. Your cached archive is still available offline.",
+            });
+        } else {
+            renderBackendError(authEl, { message });
+        }
+        startReconnectWatch();
+    };
+
     try {
         driver = await createRemoteDriver();
     } catch (err) {
         console.warn("[boot]", err);
-        bootEl.classList.add("gone");
-        const verified = localStorage.getItem("afo_sp_verified_session");
-        if (verified && !navigator.onLine) {
-            showAuth(authEl, { allowOffline: true, error: err.message });
-        } else {
-            renderBackendError(authEl, { message: err.message });
-        }
+        cloudUnavailable(err.message || "The BreadBackend client could not be loaded.");
         return;
     }
 
     try {
         const session = await driver.me();
+        if (driver.reachable === false) {
+            cloudUnavailable(driver.lastMeError || "The cloud backend did not answer from this device.");
+            return;
+        }
         if (session?.user) {
             bootEl.querySelector(".boot-sub").textContent = "Restoring your session…";
             const ok = await afterAuth(session.user, { silent: true });
             if (!ok) return;
         } else {
             bootEl.classList.add("gone");
-            showAuth(authEl);
+            showAuth(authEl, { allowOffline: offlineAvailable });
         }
     } catch (err) {
         console.warn("[boot] session restore failed", err);
         bootEl.classList.add("gone");
-        showAuth(authEl, { error: "Could not restore the previous session. Sign in again." });
+        showAuth(authEl, { error: "Could not restore the previous session. Sign in again.", allowOffline: offlineAvailable });
     }
+}
+
+/* When the cloud comes back, reload so the queue can flush. iOS routinely
+   suspends a tab (and its sockets) when the screen locks; a reload on the
+   `online` / focus / pageshow path is the most reliable recovery. */
+async function tryReconnect({ manual = false } = {}) {
+    if (reconnecting) return false;
+    if (!manual && Date.now() - lastReconnectAttempt < 20000) return false;
+    lastReconnectAttempt = Date.now();
+    reconnecting = true;
+    try {
+        const failed = () => {
+            if (manual) toast("Still offline. Your changes stay saved on this device.", "warn");
+            return false;
+        };
+        if (window.BreadClient) {
+            const probe = await createRemoteDriver();
+            await probe.me();
+            if (probe.reachable === false || probe.lastMeError) return failed();
+        } else if (!manual && navigator.onLine === false) {
+            return failed();
+        }
+        toast("Cloud connection restored — reconnecting…", "success", { timeout: 2200 });
+        setTimeout(() => location.reload(), 800);
+        return true;
+    } catch (err) {
+        return false;
+    } finally {
+        reconnecting = false;
+    }
+}
+
+function startReconnectWatch() {
+    if (reconnectWatchStarted) return;
+    reconnectWatchStarted = true;
+    window.addEventListener("online", () => tryReconnect());
+    const onVisible = () => {
+        if (document.visibilityState && document.visibilityState !== "visible") return;
+        if (window.BreadClient) tryReconnect();
+    };
+    window.addEventListener("focus", onVisible);
+    window.addEventListener("pageshow", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
+    setInterval(() => {
+        if (window.BreadClient && document.visibilityState === "visible") tryReconnect();
+    }, 30000);
 }
 
 function showAuth(authEl, opts = {}) {
@@ -132,11 +203,17 @@ function showAuth(authEl, opts = {}) {
         error: opts.error || "",
         notice: opts.notice || "",
         allowOffline: Boolean(opts.allowOffline),
-        onLogin: async (email, password) => {
-            const user = await driver.login(email, password);
-            const me = await driver.me();
-            const finalUser = me?.user || user;
-            const ok = await afterAuth(finalUser);
+        onLogin: async (email, password, opts = {}) => {
+            if (!driver || driver.kind !== "remote") {
+                throw new Error("The cloud client is not loaded on this device. Use Retry connection, or continue offline.");
+            }
+            // login() verifies the session with me() and refuses to fall back
+            // to a fabricated user when a browser blocks the session cookie.
+            const user = await driver.login(email, password, opts);
+            if (driver.reachable === false) {
+                throw new Error("The cloud stopped answering while signing in. Check your connection and try again.");
+            }
+            const ok = await afterAuth(user);
             if (!ok) throw new Error("__denied__");
         },
         onOffline: () => startOfflineMode(authEl),
@@ -148,9 +225,7 @@ function bootstrapDenied(authEl, email) {
     renderAccessDenied(authEl, {
         email,
         onSignOut: async () => {
-            await driver.logout();
-            localStorage.removeItem("afo_sp_verified_session");
-            clearLocalArchive();
+            await store.signOut();
             location.reload();
         },
         onRetry: () => location.reload(),
@@ -176,8 +251,7 @@ async function afterAuth(user, { silent = false } = {}) {
         (store.state.data.access || []).some((a) => String(a.email || "").toLowerCase() === String(user?.email || "").toLowerCase() && a.active !== false);
 
     if (!approved) {
-        localStorage.removeItem("afo_sp_verified_session");
-        clearLocalArchive();
+        clearLocalData();
         bootstrapDenied(authEl, user?.email || "unknown");
         return false;
     }
@@ -191,24 +265,20 @@ async function afterAuth(user, { silent = false } = {}) {
 }
 
 async function startOfflineMode(authEl) {
-    const verified = localStorage.getItem("afo_sp_verified_session");
-    if (!verified) return;
+    let parsed = null;
+    try {
+        parsed = JSON.parse(localStorage.getItem("afo_sp_verified_session") || "null");
+    } catch (err) {}
+    if (!parsed?.email) return;
     driver = new LocalDriver();
-    const parsed = JSON.parse(verified);
-    const user = { email: parsed.email || "offline@device", isVerified: true, offline: true };
+    const user = { email: parsed.email, isVerified: true, offline: true };
     await store.boot({ driver, user });
     state.accessSupported = false;
     authEl.hidden = true;
     authEl.innerHTML = "";
     startApp({ offline: true });
-    toast("Offline mode — changes are stored on this device and will not sync.", "warn", { timeout: 6000 });
-}
-
-function clearLocalArchive() {
-    try {
-        localStorage.removeItem("afo_story_plan_cache_v2");
-        localStorage.removeItem("afo_story_plan_queue_v2");
-    } catch (err) {}
+    startReconnectWatch();
+    toast("Offline mode — changes are saved on this device and will send when the cloud reconnects.", "warn", { timeout: 6000 });
 }
 
 /* -------------------------------------------------------------------------
@@ -231,11 +301,15 @@ function startApp({ offline = false } = {}) {
         syncBound = true;
     }
     if (offline) {
-        const viewEl = document.getElementById("view");
-        viewEl.insertAdjacentHTML(
-            "afterbegin",
-            `<div class="banner" style="margin:14px 22px 0"><span>${icon("cloudOff")}</span><div><b>Offline mode.</b> The backend could not be reached. This session reads and writes to this browser only; queued changes will not be sent.</div></div>`,
+        // Put the banner outside #view so router replacement doesn't remove it.
+        const topbar = document.getElementById("topbar");
+        topbar?.insertAdjacentHTML(
+            "afterend",
+            `<div class="banner" data-offline-banner style="margin:14px 22px 0"><span>${icon("cloudOff")}</span><div><b>Offline mode.</b> The cloud could not be reached. Changes are saved on this device and will send automatically when it reconnects.</div><div class="b-actions"><button class="btn sm" data-retry-cloud>${icon("refresh")} Try cloud again</button></div></div>`,
         );
+        document.addEventListener("click", (e) => {
+            if (e.target.closest("[data-retry-cloud]")) tryReconnect({ manual: true });
+        });
     }
     if (!location.hash || location.hash === "#" || location.hash === "#/") {
         navigate("/overview", { replace: true });
@@ -245,6 +319,10 @@ function startApp({ offline = false } = {}) {
     document.addEventListener("keydown", handleShortcuts);
     window.addEventListener("afo-forgot-password", async (e) => {
         const email = e.detail?.email;
+        if (typeof driver?.forgotPassword !== "function") {
+            toast("Password reset needs a connection to the cloud.", "warn");
+            return;
+        }
         try {
             await driver.forgotPassword(email);
             toast(`Password reset instructions sent to ${email}.`, "success", { timeout: 6000 });
@@ -300,11 +378,44 @@ function renderSidebar() {
 
 function syncStateMeta() {
     const s = state.sync;
-    if (state.driverKind === "local") return { icon: "cloudOff", label: "Local only", cls: "warn", title: "Offline local mode — data stays in this browser" };
-    if (s.status === "offline") return { icon: "cloudOff", label: s.pending ? `${s.pending} unsynced` : "Offline", cls: "err", title: s.error || "Backend unreachable — retrying" };
-    if (s.status === "syncing") return { icon: "refresh", label: "Saving…", cls: "", title: "Syncing with BreadBackend" };
-    if (s.status === "online") return { icon: "cloud", label: "Synced", cls: "ok", title: `Last synced ${s.lastSync ? timeAgo(s.lastSync) : "just now"}` };
-    return { icon: "database", label: "Ready", cls: "", title: "Archive ready" };
+    if (state.driverKind === "local") {
+        return {
+            icon: "cloudOff",
+            label: s.pending ? `${s.pending} queued` : "Local only",
+            cls: "warn",
+            title: "Offline mode — edits are saved on this device and will send when the cloud reconnects. Tap for details.",
+        };
+    }
+    if (s.pending) {
+        return {
+            icon: "cloud",
+            label: `${s.pending} queued`,
+            cls: "warn",
+            title: `${s.pending} change(s) saved on this device, waiting for the cloud. ${s.writeError || "Retrying automatically."} Tap for details.`,
+        };
+    }
+    if (s.status === "syncing") return { icon: "refresh", label: "Saving…", cls: "", title: "Syncing with the cloud. Tap for details." };
+    if (s.readStatus === "failed" && s.writeStatus === "failed") {
+        return { icon: "cloudOff", label: "Offline", cls: "err", title: `${s.error || "The cloud is unreachable."} Tap for details.` };
+    }
+    if (s.readStatus === "partial" || s.status === "partial") {
+        return {
+            icon: "cloud",
+            label: "Partial",
+            cls: "warn",
+            title: `${s.readError || s.writeError || "Some collections could not be reached; the rest are up to date."} Tap for details.`,
+        };
+    }
+    if (s.writeStatus === "failed") {
+        return { icon: "cloud", label: "Save failed", cls: "err", title: `${s.writeError || "A save is still queued."} Tap for details.` };
+    }
+    if (s.status === "offline") {
+        return { icon: "cloudOff", label: "Offline", cls: "err", title: `${s.error || "The cloud is unreachable."} Tap for details.` };
+    }
+    if (s.status === "online") {
+        return { icon: "cloud", label: "Synced", cls: "ok", title: `Last synced ${s.lastSync ? timeAgo(s.lastSync) : "just now"}. Tap for details.` };
+    }
+    return { icon: "database", label: "Ready", cls: "", title: "Archive ready. Tap for details." };
 }
 
 function renderTopbar() {
@@ -327,7 +438,7 @@ function renderTopbar() {
             <kbd>⌘K</kbd>
         </button>
         <div class="row gap-4 tb-actions">
-            <button class="icon-btn ${meta.cls}" data-sync-chip title="${esc(meta.title)}">
+            <button class="icon-btn ${meta.cls}" data-sync-chip title="${esc(meta.title)}" aria-label="${esc(meta.title)}">
                 ${icon(meta.icon)}<span class="sync-label hide-sm">${esc(meta.label)}</span>
             </button>
             <button class="btn primary sm" data-quick-create>${icon("plus")} New</button>
@@ -347,7 +458,58 @@ function updateSyncChip() {
     const meta = syncStateMeta();
     btn.className = `icon-btn ${meta.cls}`;
     btn.title = meta.title;
+    btn.setAttribute("aria-label", meta.title);
     btn.innerHTML = `${icon(meta.icon)}<span class="sync-label hide-sm">${esc(meta.label)}</span>`;
+}
+
+/* On a phone the label is hidden by CSS, so the icon alone has to be
+   explainable. Tapping it opens a plain-language breakdown of reads, writes,
+   realtime and the last successful contact with the cloud. */
+async function openSyncPanel(btn) {
+    const { openPopover, closePopover } = await import("./components/ui.js");
+    const d = store.diagnostics();
+    const row = (label, value, cls = "") =>
+        `<div class="pop-row" style="display:flex;justify-content:space-between;gap:12px;padding:5px 0"><span class="dim">${esc(label)}</span><b class="${cls}" style="text-align:right;max-width:165px;font-weight:500">${esc(value)}</b></div>`;
+    const stateLabel = (v) => ({ ok: "Working", partial: "Partial", failed: "Failed", unknown: "Not checked yet" }[v] || String(v || "—"));
+    const html = `
+        <div class="pop-label">Cloud status</div>
+        <div style="padding:2px 4px 8px">
+            ${row("Reading data", stateLabel(d.readStatus), d.readStatus === "ok" ? "ok-text" : "warn-text")}
+            ${row("Saving changes", d.pending ? `${d.pending} queued` : stateLabel(d.writeStatus), d.writeStatus === "ok" || (!d.pending && d.writeStatus !== "failed") ? "ok-text" : "warn-text")}
+            ${row("Live updates", d.realtime ? "Connected" : "Polling only", d.realtime ? "ok-text" : "warn-text")}
+            ${row("Last pull", d.lastPull ? timeAgo(d.lastPull) : "never")}
+            ${row("Last sync", d.lastSync ? timeAgo(d.lastSync) : "never")}
+            ${row("Mode", d.mode === "local" ? "Offline / local" : "Cloud")}
+            ${row("Backend SDK", d.sdkLoaded ? "Loaded" : "Not loaded", d.sdkLoaded ? "ok-text" : "warn-text")}
+        </div>
+        ${d.failedCollections?.length ? `<div class="pop-item" style="cursor:default;white-space:normal;line-height:1.45">Could not load: <b>${esc(d.failedCollections.join(", "))}</b>. Everything else is up to date.</div>` : ""}
+        ${d.truncatedCollections?.length ? `<div class="pop-item" style="cursor:default;white-space:normal;line-height:1.45">Only part of <b>${esc(d.truncatedCollections.join(", "))}</b> could be loaded — the backend did not page through all records.</div>` : ""}
+        ${d.readError ? `<div class="pop-item" style="cursor:default;white-space:normal;line-height:1.45">${esc(d.readError)}</div>` : ""}
+        ${d.writeError ? `<div class="pop-item" style="cursor:default;white-space:normal;line-height:1.45">${esc(d.writeError)}</div>` : ""}
+        ${d.sessionError ? `<div class="pop-item" style="cursor:default;white-space:normal;line-height:1.45">Session: ${esc(d.sessionError)}</div>` : ""}
+        <div class="pop-item" style="cursor:default;white-space:normal;line-height:1.45;font-size:11px">Cloud host: <span class="mono">${esc(d.backendHost)}</span>. If reads work but writes don't on iPhone, check that Safari allows cross-site tracking for this site.</div>
+        <div class="pop-sep"></div>
+        <button class="pop-item" data-sync-now>${icon("refresh")} Sync now</button>
+        ${d.mode === "local" ? `<button class="pop-item" data-sync-reconnect>${icon("cloud")} Reconnect to cloud</button>` : ""}
+        <button class="pop-item" data-sync-close>Close</button>`;
+    openPopover(btn, html, {
+        width: 288,
+        align: "right",
+        onMount: (node) => {
+            node.addEventListener("click", (ev) => {
+                if (ev.target.closest("[data-sync-now]")) {
+                    closePopover();
+                    toast("Retrying sync…", "info", { timeout: 1800 });
+                    store.retry();
+                } else if (ev.target.closest("[data-sync-reconnect]")) {
+                    closePopover();
+                    tryReconnect({ manual: true });
+                } else if (ev.target.closest("[data-sync-close]")) {
+                    closePopover();
+                }
+            });
+        },
+    });
 }
 
 function bindShell() {
@@ -370,12 +532,7 @@ function bindShell() {
             return;
         }
         if (e.target.closest("[data-sync-chip]")) {
-            if (state.driverKind === "local") {
-                toast("This session is offline-only. Sign in with the backend available to sync.", "warn");
-                return;
-            }
-            store.retry();
-            toast("Retrying sync…", "info", { timeout: 1800 });
+            openSyncPanel(e.target.closest("[data-sync-chip]"));
             return;
         }
         if (e.target.closest("[data-user-menu]")) {
@@ -417,8 +574,6 @@ function bindShell() {
                                         danger: false,
                                         onConfirm: async () => {
                                             await store.signOut();
-                                            localStorage.removeItem("afo_sp_verified_session");
-                                            clearLocalArchive();
                                             location.reload();
                                         },
                                     });

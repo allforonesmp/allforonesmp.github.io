@@ -33,7 +33,7 @@ export function renderAuth(host, { onLogin, error = "", notice = "", allowOfflin
             ${notice ? `<div class="auth-notice">${icon("info")}<div>${esc(notice)}</div></div>` : ""}
             ${
                 allowOffline
-                    ? `<div class="auth-notice">${icon("cloudOff")}<div>The backend is unreachable. You have a verified session on this device — you can open the archive in offline mode. Changes will be stored locally until the connection returns.</div></div>
+                    ? `<div class="auth-notice">${icon("cloudOff")}<div>The cloud is unreachable from this device. You have a verified session here — open the archive offline. Changes are saved on this device and sent automatically when the cloud reconnects.</div></div>
                        <button class="btn full lg" data-offline style="margin-bottom:14px">${icon("cloudOff")} Continue offline</button>
                        <div class="auth-row" style="margin:0 0 14px"><span></span><span style="flex:1;height:1px;background:var(--line-soft)"></span><span>or sign in again</span><span style="flex:1;height:1px;background:var(--line-soft)"></span><span></span></div>`
                     : ""
@@ -164,7 +164,7 @@ export function renderBackendError(host, { message, onRetry }) {
             <div class="auth-error">${icon("cloudOff")}<div>The story archive is stored in BreadBackend. Without a connection it cannot verify your access or load your data.</div></div>
             <button class="btn primary full lg" data-retry>${icon("refresh")} Retry connection</button>
             <div class="auth-foot">
-                <b>If this keeps happening</b>, check that <span class="mono">kaidaz18.duckdns.org</span> is reachable from this network, that the backend is running, and that no browser extension is blocking the SDK.
+                <b>If this keeps happening</b>, check that <span class="mono">kaidaz18.duckdns.org</span> is reachable from this network and that the backend is running. This site is served from GitHub Pages while the archive lives on that separate host, so iPhone/iPad Safari may block the SDK script or the cross-site session: try disabling content blockers, allowing cross-site tracking for this site, or testing on another network.
             </div>
         </div>
     </div>`;

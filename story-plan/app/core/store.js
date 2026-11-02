@@ -29,6 +29,8 @@ export const COLLECTIONS = [
 const CACHE_KEY = "afo_story_plan_cache_v2";
 const QUEUE_KEY = "afo_story_plan_queue_v2";
 const PREFS_KEY = "afo_story_plan_prefs_v2";
+const SESSION_KEY = "afo_sp_verified_session";
+const DRAFT_PREFIX = "afo_sp_draft_";
 const DEFAULT_PREFS = {
     sidebarCollapsed: false,
     density: "comfortable",
@@ -77,7 +79,25 @@ export const state = {
     user: null,
     approved: null,
     driverKind: "remote",
-    sync: { status: "idle", pending: 0, lastSync: null, error: null },
+    // `status` is a summary for the UI. readStatus / writeStatus are kept
+    // separately because reads can succeed while writes are failing (and vice
+    // versa) — collapsing both into one "offline" flag is what made the cloud
+    // icon lie on iPhone while data was still arriving.
+    sync: {
+        status: "idle",
+        pending: 0,
+        lastSync: null,
+        lastPull: null,
+        lastWrite: null,
+        error: null,
+        readStatus: "unknown",
+        writeStatus: "unknown",
+        readError: null,
+        writeError: null,
+        failedCollections: [],
+        truncatedCollections: [],
+        realtime: true,
+    },
     data: emptyData(),
     prefs: { ...DEFAULT_PREFS, ...loadJSON(PREFS_KEY, {}) },
     accessSupported: true,
@@ -89,14 +109,58 @@ state.prefs.edgeColors = { ...DEFAULT_PREFS.edgeColors, ...(state.prefs.edgeColo
 let driver = null;
 let queue = loadJSON(QUEUE_KEY, []);
 let retryTimer = null;
+let heartbeatTimer = null;
+let lastVisibleRefresh = 0;
+let lastPersistAt = 0;
+let pulling = false;
 let flushing = false;
+let retryDelay = 20000;
 const unsubs = [];
+const emptyPulls = new Map();
+
+function setSync(patch) {
+    Object.assign(state.sync, patch);
+    state.sync.pending = queue.length;
+}
+
+/** Remove everything this browser knows about the archive. */
+export function clearLocalData() {
+    try {
+        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(QUEUE_KEY);
+        localStorage.removeItem(SESSION_KEY);
+        for (const key of Object.keys(localStorage)) {
+            if (key.startsWith(DRAFT_PREFIX)) localStorage.removeItem(key);
+        }
+    } catch (err) {
+        console.warn("[store] could not clear local data", err);
+    }
+    queue = [];
+    state.data = emptyData();
+    state.sync.pending = 0;
+}
 
 /* -------------------------------------------------------------------------
    Cache
    ------------------------------------------------------------------------- */
-function loadCache() {
+function sessionEmail() {
+    try {
+        return JSON.parse(localStorage.getItem(SESSION_KEY) || "null")?.email || null;
+    } catch (err) {
+        return null;
+    }
+}
+
+function loadCache(owner = sessionEmail()) {
     const cached = loadJSON(CACHE_KEY, null);
+    if (!cached) return;
+    // A shared iPhone/iPad can be used by more than one approved account.
+    // Never pre-fill the archive with the previous account's cached copy.
+    if (cached.owner && owner && cached.owner !== owner) {
+        console.warn("[store] cached archive belongs to a different account; ignoring it");
+        state.data = emptyData();
+        return;
+    }
     let migrated = false;
     if (cached && cached.data) {
         for (const c of COLLECTIONS) {
@@ -146,19 +210,19 @@ function loadCache() {
 function persistCache() {
     const slim = {};
     for (const c of COLLECTIONS) slim[c] = state.data[c];
-    saveJSON(CACHE_KEY, { savedAt: new Date().toISOString(), data: slim });
+    const savedAt = new Date().toISOString();
+    const ok = saveJSON(CACHE_KEY, { savedAt, owner: state.user?.email || "", data: slim });
+    if (ok) lastPersistAt = Date.now();
+    return ok;
 }
 
 function assertOnlineWrites() {
-    if (!driver || driver.kind !== "remote") {
-        throw new Error("Saving is disabled without a connection to the shared archive. Reconnect, then use Resync before saving.");
-    }
-    if (typeof navigator !== "undefined" && navigator.onLine === false) {
-        throw new Error("You appear to be offline. Reconnect to Wi-Fi or mobile data before saving; no changes were stored.");
-    }
-    if (state.sync.status === "offline") {
-        throw new Error(state.sync.error ? `The shared archive is unreachable: ${state.sync.error} Saving is disabled until it reconnects.` : "The shared archive is offline. Resync before saving.");
-    }
+    // Local-first: a write is always accepted into the cache + queue. The
+    // cloud chip must never be able to block editing. On iOS Safari
+    // navigator.onLine is only a hint (it can be false with a working
+    // connection), and a failed READ used to set sync.status = "offline",
+    // which then refused every save even though data was still arriving.
+    if (!driver) throw new Error("The archive is still opening. Wait a moment and try again.");
 }
 
 loadCache();
@@ -171,10 +235,22 @@ export const store = {
         return state;
     },
 
+    // True when edits are being accepted for the shared archive. They may be
+    // queued locally until the backend answers — that is not a failure.
     canWriteOnline() {
-        if (!driver || driver.kind !== "remote") return false;
-        if (typeof navigator !== "undefined" && navigator.onLine === false) return false;
-        return state.sync.status !== "offline";
+        return Boolean(driver && driver.kind === "remote");
+    },
+
+    diagnostics() {
+        return {
+            mode: state.driverKind,
+            ...state.sync,
+            pending: queue.length,
+            sdkLoaded: Boolean(driver?.sdkAvailable),
+            backendReachable: driver?.reachable ?? null,
+            backendHost: "kaidaz18.duckdns.org",
+            sessionError: driver?.lastMeError || null,
+        };
     },
 
     /* ---------------------------------------------------------------- reads */
@@ -247,12 +323,18 @@ export const store = {
         }
 
         const list = state.data[type];
+        const previous = list.slice();
         const idx = list.findIndex((r) => r.key === row.key);
         if (idx >= 0) list[idx] = row;
         else list.push(row);
 
         const action = exists ? "update" : "create";
-        persistCache();
+        if (!persistCache()) {
+            // Never report "Saved" when the local copy could not be written —
+            // Safari can evict/fill localStorage on iPhone.
+            state.data[type] = previous;
+            throw new Error("This device's storage is full. Export a backup and remove unused images before saving.");
+        }
         enqueue({ op: "upsert", type, key: row.key });
         flushSoon();
         bus.emit("change", { type, action, record: row, silent });
@@ -271,9 +353,17 @@ export const store = {
         assertOnlineWrites();
         const row = this.get(type, key);
         if (!row) return false;
+        const previous = Object.fromEntries(COLLECTIONS.map((c) => [c, (state.data[c] || []).slice()]));
+        const previousQueue = queue.map((q) => ({ ...q }));
         state.data[type] = state.data[type].filter((r) => r.key !== key);
         if (cleanup) purgeReferences(type, key);
-        persistCache();
+        if (!persistCache()) {
+            state.data = previous;
+            queue = previousQueue;
+            saveJSON(QUEUE_KEY, queue);
+            state.sync.pending = queue.length;
+            throw new Error("This device's storage is full. Export a backup and remove unused images before deleting.");
+        }
         enqueue({ op: "delete", type, key, remoteId: row.remoteId });
         flushSoon();
         bus.emit("change", { type, action: "delete", record: row });
@@ -357,11 +447,13 @@ export const store = {
         state.user = user;
         state.driverKind = drv.kind;
         state.ready = true;
+        // Re-check the cache now that we know which account is signed in.
+        loadCache(user?.email);
         bus.emit("ready", state);
         await this.pull({ initial: true });
         subscribeAll();
         if (queue.length) this.flush();
-        flushSoon(1200);
+        startHeartbeat();
     },
 
     setUser(user) {
@@ -370,11 +462,13 @@ export const store = {
 
     async pull({ initial = false } = {}) {
         if (!driver || driver.kind === "local") {
-            state.sync.status = "local";
+            setSync({ status: "local", readStatus: "unknown", readError: null, failedCollections: [], truncatedCollections: [] });
             bus.emit("sync", state.sync);
             return;
         }
-        state.sync.status = "syncing";
+        if (pulling) return;
+        pulling = true;
+        setSync({ status: "syncing" });
         bus.emit("sync", state.sync);
         try {
             const results = await Promise.all(
@@ -388,49 +482,78 @@ export const store = {
                 }),
             );
             let merged = 0;
+            let reconciled = 0;
             const failedCollections = [];
+            // A truncated list is not authoritative: never use it to delete
+            // local copies of records that simply didn't fit in the page.
+            const truncatedCollections = Array.from(driver.listTruncated || []);
             for (const [collection, rows] of results) {
                 if (!rows) {
                     failedCollections.push(collection);
                     continue;
                 }
                 merged += mergeRemote(collection, rows);
+                if (!truncatedCollections.includes(collection)) {
+                    // Only complete, successfully loaded collections are
+                    // authoritative. Never let one failed collection wipe
+                    // another one's cache.
+                    reconciled += reconcileRemote(collection, rows);
+                }
             }
-            state.sync = failedCollections.length
-                ? {
-                      status: "offline",
-                      pending: queue.length,
-                      lastSync: state.sync.lastSync,
-                      error: `Could not load ${failedCollections.join(", ")} from the backend.`,
-                  }
-                : { status: "online", pending: queue.length, lastSync: new Date().toISOString(), error: null };
+            const allFailed = failedCollections.length === COLLECTIONS.length;
+            const partial = (failedCollections.length > 0 || truncatedCollections.length > 0) && !allFailed;
+            const problems = [];
+            if (failedCollections.length) problems.push(`Could not load ${failedCollections.join(", ")} from the cloud.`);
+            if (truncatedCollections.length) problems.push(`Only part of ${truncatedCollections.join(", ")} could be loaded (backend page limit).`);
+            const readError = problems.length ? problems.join(" ") : null;
+            setSync({
+                status: allFailed ? "offline" : partial ? "partial" : "online",
+                readStatus: allFailed ? "failed" : partial ? "partial" : "ok",
+                readError,
+                failedCollections,
+                truncatedCollections,
+                lastSync: allFailed ? state.sync.lastSync : new Date().toISOString(),
+                lastPull: allFailed ? state.sync.lastPull : new Date().toISOString(),
+                error: state.sync.writeError || readError,
+                realtime: driver.realtimeFailed === true ? false : state.sync.realtime,
+            });
             state.demoPresent = Object.values(state.data)
                 .flat()
                 .some((r) => r && r.demo);
             persistCache();
-            bus.emit("change", { type: "*", action: "pull", merged });
+            bus.emit("change", { type: "*", action: "pull", merged, reconciled });
             bus.emit("sync", state.sync);
-            if (failedCollections.length || queue.length) scheduleRetry();
-            else clearTimeout(retryTimer);
+            if (failedCollections.length || truncatedCollections.length || queue.length) scheduleRetry();
+            else {
+                clearTimeout(retryTimer);
+                retryDelay = 20000;
+            }
         } catch (err) {
-            state.sync = { ...state.sync, status: "offline", error: err.message || "Backend unreachable", pending: queue.length };
+            setSync({
+                status: "offline",
+                readStatus: "failed",
+                readError: err.message || "Cloud unreachable",
+                failedCollections: [...COLLECTIONS],
+                truncatedCollections: [],
+                error: state.sync.writeError || err.message || "Cloud unreachable",
+            });
             bus.emit("sync", state.sync);
             scheduleRetry();
+        } finally {
+            pulling = false;
         }
     },
 
     async flush() {
         if (flushing || !driver || driver.kind === "local" || !queue.length) {
             if (!queue.length) {
-                state.sync.pending = 0;
-                if (state.sync.status === "syncing") state.sync.status = "online";
+                setSync({});
                 bus.emit("sync", state.sync);
             }
             return;
         }
         flushing = true;
-        state.sync.status = "syncing";
-        state.sync.pending = queue.length;
+        setSync({ status: "syncing" });
         bus.emit("sync", state.sync);
 
         let failed = false;
@@ -467,28 +590,28 @@ export const store = {
                 // rule errors must never silently discard locally saved work;
                 // once credentials/rules are fixed, a retry can sync it.
                 op.attempts = (op.attempts || 0) + 1;
-                state.sync.error = err.message || "Could not save to the backend";
+                state.sync.writeError = err.message || "Could not save to the cloud";
                 console.warn("[store] save remains queued for retry", op, err);
                 break;
             }
         }
         saveJSON(QUEUE_KEY, queue);
         flushing = false;
-        state.sync = {
-            ...state.sync,
-            status: failed ? "offline" : "online",
-            pending: queue.length,
+        setSync({
+            status: summarizeSync(),
+            writeStatus: failed ? "failed" : "ok",
+            writeError: failed ? state.sync.writeError : null,
+            lastWrite: failed ? state.sync.lastWrite : new Date().toISOString(),
             lastSync: failed ? state.sync.lastSync : new Date().toISOString(),
-            error: failed ? state.sync.error : null,
-        };
+            error: failed ? state.sync.writeError : state.sync.readError,
+        });
         bus.emit("sync", state.sync);
-        if (failed) {
-            scheduleRetry();
-        }
+        if (failed) scheduleRetry();
     },
 
     async retry() {
         clearTimeout(retryTimer);
+        retryDelay = 20000;
         await this.pull();
         await this.flush();
     },
@@ -501,6 +624,12 @@ export const store = {
     async uploadFile(file) {
         if (!driver) throw new Error("Not connected");
         if (file.size > 8 * 1024 * 1024) throw new Error("That image is larger than 8 MB.");
+        // LocalDriver turns uploads into base64 data URLs that would be cached
+        // in localStorage. On iOS that instantly exhausts the quota and the
+        // record then fails to persist at all.
+        if (driver.kind === "local") {
+            throw new Error("Image uploads need a cloud connection. Save the record now and add the image when you're back online.");
+        }
         const { url } = await driver.upload(file);
         return url;
     },
@@ -688,7 +817,15 @@ export const store = {
             } catch (err) {}
         });
         unsubs.length = 0;
+        clearTimeout(retryTimer);
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
         if (driver) await driver.logout();
+        // Both sign-out entry points must clear the same local state. The
+        // Settings one used to leave the verified-session flag and the whole
+        // cached archive behind, so a reload on a shared phone could reopen
+        // the archive in offline mode without signing in.
+        clearLocalData();
         bus.emit("signed-out");
     },
 };
@@ -723,86 +860,202 @@ function flushSoon(delay = 350) {
     flushSoon.t = setTimeout(() => store.flush(), delay);
 }
 
+function isPending(collection, key) {
+    return queue.some((q) => q.type === collection && q.key === key);
+}
+
+/** One honest summary for the chip, derived from reads AND writes. */
+function summarizeSync() {
+    const { readStatus, writeStatus } = state.sync;
+    if (pulling) return "syncing";
+    if (readStatus === "failed" && writeStatus === "failed") return "offline";
+    if (readStatus === "partial" || readStatus === "failed" || writeStatus === "failed" || queue.length) return "partial";
+    return "online";
+}
+
 function scheduleRetry() {
     clearTimeout(retryTimer);
+    // Back off instead of hammering 13 collections every 20 seconds forever
+    // when one collection is persistently unavailable (mobile data / battery).
     retryTimer = setTimeout(() => {
         if (queue.length) store.flush();
         else store.pull();
-    }, 20000);
+    }, retryDelay);
+    retryDelay = Math.min(retryDelay * 2, 300000);
     bus.emit("sync", state.sync);
+}
+
+function startHeartbeat() {
+    if (typeof window === "undefined" || typeof document === "undefined" || heartbeatTimer) return;
+    // iOS suspends WebSocket/SSE subscriptions when the tab is backgrounded or
+    // the screen locks, and does not reliably fire `online` afterwards. Poll
+    // while visible and refresh on every return to the tab so another device's
+    // edits are picked up even when realtime is dead.
+    heartbeatTimer = setInterval(() => {
+        if (document.visibilityState !== "visible") return;
+        if (queue.length) return store.flush();
+        const last = Date.parse(state.sync.lastPull || "") || 0;
+        if (Date.now() - last < 30000) return;
+        store.pull();
+    }, 60000);
+
+    const onVisible = () => {
+        if (document.visibilityState && document.visibilityState !== "visible") return;
+        if (Date.now() - lastVisibleRefresh < 5000) return;
+        lastVisibleRefresh = Date.now();
+        store.retry();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", onVisible);
+    window.addEventListener("focus", onVisible);
 }
 
 function mergeRemote(collection, rows) {
     let merged = 0;
     const list = state.data[collection] || (state.data[collection] = []);
     for (const raw of rows) {
-        const key = raw.key || raw.id;
-        if (!key) continue;
-        const incoming = { ...raw, key, remoteId: raw.id && raw.id !== key ? raw.id : raw.remoteId || raw.id };
+        const remoteId = String(raw.id || raw.remoteId || "");
+        const rawKey = String(raw.key || remoteId);
+        if (!rawKey) continue;
+        // Match on the app key OR the backend id. Old rows created by a
+        // different device/version may only have one of the two.
+        const idx = list.findIndex(
+            (r) =>
+                r.key === rawKey ||
+                (remoteId && (r.remoteId === remoteId || r.key === remoteId)) ||
+                (raw.key && r.remoteId === raw.key),
+        );
+        const localKey = idx >= 0 ? list[idx].key : rawKey;
+        const pending = isPending(collection, localKey) || isPending(collection, rawKey);
+        const incoming = { ...raw, key: localKey };
         delete incoming.id;
-        const idx = list.findIndex((r) => r.key === key);
-        const pending = queue.some((q) => q.type === collection && q.key === key);
+        if (remoteId) incoming.remoteId = remoteId;
+        else delete incoming.remoteId;
+
         if (idx === -1) {
             if (!pending) {
                 list.push(incoming);
                 merged++;
             }
-        } else if (pending) {
+            continue;
+        }
+        if (pending) {
             // A create may have reached the server even if its response was
             // lost. Reattach the remote ID without replacing the newer local
             // draft so the queued retry updates that document instead of
             // creating a duplicate.
-            const pendingOp = queue.find((q) => q.type === collection && q.key === key);
-            if (pendingOp?.op === "upsert" && !list[idx].remoteId && incoming.remoteId) {
-                list[idx].remoteId = incoming.remoteId;
+            const op = queue.find((q) => q.type === collection && q.key === localKey);
+            if (op?.op === "upsert" && !list[idx].remoteId && remoteId) {
+                list[idx].remoteId = remoteId;
                 merged++;
             }
-        } else {
-            if (!list[idx].remoteId && incoming.remoteId) {
-                list[idx].remoteId = incoming.remoteId;
+            continue;
+        }
+        const localTime = new Date(list[idx].updatedAt || 0).getTime();
+        const remoteTime = new Date(incoming.updatedAt || 0).getTime();
+        if (remoteTime > localTime) {
+            // Replace, don't shallow-merge: fields removed on another device
+            // must actually disappear here.
+            if (JSON.stringify(list[idx]) !== JSON.stringify(incoming)) {
+                list[idx] = incoming;
                 merged++;
             }
-            const localTime = new Date(list[idx].updatedAt || 0).getTime();
-            const remoteTime = new Date(incoming.updatedAt || 0).getTime();
-            if (remoteTime > localTime && JSON.stringify(list[idx]) !== JSON.stringify(incoming)) {
-                list[idx] = { ...list[idx], ...incoming };
-                merged++;
-            }
+        } else if (remoteId && list[idx].remoteId !== remoteId) {
+            list[idx].remoteId = remoteId;
+            merged++;
         }
     }
     return merged;
+}
+
+/** Remove records that no longer exist in the cloud (deleted on another device). */
+function reconcileRemote(collection, rows) {
+    const list = state.data[collection] || [];
+    if (!list.length) return 0;
+    // A backend can answer 200 with an empty list (rules quietly hiding rows).
+    // Require two consecutive empty responses before treating it as a genuine
+    // "everything was deleted on another device".
+    if (!rows.length) {
+        const seen = (emptyPulls.get(collection) || 0) + 1;
+        emptyPulls.set(collection, seen);
+        if (seen < 2) return 0;
+    } else {
+        emptyPulls.delete(collection);
+    }
+    const remoteKeys = new Set();
+    const remoteIds = new Set();
+    for (const raw of rows) {
+        if (raw.key) remoteKeys.add(raw.key);
+        if (raw.id) remoteIds.add(raw.id);
+        if (raw.remoteId) remoteIds.add(raw.remoteId);
+    }
+    const kept = list.filter((r) => {
+        // Never discard an unsynced local draft, or a record that never made
+        // it to the backend in the first place.
+        if (isPending(collection, r.key) || !r.remoteId) return true;
+        return (
+            remoteKeys.has(r.key) ||
+            remoteKeys.has(r.remoteId) ||
+            remoteIds.has(r.remoteId) ||
+            remoteIds.has(r.key)
+        );
+    });
+    const removed = list.length - kept.length;
+    if (removed) state.data[collection] = kept;
+    return removed;
 }
 
 function subscribeAll() {
     if (!driver || driver.kind === "local") return;
     for (const collection of COLLECTIONS) {
         try {
-            const unsub = driver.subscribe(collection, ({ action, doc }) => {
-                if (!doc || !doc.id) {
-                    if (action === "delete") store.pull();
+            const unsub = driver.subscribe(collection, ({ action, doc, raw }) => {
+                const kind = String(action || "update").toLowerCase();
+                const isDelete = ["delete", "deleted", "remove", "removed"].includes(kind);
+                const list = state.data[collection] || (state.data[collection] = []);
+                const rawId = String(doc?.id || raw?.id || raw?._id || "");
+                const rawKey = String(doc?.key || raw?.key || rawId);
+                const idx = list.findIndex(
+                    (r) =>
+                        (rawKey && r.key === rawKey) ||
+                        (rawId && (r.remoteId === rawId || r.key === rawId)) ||
+                        (doc?.key && r.remoteId === doc.key),
+                );
+
+                if (isDelete) {
+                    if (idx >= 0 && !isPending(collection, list[idx].key)) {
+                        // Delete events often carry only the backend id, while
+                        // local rows are keyed by the app key. Match both.
+                        list.splice(idx, 1);
+                        persistCache();
+                        bus.emit("change", { type: collection, action: "realtime-delete" });
+                    } else {
+                        store.pull();
+                    }
                     return;
                 }
-                const key = doc.key || doc.id;
-                if (queue.some((q) => q.type === collection && q.key === key)) return;
-                const list = state.data[collection] || (state.data[collection] = []);
-                const idx = list.findIndex((r) => r.key === key);
-                if (action === "delete") {
-                    if (idx >= 0) list.splice(idx, 1);
-                } else if (idx === -1) {
-                    list.push({ ...doc, key, remoteId: doc.id });
-                } else {
-                    const remoteTime = new Date(doc.updatedAt || 0).getTime();
-                    const localTime = new Date(list[idx].updatedAt || 0).getTime();
-                    if (remoteTime >= localTime) list[idx] = { ...list[idx], ...doc, key };
+                if (!doc || !doc.id) {
+                    store.pull();
+                    return;
                 }
+                const localKey = idx >= 0 ? list[idx].key : rawKey;
+                if (isPending(collection, localKey)) return;
+                const incoming = { ...doc, key: localKey, remoteId: doc.id };
+                delete incoming.id;
+                const remoteTime = new Date(doc.updatedAt || 0).getTime();
+                const localTime = idx >= 0 ? new Date(list[idx].updatedAt || 0).getTime() : -1;
+                if (idx === -1) list.push(incoming);
+                else if (remoteTime >= localTime) list[idx] = incoming;
+                else return;
                 persistCache();
                 bus.emit("change", { type: collection, action: "realtime" });
             });
             unsubs.push(unsub);
         } catch (err) {
-            /* realtime is optional */
+            state.sync.realtime = false;
         }
     }
+    if (driver.realtimeFailed === true) state.sync.realtime = false;
 }
 
 function purgeReferences(deletedType, deletedKey) {
@@ -852,10 +1105,11 @@ function purgeReferences(deletedType, deletedKey) {
     }
 }
 
-// Retry when the browser comes back online.
+// Retry when the browser comes back online, and keep tabs on this device in
+// step. Note: `offline` is only a hint — writes stay enabled and queue locally.
 if (typeof window !== "undefined") {
     window.addEventListener("offline", () => {
-        state.sync = { ...state.sync, status: "offline", error: "No network connection. Reconnect before saving.", pending: queue.length };
+        setSync({ error: "No network connection. Changes are saved on this device and will send when the connection returns." });
         bus.emit("sync", state.sync);
     });
     window.addEventListener("online", () => {
@@ -868,6 +1122,19 @@ if (typeof window !== "undefined") {
             } catch (err) {
                 queue = [];
             }
+            setSync({});
+            bus.emit("sync", state.sync);
+        } else if (e.key === CACHE_KEY && !flushing && !pulling) {
+            // Another tab on this device wrote the cache. Adopt it only when
+            // newer than our own last write, so a stale tab cannot clobber work.
+            try {
+                const next = JSON.parse(e.newValue || "null");
+                if (!next?.data || !next.savedAt) return;
+                if (Date.parse(next.savedAt) < lastPersistAt) return;
+                if (next.owner && state.user?.email && next.owner !== state.user.email) return;
+                for (const c of COLLECTIONS) if (Array.isArray(next.data[c])) state.data[c] = next.data[c];
+                bus.emit("change", { type: "*", action: "tab-sync" });
+            } catch (err) {}
         }
     });
 }

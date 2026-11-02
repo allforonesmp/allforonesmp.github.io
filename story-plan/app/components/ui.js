@@ -612,7 +612,9 @@ export function openEntityForm({ type, record = null, defaults = {}, onSaved = n
             };
 
             const saveDraft = debounce(() => {
-                if (!store.canWriteOnline()) return;
+                // Drafts live on this device, so they must be kept even when
+                // the cloud chip shows offline. Otherwise a backgrounded iPhone
+                // tab loses everything typed before it is killed.
                 try {
                     localStorage.setItem(draftKey, JSON.stringify({ savedAt: new Date().toISOString(), data: working }));
                 } catch (err) {}
@@ -803,10 +805,14 @@ export function openEntityForm({ type, record = null, defaults = {}, onSaved = n
                         detail: "This cannot be undone. Export a backup first if you need a safety net.",
                         confirmLabel: "Delete permanently",
                         onConfirm: async () => {
-                            store.remove(type, { key: record.key });
-                            toast(`${singular(type)} deleted.`, "success");
-                            localStorage.removeItem(draftKey);
-                            onDeleted?.(record);
+                            try {
+                                store.remove(type, { key: record.key });
+                                toast(`${singular(type)} deleted.`, "success");
+                                localStorage.removeItem(draftKey);
+                                onDeleted?.(record);
+                            } catch (err) {
+                                toast(err.message || "Could not delete that record.", "error");
+                            }
                         },
                     });
                     return;
