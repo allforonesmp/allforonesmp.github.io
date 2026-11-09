@@ -1008,8 +1008,8 @@
                     <div class="section-title">Hidden Players</div>
                     <div class="card">
                         <p class="hint" style="margin-bottom: 1.25rem">
-                            Usernames added here will never show as "online" on the homepage status pill or the
-                            Stats for Nerds page — for anyone viewing those pages. They're also excluded from the
+                            Usernames added here will never show as "online" on the homepage status pill — for anyone
+                            viewing the site. They're also excluded from the
                             online player count. This does not hide them in-game, only on the public site. Matching
                             is case-insensitive.
                         </p>
@@ -1704,7 +1704,7 @@
                 const input = document.getElementById("newsVideoLinkInput");
                 const url = input.value.trim();
                 if (!url) return;
-                if (!/^https?:\/\
+                if (!/^https?:\/\//.test(url)) {
                     showToast("Video link must start with http:// or https://", "error");
                     return;
                 }
