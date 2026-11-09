@@ -1,8 +1,0 @@
-{
-    "name": "allforone-story-plan",
-    "private": true,
-    "type": "module",
-    "scripts": {
-        "test": "node tests/sync.test.mjs"
-    }
-}

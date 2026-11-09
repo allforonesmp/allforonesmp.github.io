@@ -6,18 +6,18 @@
         <meta name="theme-color" content="#4a90e2" />
         <title>AllForOne SMP</title>
         <meta name="title" content="AllForOne SMP" />
-        <meta name="description" content="Welcome to AllForOne SMP! Explore our mods, rules, skin creator, and server stats." />
+        <meta name="description" content="Welcome to AllForOne SMP! Explore our rules, skin creator, and more." />
 
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://allforonesmp.github.io/" />
         <meta property="og:title" content="AllForOne SMP" />
-        <meta property="og:description" content="Welcome to AllForOne SMP! Explore our mods, rules, skin creator, and server stats." />
+        <meta property="og:description" content="Welcome to AllForOne SMP! Explore our rules, skin creator, and more." />
         <meta property="og:image" content="https://allforonesmp.github.io/images/banner.png" />
 
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content="https://allforonesmp.github.io/" />
         <meta name="twitter:title" content="AllForOne SMP" />
-        <meta name="twitter:description" content="Welcome to AllForOne SMP! Explore our mods, rules, skin creator, and server stats." />
+        <meta name="twitter:description" content="Welcome to AllForOne SMP! Explore our rules, skin creator, and more." />
         <meta name="twitter:image" content="https://allforonesmp.github.io/images/banner.png" />
         <link rel="icon" type="image/png" href="/images/logo.png" />
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />
@@ -656,11 +656,9 @@
 
                 <ul class="nav-links" id="navLinks">
                     <li><button data-path="/" onclick="navigate('/', event)">Home</button></li>
-                    <li><button data-path="/mods" onclick="navigate('/mods', event)">Mods</button></li>
                     <li><button data-path="/rules" onclick="navigate('/rules', event)">Rules</button></li>
                     <li><button data-path="/make-skin" onclick="navigate('/make-skin', event)">Create A Skin</button></li>
                     <li><button data-path="/admin" onclick="navigate('/admin', event)">Admin Page</button></li>
-                    <li><button data-path="/stats" onclick="navigate('/stats', event)">Stats For 🤓's</button></li>
                 </ul>
 
                 <div class="theme-toggle-row nav-theme-toggle" title="Toggle dark mode">
@@ -695,7 +693,6 @@
         <div class="drawer" id="drawer">
             <ul class="drawer-links" id="drawerLinks">
                 <li><button data-path="/" onclick="navigate('/', event); closeDrawer()">Home</button></li>
-                <li><button data-path="/mods" onclick="navigate('/mods', event); closeDrawer()">Mods</button></li>
                 <li><button data-path="/rules" onclick="navigate('/rules', event); closeDrawer()">Rules</button></li>
                 <li>
                     <button data-path="/make-skin" onclick="navigate('/make-skin', event); closeDrawer()">
@@ -703,15 +700,7 @@
                     </button>
                 </li>
                 <li>
-                </li>
-                <li></li>
-                <li>
                     <button data-path="/admin" onclick="navigate('/admin', event); closeDrawer()">Admin Page</button>
-                </li>
-                <li>
-                    <button data-path="/stats" onclick="navigate('/stats', event); closeDrawer()">
-                        Stats For 🤓's
-                    </button>
                 </li>
             </ul>
             <div class="drawer-theme-row">
@@ -789,19 +778,15 @@
             const BASE = "";
             const ROUTES = {
                 "/": BASE + "main.html",
-                "/mods": BASE + "mods/index.html",
                 "/rules": BASE + "rules/index.html",
                 "/make-skin": BASE + "make-skin/index.html",
-                "/admin": BASE + "admin/index.html",
-                "/stats": BASE + "stats/index.html"
+                "/admin": BASE + "admin/index.html"
             };
             const PAGE_TITLES = {
                 "/": "AllForOne SMP",
-                "/mods": "Mods | AllForOne SMP",
                 "/rules": "Rules | AllForOne SMP",
                 "/make-skin": "Create Skin | AllForOne SMP",
-                "/admin": "Admin | AllForOne SMP",
-                "/stats": "🤓 | AllForOne SMP"
+                "/admin": "Admin | AllForOne SMP"
             };
             const REFRESH_INTERVAL = 2 * 60 * 1000;
             const EXIT_DURATION = 320;
