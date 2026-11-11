@@ -7,6 +7,11 @@
  *   • If the collection has no records, the first account becomes owner.
  *   • Owner approves/removes members from Settings → Members.
  *
+ * Two conditions must BOTH hold before any story data is rendered:
+ *   1. the account's email is verified (BreadBackend `user.isVerified === true`),
+ *   2. the account is an approved member of the `members` collection.
+ * There is no "continue anyway" path for an unverified account.
+ *
  * IMPORTANT LIMITATION: BreadBackend's public client key carries no per-user
  * roles, and collection reads are enforced only by project rules. A determined
  * signed-up account could still call the API directly, so open signup must be
@@ -34,6 +39,23 @@ export function getMember() {
 
 export function isOwner() {
     return currentMember?.role === "owner";
+}
+
+/** True only when BreadBackend positively reports the email as verified. */
+export function isVerifiedUser() {
+    return currentUser?.isVerified === true;
+}
+
+/**
+ * "verified" | "unverified" | "unknown".
+ * "unknown" means the backend returned no isVerified field at all — treated as
+ * not verified so the gate fails closed, with a message naming the setting to fix.
+ */
+function verificationState(user) {
+    if (!user) return "unverified";
+    if (user.isVerified === true) return "verified";
+    if (user.isVerified === false) return "unverified";
+    return "unknown";
 }
 
 function showPanel(name) {
@@ -80,6 +102,8 @@ function buttonBusy(btn, busy, label) {
 /* ------------------------------------------------------------- membership */
 
 const OWNER_EMAIL_KEY = "afo_storyplan_owner_email";
+/** Verification token preserved across the email round-trip (URL → form). */
+const VERIFY_TOKEN_KEY = "afo_storyplan_verify_token";
 
 async function resolveMembership(user) {
     const email = String(user.email || "").toLowerCase();
@@ -146,17 +170,27 @@ async function afterLogin(user) {
         showPanel("Login");
         return;
     }
-    if (user.isVerified === false) {
-        const copy = $("verifyCopy");
-        if (copy) {
-            copy.textContent = `${user.email || "Your email"} has not been verified yet. You can still continue — verification protects password resets.`;
-        }
-        showPanel("Verify");
-        // stash the pending user so Continue can proceed
-        pendingUser = user;
-        return;
-    }
+    if (!showVerify(user)) return;
     await gateOnUser(user);
+}
+
+let pendingUser = null;
+
+/** Render the verification wall. Returns true only when the user may proceed. */
+function showVerify(user) {
+    const state = verificationState(user);
+    if (state === "verified") return true;
+    const copy = $("verifyCopy");
+    if (copy) {
+        copy.textContent =
+            state === "unknown"
+                ? `${user.email || "Your account"} signed in, but the backend did not report an email-verification state. Access stays locked until it does — check that email verification is enabled for project allforone-story-planner.`
+                : `${user.email || "Your email"} has not been verified yet. Click the link in the verification email, then press "I've verified my email". Story data stays locked until then.`;
+    }
+    pendingUser = user;
+    showPanel("Verify");
+    primeVerifyPanel();
+    return false;
 }
 
 async function gateOnUser(user) {
@@ -170,8 +204,6 @@ async function gateOnUser(user) {
     if (deniedEmail) deniedEmail.textContent = user.email || "—";
     showPanel("Denied");
 }
-
-let pendingUser = null;
 
 async function checkSession() {
     if (!auth.hasToken()) {
@@ -187,13 +219,7 @@ async function checkSession() {
         }
         currentUser = user;
         $("gate").hidden = true;
-        if (user.isVerified === false) {
-            const copy = $("verifyCopy");
-            if (copy) copy.textContent = `${user.email || "Your email"} has not been verified yet. You can still continue — verification protects password resets.`;
-            pendingUser = user;
-            showPanel("Verify");
-            return;
-        }
+        if (!showVerify(user)) return;
         await gateOnUser(user);
     } catch (err) {
         if (err?.status === 401) {
@@ -334,13 +360,75 @@ function wire() {
         }
     });
 
-    // --- verification panel
+    // --- verification panel: re-check with the backend, never a local bypass
     $("verifyContinue").addEventListener("click", async () => {
-        if (!pendingUser) {
-            showPanel("Login");
+        const btn = $("verifyContinue");
+        buttonBusy(btn, true, "Checking…");
+        try {
+            const fresh = await auth.me();
+            if (fresh) {
+                currentUser = fresh;
+                pendingUser = fresh;
+            }
+            const user = fresh || pendingUser;
+            if (!user) {
+                showPanel("Login");
+                return;
+            }
+            if (verificationState(user) !== "verified") {
+                const copy = $("verifyCopy");
+                if (copy) {
+                    copy.textContent =
+                        verificationState(user) === "unknown"
+                            ? "The backend still reports no verification state for this account. Access stays locked."
+                            : `Still unverified. Open the link in the verification email sent to ${user.email || "your address"}, then try again.`;
+                }
+                return;
+            }
+            await gateOnUser(user);
+        } catch (err) {
+            const copy = $("verifyCopy");
+            if (copy) copy.textContent = errorText(err);
+        } finally {
+            buttonBusy(btn, false);
+        }
+    });
+
+    // --- verification token: pasted by hand or delivered as ?token= in the email link
+    $("verifyTokenForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const form = e.currentTarget;
+        const input = field(form, "token");
+        const token = input.value.trim();
+        const err = $("verifyTokenError");
+        if (!token) {
+            if (err) {
+                err.hidden = false;
+                err.textContent = "Paste the verification token from your email.";
+            }
             return;
         }
-        await gateOnUser(pendingUser);
+        const btn = form.querySelector("button[type=submit]");
+        buttonBusy(btn, true, "Verifying…");
+        try {
+            await auth.verifyEmail(token);
+            input.value = "";
+            if (err) err.hidden = true;
+            localStorage.removeItem(VERIFY_TOKEN_KEY);
+            const fresh = await auth.me();
+            if (fresh) {
+                currentUser = fresh;
+                pendingUser = fresh;
+            }
+            await afterLogin(fresh || pendingUser);
+        } catch (e2) {
+            if (err) {
+                err.hidden = false;
+                err.textContent = errorText(e2);
+            }
+        } finally {
+            buttonBusy(btn, false);
+        }
     });
     $("verifyResend").addEventListener("click", async () => {
         const email = pendingUser?.email;
@@ -395,11 +483,54 @@ function wire() {
     });
 }
 
+/**
+ * BreadBackend verification emails link back to the site with a token in the
+ * query string or fragment. Capture it before routing so the gate can offer
+ * one-click verification, then scrub it from the address bar.
+ */
+function captureVerificationToken() {
+    let token = "";
+    try {
+        const search = new URLSearchParams(window.location.search || "");
+        const hash = window.location.hash || "";
+        const hashQuery = hash.includes("?") ? new URLSearchParams(hash.split("?")[1]) : new URLSearchParams();
+        token = search.get("token") || search.get("verify") || hashQuery.get("token") || hashQuery.get("verify") || "";
+        if (!token) return "";
+        localStorage.setItem(VERIFY_TOKEN_KEY, token);
+        const url = `${window.location.pathname}#/dashboard`;
+        window.history.replaceState(null, "", url);
+    } catch (_) {
+        /* non-browser or blocked history access — the token can still be pasted */
+    }
+    return token;
+}
+
+function pendingVerificationToken() {
+    try {
+        return localStorage.getItem(VERIFY_TOKEN_KEY) || "";
+    } catch (_) {
+        return "";
+    }
+}
+
+/** Pre-fill and auto-submit the token form when the gate opens on a fresh link. */
+function primeVerifyPanel() {
+    const token = pendingVerificationToken();
+    const input = $("verifyToken");
+    if (token && input && !input.value) {
+        input.value = token;
+        const copy = $("verifyCopy");
+        if (copy) copy.textContent = "Verification link detected. Press Verify my email to finish.";
+    }
+}
+
 export async function startGate(ready) {
     onReady = ready;
+    captureVerificationToken();
     wire();
     showPanel("Booting");
     await checkSession();
+    if (!$("gateVerify").hidden) primeVerifyPanel();
     settled = true;
 }
 

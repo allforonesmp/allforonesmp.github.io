@@ -376,6 +376,12 @@ export const auth = {
         return guarded(() => c.auth.resetPassword(token.trim(), newPassword), { allowRefresh: false });
     },
 
+    /** Consume the token from a verification email. Required before any data access. */
+    async verifyEmail(token) {
+        const c = getClient();
+        return guarded(() => c.auth.verifyEmail(String(token).trim()), { allowRefresh: false });
+    },
+
     async resendVerification(email) {
         const c = getClient();
         return guarded(() => c.auth.resendVerification(email.trim()), { allowRefresh: false });

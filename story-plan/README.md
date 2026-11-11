@@ -66,7 +66,32 @@ Every record carries `id`, `createdAt`, `updatedAt`, and (when archived) `archiv
 `previousStatus`. References are stored as singular IDs or arrays of IDs on the record that
 "owns" the relationship, so deleting nothing silently orphans anything.
 
-## 4. Before using it — two required backend settings
+## 4. Email verification is mandatory
+
+Access requires **both** of these, checked on every page load:
+
+1. BreadBackend reports `user.isVerified === true` for the account.
+2. The account is an approved member in the `members` collection.
+
+There is no bypass. An unverified account — or one where the backend reports no
+verification state at all (the gate fails closed) — sees only the verification
+screen, which can:
+
+- verify with the token from the emailed link (auto-filled from `?token=…`, or pasted),
+- re-check the backend after verifying in another tab,
+- resend the verification email,
+- sign out.
+
+The workspace shell and all collections stay untouched until verification passes;
+the token is scrubbed from the address bar once consumed and is never kept after a
+successful verification.
+
+**Backend requirement:** enable email verification for project
+`allforone-story-planner`. If verification is disabled the backend returns no
+`isVerified` field, and the app will refuse access rather than assume the account
+is trustworthy.
+
+## 5. Before using it — two required backend settings
 
 1. **Restrict signup.** The app's access gate is real, but BreadBackend's public client key has
    no per-user roles, so the true boundary is the project rule that decides who may read
@@ -78,7 +103,7 @@ Every record carries `id`, `createdAt`, `updatedAt`, and (when archived) `archiv
 On first sign-in the first account is recorded as **owner** in `members`; everyone else signs in
 but sees an "Access pending" screen until the owner approves them in **Settings → Members**.
 
-## 5. Known limitations (by design, not oversights)
+## 6. Known limitations (by design, not oversights)
 
 - The SDK exposes `limit` / `orderBy` only — **no `where` filters** — so each collection is
   fetched once and filtered client-side. Change history and storyboard scenes load lazily.
@@ -89,14 +114,20 @@ but sees an "Access pending" screen until the owner approves them in **Settings 
 - Realtime uses the SDK's SSE subscription and silently degrades to the local cache if the
   backend does not stream.
 
-## 6. Verification performed
+## 7. Verification performed
 
 Automated tests drive the real modules against a mocked BreadBackend (jsdom): authentication
 gate, login/logout, every route and every detail tab, editor autosave → `PATCH` persistence,
 create-with-failed-write resilience, archive/restore, history, Markdown XSS escaping, graph
 filter/select/fit, URL-driven filters, global search and session expiry.
 
-## 7. Adding an entity type
+A dedicated 21-check verification suite additionally proves the email gate fails closed:
+unverified accounts never reach the workspace, the old "continue anyway" path is gone,
+re-checking a still-unverified account stays locked, a verified-but-unapproved account hits
+"Access pending", token links verify end-to-end and are scrubbed from the URL, and invalid
+tokens surface an error without unlocking anything.
+
+## 8. Adding an entity type
 
 Add one entry to `ENTITIES` in `js/schema.js`; the editor, detail view, list view,
 cross-reference index, search and exports pick it up automatically.

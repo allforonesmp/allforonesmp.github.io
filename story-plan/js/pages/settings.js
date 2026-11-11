@@ -25,9 +25,14 @@ export function settingsPage() {
                 el("div", { class: "settings-row" }, [
                     el("div", { class: "sr-label" }, [el("strong", { text: user?.email || "—" }), el("span", { text: `Role: ${member?.role || "member"} · Status: ${member?.status || "active"}` })]),
                     el("div", { class: "sr-control" }, [
-                        el("span", { class: `badge ${user?.isVerified === false ? "warning" : "success"}`, text: user?.isVerified === false ? "Email not verified" : "Email verified" }),
-                        user?.isVerified === false
-                            ? el("button", {
+                        el("span", {
+                            class: `badge ${user?.isVerified === true ? "success" : "warning"}`,
+                            text: user?.isVerified === true ? "Email verified" : user?.isVerified === false ? "Email not verified" : "Verification unknown",
+                            title: "Unverified accounts cannot open the workspace.",
+                        }),
+                        user?.isVerified === true
+                            ? null
+                            : el("button", {
                                   class: "btn btn-ghost btn-sm",
                                   type: "button",
                                   onclick: async () => {
@@ -38,8 +43,7 @@ export function settingsPage() {
                                           toastError(err, "Sending verification");
                                       }
                                   },
-                              }, "Resend verification")
-                            : null,
+                              }, "Resend verification"),
                     ]),
                 ]),
                 el("div", { class: "settings-row" }, [
@@ -250,7 +254,7 @@ function capability(name, level, detail) {
 function membersCard() {
     const host = el("div", {});
     const body = el("div", { class: "stack sm" }, [
-        el("p", { class: "field-hint", text: "New accounts can sign in but see nothing until approved here. The first account created is the owner." }),
+        el("p", { class: "field-hint", text: "Access needs both conditions: the account must have a verified email address, AND be approved here. Unverified accounts see nothing at all. The first account created is the owner." }),
         host,
         el("button", {
             class: "btn btn-ghost btn-sm",
