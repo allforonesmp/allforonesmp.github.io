@@ -242,7 +242,8 @@ function detailView(list, highlight, zoom) {
     const laneCount = 4;
     const colWidth = Math.round(150 * zoom);
     const width = months.length * colWidth + 40;
-    const laneHeight = 46;
+    const laneHeight = 54;
+    const laneLabelSpace = 18; // chips sit below their lane label instead of under it
     const height = 44 + laneCount * laneHeight + 20;
 
     const scroller = el("div", { class: "timeline-scroll" });
@@ -297,7 +298,7 @@ function detailView(list, highlight, zoom) {
             type: "button",
             style: {
                 left: `${idx * colWidth + 6 + dayFrac * (colWidth - 46) + Math.min(stack, 5) * 4}px`,
-                top: `${44 + lane * laneHeight + Math.min(stack, 1) * 3}px`,
+                top: `${44 + lane * laneHeight + laneLabelSpace + Math.min(stack, 1) * 3}px`,
                 "--dot": e.kind === "Main Event" ? "var(--c-event-main)" : colourForStatus(e.status),
             },
             title: `${e.title} — ${when ? fmtDate(when) : "undated"} (${e.status || "no status"})`,

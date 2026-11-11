@@ -11,6 +11,20 @@ import { toArray, deepClone, uid } from "./util.js";
 
 const COLLECTION_KEYS = Object.keys(ENTITIES);
 
+/* Collections that are not schema entities but still live in the store.
+   loadCollection used to reject these, so storyboard scenes, saved diagrams,
+   workspace settings and the members list never loaded from the backend. */
+const SUPPORT_KEYS = [COLLECTIONS.scenes, COLLECTIONS.diagrams, COLLECTIONS.settings, COLLECTIONS.members];
+const STORE_KEYS = [...COLLECTION_KEYS, ...SUPPORT_KEYS];
+
+/* Non-entity collections that belong in exports/backups (members excluded:
+   access is managed by the operator, never by importing a file). */
+export const EXPORT_EXTRA = {
+    [COLLECTIONS.scenes]: "Storyboard scenes",
+    [COLLECTIONS.diagrams]: "Saved diagrams",
+    [COLLECTIONS.settings]: "Workspace settings",
+};
+
 const PREFS_KEY = "afo_storyplan_prefs";
 
 export const prefs = {
@@ -44,7 +58,7 @@ export function savePrefs(patch = {}) {
 /* ------------------------------------------------------------------ state */
 
 export const state = {
-    collections: Object.fromEntries(COLLECTION_KEYS.map((k) => [k, []])),
+    collections: Object.fromEntries(STORE_KEYS.map((k) => [k, []])),
     loaded: new Set(), // collections fetched at least once this session
     loading: new Set(),
     inflight: new Map(), // collection -> promise (concurrent callers share one request)
@@ -138,7 +152,7 @@ export function isLoaded(collection) {
 }
 
 export async function loadCollection(collection, { force = false } = {}) {
-    if (!COLLECTION_KEYS.includes(collection)) return [];
+    if (!STORE_KEYS.includes(collection)) return [];
     if (!force && state.loaded.has(collection)) return docs(collection);
 
     // Share one request per collection. The old version spun on a 40ms timer,
@@ -647,7 +661,7 @@ export function generateCode(collection, prefix) {
 }
 
 export function resetStore() {
-    for (const key of COLLECTION_KEYS) {
+    for (const key of STORE_KEYS) {
         state.collections[key] = [];
     }
     state.loaded.clear();
@@ -735,7 +749,7 @@ export function ensureCollection(collection) {
     return loadCollection(collection).catch(() => docs(collection));
 }
 
-export function exportPayload(collections = COLLECTION_KEYS) {
+export function exportPayload(collections = [...COLLECTION_KEYS, ...Object.keys(EXPORT_EXTRA)]) {
     const out = {
         app: "allforone-story-planner",
         exportedAt: new Date().toISOString(),

@@ -230,7 +230,7 @@ export function listView(cfg) {
 
         const visible = rows.slice(0, limit);
         const wrap = el("div", { class: "table-wrap" });
-        const table = el("table", { class: "data" });
+        const table = el("table", { class: "data dt" });
         const thead = el("thead");
         const tr = el("tr");
         (cfg.columns || defaultColumns(collection)).forEach((col) => {
@@ -264,14 +264,15 @@ export function listView(cfg) {
                 navigate(cfg.rowHref ? cfg.rowHref(doc) : detailPath(collection, doc.id));
             });
             (cfg.columns || defaultColumns(collection)).forEach((col) => {
-                const td = el("td", { class: col.nowrap === false ? "" : "nowrap" });
+                // data-label drives the stacked card layout on phones (see app.css)
+                const td = el("td", { class: col.nowrap === false ? "" : "nowrap", dataset: { label: col.label || "" } });
                 const value = col.get ? col.get(doc) : doc[col.key];
                 if (value instanceof Node) td.appendChild(value);
                 else td.textContent = value ?? "";
                 if (col.className) td.className += ` ${col.className}`;
                 row.appendChild(td);
             });
-            const actions = el("td", { class: "nowrap" });
+            const actions = el("td", { class: "nowrap dt-actions" });
             actions.appendChild(
                 el("button", {
                     class: "icon-btn",

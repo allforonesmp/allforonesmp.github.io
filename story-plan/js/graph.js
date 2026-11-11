@@ -144,6 +144,10 @@ export function createGraph(container, opts = {}) {
         // seed on a circle so the first frames look intentional
         const n = nodes.length || 1;
         nodes.forEach((node, i) => {
+            // velocities must always be numbers: nodes restored from a saved
+            // layout skipped this and turned into NaN on the first tick.
+            if (!Number.isFinite(node.vx)) node.vx = 0;
+            if (!Number.isFinite(node.vy)) node.vy = 0;
             if (Number.isFinite(node.x) && Number.isFinite(node.y)) return;
             const angle = (i / n) * Math.PI * 2;
             const radius = Math.min(w, h) * 0.32 + (i % 3) * 24;
@@ -248,7 +252,9 @@ export function createGraph(container, opts = {}) {
             else if (focusSet) g.classList.add("dim");
             if (isMatch(node)) g.classList.add("sel");
 
-            const w = node.width || Math.max(84, textWidth(node.label, options.fontSize));
+            const shown = node.label.length > 26 ? node.label.slice(0, 25) + "…" : node.label;
+            // size the box to the text actually drawn (long titles are truncated)
+            const w = node.width || Math.max(84, textWidth(shown, options.fontSize));
             node.width = w;
             const h = options.nodeHeight;
             const accent = node.color || "var(--primary-blue)";
@@ -275,7 +281,7 @@ export function createGraph(container, opts = {}) {
                 );
                 g.appendChild(svgEl("rect", { x: -w / 2, y: -h / 2, width: 4, height: h, rx: 2, fill: accent, stroke: "none" }));
                 const t = svgEl("text", { x: 2, y: node.sub ? -1 : 4, "text-anchor": "middle" });
-                t.textContent = node.label.length > 26 ? node.label.slice(0, 25) + "…" : node.label;
+                t.textContent = shown;
                 g.appendChild(t);
                 if (node.sub) {
                     const s = svgEl("text", { x: 2, y: 11, "text-anchor": "middle", class: "dg-sub" });
@@ -380,8 +386,21 @@ export function createGraph(container, opts = {}) {
         return new Set(visibleNodes().map((n) => n.id));
     }
 
-    // pan
+    // pan (one pointer) + pinch-zoom (two pointers, touch screens)
+    const touches = new Map();
+    let pinch = null;
+    const pinchState = () => {
+        const [a, b] = [...touches.values()];
+        return { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+    };
     svg.addEventListener("pointerdown", (e) => {
+        touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (touches.size === 2) {
+            // second finger: switch from panning to pinching
+            panning = null;
+            pinch = pinchState();
+            return;
+        }
         if (e.target.closest(".dg-node")) return;
         svg.setPointerCapture(e.pointerId);
         container.classList.add("dragging");
@@ -393,19 +412,29 @@ export function createGraph(container, opts = {}) {
         }
     });
     svg.addEventListener("pointermove", (e) => {
+        if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pinch && touches.size === 2) {
+            const next = pinchState();
+            zoomAt(next.mx, next.my, next.dist / pinch.dist);
+            tx += next.mx - pinch.mx;
+            ty += next.my - pinch.my;
+            applyTransform();
+            pinch = next;
+            return;
+        }
         if (!panning) return;
         tx = panning.tx + (e.clientX - panning.x);
         ty = panning.ty + (e.clientY - panning.y);
         applyTransform();
     });
-    svg.addEventListener("pointerup", () => {
+    const endPointer = (e) => {
+        touches.delete(e.pointerId);
+        if (touches.size < 2) pinch = null;
         panning = null;
         container.classList.remove("dragging");
-    });
-    svg.addEventListener("pointercancel", () => {
-        panning = null;
-        container.classList.remove("dragging");
-    });
+    };
+    svg.addEventListener("pointerup", endPointer);
+    svg.addEventListener("pointercancel", endPointer);
 
     container.addEventListener(
         "wheel",
@@ -439,13 +468,11 @@ export function createGraph(container, opts = {}) {
             nodeIndex = new Map(nodes.map((node) => [node.id, node]));
             edges = (e || []).filter((edge) => nodeIndex.has(edge.source) && nodeIndex.has(edge.target));
             selectedId = null;
+            // positions first, then paint — painting unpositioned nodes wrote
+            // NaN/undefined into SVG attributes.
+            warmLayout();
             paint();
-            if (layout) {
-                warmLayout();
-                runSimulation(nodes.length > 120 ? 60 : 90);
-            } else {
-                paint();
-            }
+            if (layout) runSimulation(nodes.length > 120 ? 60 : 90);
         },
         setVisibleTypes(types) {
             visibleTypes = types && types.size ? types : null;
