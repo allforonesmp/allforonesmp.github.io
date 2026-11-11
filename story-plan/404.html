@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="robots" content="noindex, nofollow, noarchive" />
+        <meta name="referrer" content="no-referrer" />
+        <title>Not found | AllForOne SMP Story Planner</title>
+        <link rel="icon" type="image/x-icon" href="../images/logo.png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Spectral:wght@600;700&display=swap" rel="stylesheet" />
+        <style>
+            :root {
+                --primary-blue: #4a90e2;
+                --light-blue: #e8f4f8;
+                --text-dark: #1a2332;
+                --text-medium: #4a5568;
+                --border-color: #d4e8f0;
+                --surface: #ffffff;
+                --surface-2: #f5fbfd;
+            }
+            :root[data-theme="dark"] {
+                --primary-blue: #5ba3f5;
+                --light-blue: #1e2a38;
+                --text-dark: #eef2f7;
+                --text-medium: #b7c2cf;
+                --border-color: #2c3b4a;
+                --surface: #1a232e;
+                --surface-2: #141c26;
+            }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+                min-height: 100vh;
+                display: grid;
+                place-items: center;
+                padding: 1.5rem;
+                background: var(--surface-2);
+                color: var(--text-dark);
+                font-family: "DM Sans", system-ui, sans-serif;
+            }
+            .card {
+                background: var(--surface);
+                border: 1px solid var(--border-color);
+                border-radius: 16px;
+                padding: 1.8rem;
+                max-width: 430px;
+                text-align: center;
+                box-shadow: 0 18px 48px rgba(26, 35, 50, 0.12);
+            }
+            img { width: 46px; height: 46px; border-radius: 10px; }
+            h1 { font-family: "Spectral", serif; font-size: 1.4rem; margin: 0.9rem 0 0.4rem; }
+            p { color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; }
+            a {
+                display: inline-block;
+                margin-top: 1.15rem;
+                background: var(--primary-blue);
+                color: #fff;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 0.9rem;
+                padding: 0.6rem 1.1rem;
+                border-radius: 8px;
+            }
+        </style>
+        <script>
+            try {
+                var t = localStorage.getItem("afo_theme");
+                document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+            } catch (_) {}
+        </script>
+    </head>
+    <body>
+        <div class="card">
+            <img src="../images/logo.png" alt="" />
+            <h1>Page not found</h1>
+            <p>This path is not part of the Story Planner. Private pages are never listed publicly.</p>
+            <a href="../story-plan/">Back to the workspace</a>
+        </div>
+    </body>
+</html>
