@@ -1,6 +1,6 @@
 /* Story Planner — Dashboard: the current state of the narrative at a glance. */
 
-import {el, icon, fmtDate, relTime, toArray, parseDate, MONTHS} from "../util.js";
+import {el, clear, icon, fmtDate, relTime, toArray, parseDate, MONTHS} from "../util.js";
 import { activeDocs, archivedDocs, byId, recentActivity, getWorkspaceMeta, saveWorkspaceMeta, subscribe } from "../store.js";
 
 import { statTile, emptyState, badge, statusBadge, importanceBadge, meter, toast, toastError, promptDialog, openModal, closeModal } from "../components/ui.js";
@@ -223,28 +223,24 @@ export function dashboardPage() {
     );
 
     /* ------------------------------------------------------- refresh wiring */
+    // Re-render the dashboard's own content in place. Replacing `root` from
+    // inside the dispatch would re-subscribe a new listener mid-circuit (and
+    // used to loop forever). 700ms coalesces bursts of autosave events.
+    let refreshTimer = null;
     const unsub = subscribe((ev) => {
         if (ev.type === "changed" || ev.type === "saved" || ev.type === "loaded") {
-            if (root.isConnected) {
-                clearTimeout(refreshTimer);
-                refreshTimer = setTimeout(() => {
-                    const parent = root.parentNode;
-                    if (parent) {
-                        const fresh = dashboardPage();
-                        parent.replaceChild(fresh, root);
-                    }
-                }, 700);
-            }
+            if (!root.isConnected) return;
+            clearTimeout(refreshTimer);
+            refreshTimer = setTimeout(refresh, 700);
         }
     });
-    let refreshTimer = null;
 
     function refresh() {
-        const parent = root.parentNode;
-        if (parent) {
-            const fresh = dashboardPage();
-            parent.replaceChild(fresh, root);
-        }
+        if (!root.isConnected) return;
+        const view = dashboardPage();
+        // swap only the body, keeping this root (and its single listener) alive
+        clear(root);
+        while (view.firstChild) root.appendChild(view.firstChild);
     }
 
     root.addEventListener("planner:dispose", () => {

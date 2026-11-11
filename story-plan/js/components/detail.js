@@ -5,7 +5,7 @@
  * character's timeline or an event's dependency chain, plus change history.
  */
 
-import { el, clear, icon, toArray, fmtDate, relTime, truncate, parseDate, MONTHS } from "../util.js";
+import { el, clear, icon, toArray, fmtDate, relTime, truncate, parseDate, MONTHS, debounce } from "../util.js";
 import { ENTITIES } from "../schema.js";
 import { renderMarkdown } from "../md.js";
 import { byId, docs, referencesGrouped, historyFor, archiveRecord, subscribe, ensureHistory, updateRecord } from "../store.js";
@@ -301,7 +301,7 @@ function labelForField(collection, key) {
 
 export function entityDetail(collection, id) {
     const ent = ENTITIES[collection];
-    const doc = byId(collection, id);
+    let doc = byId(collection, id);
     const root = el("div", { class: "page" });
 
     if (!doc) {
@@ -433,13 +433,20 @@ export function entityDetail(collection, id) {
     root.appendChild(body);
     renderTab();
 
+    // Refresh in place. Replacing this root from inside the dispatch would
+    // re-subscribe a new listener mid-circuit; patching instead keeps exactly one
+    // listener alive and never tears down the node the user is interacting with.
+    const refreshTab = debounce(() => {
+        if (!root.isConnected) return;
+        const latest = byId(collection, id);
+        if (!latest) return;
+        doc = latest;
+        if (active === "overview") renderTab();
+    }, 250);
+
     const unsub = subscribe((ev) => {
         if (ev.type === "changed" && ev.collection === collection && String(ev.id) === String(id)) {
-            if (root.isConnected) {
-                const parent = root.parentNode;
-                const fresh = entityDetail(collection, id);
-                if (parent) parent.replaceChild(fresh, root);
-            }
+            refreshTab();
         }
     });
     root.addEventListener("planner:dispose", () => unsub());

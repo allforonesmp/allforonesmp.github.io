@@ -47,6 +47,7 @@ export const state = {
     collections: Object.fromEntries(COLLECTION_KEYS.map((k) => [k, []])),
     loaded: new Set(), // collections fetched at least once this session
     loading: new Set(),
+    inflight: new Map(), // collection -> promise (concurrent callers share one request)
     errors: new Map(), // collection -> ApiError
     pending: new Map(), // `${collection}:${id}` -> patch awaiting save
     saving: new Map(), // docKey -> promise
@@ -74,8 +75,17 @@ export function onApiError(fn) {
     return () => errorListeners.delete(fn);
 }
 
+/**
+ * Dispatch a store event to the listeners that were registered when it started.
+ *
+ * The snapshot matters: a Set iterator visits entries added during iteration, so
+ * a listener that re-renders itself (re-subscribing in the process) used to keep
+ * the loop alive forever. That froze the tab on any save. Listeners that
+ * unsubscribed mid-dispatch are skipped, so a disposed view never runs.
+ */
 function emit(event) {
-    for (const fn of listeners) {
+    for (const fn of Array.from(listeners)) {
+        if (!listeners.has(fn)) continue;
         try {
             fn(event);
         } catch (err) {
@@ -130,33 +140,46 @@ export function isLoaded(collection) {
 export async function loadCollection(collection, { force = false } = {}) {
     if (!COLLECTION_KEYS.includes(collection)) return [];
     if (!force && state.loaded.has(collection)) return docs(collection);
-    if (state.loading.has(collection)) {
-        // wait for the in-flight request
-        while (state.loading.has(collection)) await new Promise((r) => setTimeout(r, 40));
+
+    // Share one request per collection. The old version spun on a 40ms timer,
+    // which stacked up under realtime bursts and made the tab feel frozen.
+    const inflight = state.inflight.get(collection);
+    if (inflight) {
+        // Coalesce: a reload that is already running fetched from the server
+        // moments ago, so returning its result is fresher than queueing another
+        // round-trip. Realtime bursts therefore cost one request, not N.
+        await inflight.catch(() => {});
         return docs(collection);
     }
-    state.loading.add(collection);
-    emit({ type: "loading", collection });
-    try {
-        const list = await db.list(collection, { limit: 2000, orderBy: "createdAt", order: "asc" });
-        // preserve local (unsaved) edits that are still pending
-        const merged = list.map((doc) => {
-            const pendingPatch = state.pending.get(`${collection}:${doc.id}`);
-            return pendingPatch ? { ...doc, ...pendingPatch } : doc;
-        });
-        state.collections[collection] = merged;
-        state.loaded.add(collection);
-        state.errors.delete(collection);
-        applySettingsDoc(collection);
-        emit({ type: "loaded", collection, count: merged.length });
-        return merged;
-    } catch (err) {
-        state.errors.set(collection, err);
-        emit({ type: "error", collection, error: err });
-        throw err;
-    } finally {
-        state.loading.delete(collection);
-    }
+
+    const task = (async () => {
+        state.loading.add(collection);
+        emit({ type: "loading", collection });
+        try {
+            const list = await db.list(collection, { limit: 2000, orderBy: "createdAt", order: "asc" });
+            // preserve local (unsaved) edits that are still pending
+            const merged = list.map((doc) => {
+                const pendingPatch = state.pending.get(`${collection}:${doc.id}`);
+                return pendingPatch ? { ...doc, ...pendingPatch } : doc;
+            });
+            state.collections[collection] = merged;
+            state.loaded.add(collection);
+            state.errors.delete(collection);
+            applySettingsDoc(collection);
+            emit({ type: "loaded", collection, count: merged.length });
+            return merged;
+        } catch (err) {
+            state.errors.set(collection, err);
+            emit({ type: "error", collection, error: err });
+            throw err;
+        } finally {
+            state.loading.delete(collection);
+            state.inflight.delete(collection);
+        }
+    })();
+
+    state.inflight.set(collection, task);
+    return task;
 }
 
 /* Load many collections at once, tolerating individual failures. */
@@ -670,18 +693,23 @@ export function enableRealtimeSync({ onRemoteChange } = {}) {
     const offs = [];
     for (const collection of REALTIME_COLLECTIONS) {
         const off = db.subscribe(collection, () => {
+            // Ignore our own echo: a save here already updated the cache, so
+            // refetching the whole collection would re-render for nothing.
+            if (state.saving.size > 0) return;
+            if (state.pending.size > 0) return;
             clearTimeout(timers.get(collection));
             timers.set(
                 collection,
                 setTimeout(async () => {
                     if (!state.loaded.has(collection)) return;
+                    if (state.saving.size > 0 || state.pending.size > 0) return;
                     try {
                         await loadCollection(collection, { force: true });
                         if (onRemoteChange) onRemoteChange(collection);
                     } catch (_) {
                         /* offline or forbidden — the cache stays usable */
                     }
-                }, 900)
+                }, 1200)
             );
         });
         offs.push(off);
