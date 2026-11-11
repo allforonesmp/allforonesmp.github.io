@@ -23,7 +23,7 @@ export function settingsPage() {
             iconName: "user",
             body: [
                 el("div", { class: "settings-row" }, [
-                    el("div", { class: "sr-label" }, [el("strong", { text: user?.email || "—" }), el("span", { text: `Role: ${member?.role || "member"} · Status: ${member?.status || "active"}` })]),
+                    el("div", { class: "sr-label" }, [el("strong", { text: user?.email || "—" }), el("span", { text: `Role: ${member?.role || "editor"} · Status: ${member?.status || "active"}` })]),
                     el("div", { class: "sr-control" }, [
                         el("span", {
                             class: `badge ${user?.isVerified === true ? "success" : "muted"}`,
@@ -203,7 +203,7 @@ export function settingsPage() {
                     el("div", { class: "defs" }, [
                         capability("Authentication", "Supported", "BreadBackend auth — signup, login, refresh, sessions, logout."),
                         capability("Per-collection queries", "Limited", "The SDK supports limit / orderBy only, so the app loads each collection once and filters client-side."),
-                        capability("Roles / RBAC", "Not provided", "Access is gated by the members collection. Disable open signup in the BreadBackend dashboard — that is the real boundary."),
+                        capability("Roles / RBAC", "Not provided", "Access is gated by operator-verified email. Require a verified email in the BreadBackend project rules — that is the real boundary."),
                         capability("Realtime", "SSE subscribe", "Used where the backend streams; falls back to the local cache when unavailable."),
                         capability("File uploads", "bread.files.upload", "Images and attachments are uploaded to BreadBackend and referenced by URL — never stored as base64."),
                         capability("Version history", "App-level", "Snapshots are written to the change_history collection on every save."),
@@ -234,11 +234,11 @@ function membersCard() {
     const body = el("div", { class: "stack sm" }, [
         el("p", {
             class: "field-hint",
-            text: "This list is read-only. Access is granted manually by the operator — no button here can let an account in. Every account also needs its email marked verified by the operator in the backend console.",
+            text: "This list is read-only. Access is granted by the operator marking an account's email as verified in the backend console — no button here can let an account in.",
         }),
         el("p", {
             class: "field-hint",
-            text: "To add someone, mark their account's email as verified in the backend console, then create a record in the members collection: { email, role: \"editor\", status: \"active\" }. To revoke access, set status to \"revoked\" or delete the record.",
+            text: "Member records are optional. A verified account with no record is an editor. Add { email, role } to change a role, or { email, status: \"revoked\" } to block an account.",
         }),
         host,
     ]);
@@ -251,7 +251,7 @@ function membersCard() {
                 emptyState({
                     iconName: "users",
                     title: "No one is listed",
-                    message: "Nobody can open this workspace until the first member record is added in the database.",
+                    message: "Every verified account enters as an editor. Add member records only to give someone a different role or to block them.",
                 })
             );
             return;

@@ -19,7 +19,7 @@ story-plan/
 └── js/
     ├── app.js            shell: nav, routing, global search, save indicator, realtime
     ├── api.js            BreadBackend data layer (auth, collections, uploads, errors)
-    ├── auth.js           session gate + members approval flow
+    ├── auth.js           session gate (operator-verified email)
     ├── store.js          cache, cross-reference index, autosave queue, change history
     ├── schema.js         one declarative definition per entity (drives editor/views/search)
     ├── router.js         hash router (GitHub Pages friendly, no rewrites)
@@ -66,72 +66,58 @@ Every record carries `id`, `createdAt`, `updatedAt`, and (when archived) `archiv
 `previousStatus`. References are stored as singular IDs or arrays of IDs on the record that
 "owns" the relationship, so deleting nothing silently orphans anything.
 
-## 4. Access: operator-verified email + manual allowlist — no self-service
+## 4. Access: operator-verified email — no self-service
 
-There is **no** way for a person to let themselves in. Two things must both be
-true, and only the operator can make either of them true:
+There is **no** way for a person to let themselves in. The workspace opens only
+for accounts whose **email is marked verified on the backend**, and you do that
+by hand in the BreadBackend console.
 
-1. **The account's email is marked verified on the backend.** You do this by
-   hand in the BreadBackend console. The gate checks this first: an unverified
-   account (or one whose verification state is missing) is stopped before any
-   collection is touched, and the data layer refuses every read, write, upload
-   and subscription. Verification is re-checked while the app is open, so
-   un-verifying an account locks it out within a couple of minutes.
-2. **The account has a record in the `members` collection:**
-
-```json
-{ "email": "them@example.com", "role": "editor", "status": "active" }
-```
-
-`role` may be `owner`, `admin`, `editor` or `viewer`. `status` must be `active`
-(or `approved`). Anything else — `pending`, `revoked`, a missing status, an
-unrecognised role — lands on the **Access pending** screen, which offers exactly
-two actions: *Check again* (re-reads the database) and *Sign out*.
+The gate checks this before anything else: an unverified account (or one whose
+verification state is missing) is stopped before any collection is touched, and
+the data layer refuses every read, write, upload and subscription. It lands on
+the **Access pending** screen, which offers exactly two actions: *Check again*
+and *Sign out*. Verification is re-checked while the app is open, so
+un-verifying an account locks it out within a couple of minutes.
 
 **To give someone access:** have them sign up, mark their email verified in the
-backend console, and create the members record above with that exact email.
-They then press *Check again*.
+backend console, and have them press *Check again*. They enter as an editor.
 
-**To revoke access:** un-verify the email, set `status` to `revoked`, or delete the record. The gate
-re-reads the allowlist on every load, so this takes effect on their next
-navigation — no session needs to be manually killed.
+**To revoke access:** un-verify the email.
 
-**What the app deliberately does not do:**
+**The `members` collection is optional.** A record whose `email` matches an
+account can:
 
-- It never verifies an email (`auth.verifyEmail` is not wrapped at all).
-- It never sends verification mail (`resendVerification` is not wrapped).
-- It never creates, approves or deletes member records. Settings → Members is a
-  read-only view so you can confirm who is in.
-- It does not bootstrap an owner from the first signup. An empty `members`
-  collection means **nobody** gets in, including you — seed your own record.
+- set its role — `{ "email": "them@example.com", "role": "owner" }` (`owner`,
+  `admin`, `editor` or `viewer`);
+- block it even though it is verified — `{ "email": "…", "status": "revoked" }`.
+  Any `status` other than `active` / `approved`, or an unrecognised `role`,
+  blocks the account.
 
-**The app never performs verification.** It only reads the verified flag the
+If the collection is empty or cannot be read, verified accounts still get in
+with the default role.
+
+**The app never performs verification.** `auth.verifyEmail` and
+`resendVerification` are not wrapped; the app only reads the verified flag the
 backend reports (`isVerified`) and requires it to be exactly `true`. If your
 backend also emails self-service verification links on signup, turn that off —
 otherwise people could verify themselves outside this app.
 
-**If the allowlist cannot be read** (wrong project rules, network failure), the
-gate refuses access rather than falling open.
-
 ## 5. Before using it — two required backend settings
 
-1. **Restrict signup.** The app's access gate is real, but BreadBackend's public client key has
-   no per-user roles, so the true boundary is the project rule that decides who may read
-   collections. Make signup **invite-only / disabled** in the BreadBackend dashboard.
+1. **Require a verified email in the project rules.** The app's gate runs in the browser, and
+   BreadBackend's public client key has no per-user roles, so the true boundary is the project
+   rule that decides who may read collections. Also turn off self-service verification mail.
 2. **Allow authenticated collection access** for the collections listed above, otherwise reads
    return `403 Forbidden by project rules` (the app surfaces this explicitly rather than failing
    silently).
-
-No account is recorded automatically. Until you add the first `members` record by hand, every
-sign-in (yours included) stops at **Access pending**.
 
 ## 6. Known limitations (by design, not oversights)
 
 - The SDK exposes `limit` / `orderBy` only — **no `where` filters** — so each collection is
   fetched once and filtered client-side. Change history and storyboard scenes load lazily.
-- No server-side RBAC; the verified-email and members checks run in the browser. For a hard
-  guarantee, also require a verified email in the backend project rules. A signed-up account could still call the API directly if collection
-  reads are open to all authenticated users — which is why §5 step 1 matters.
+- No server-side RBAC; the verified-email check runs in the browser. A signed-up account could
+  still call the API directly if collection reads are open to all authenticated users — which
+  is why §5 step 1 matters.
 - Version history is application-level: snapshots are written to `change_history` on save and
   can be restored from the record's **History** tab.
 - File uploads use `bread.files.upload`; URLs are stored, never base64.
@@ -145,13 +131,11 @@ gate, login/logout, every route and every detail tab, editor autosave → `PATCH
 create-with-failed-write resilience, archive/restore, history, Markdown XSS escaping, graph
 filter/select/fit, URL-driven filters, global search and session expiry.
 
-A dedicated 28-check allowlist suite proves the gate fails closed: an empty `members`
-collection refuses even the first signup and auto-creates nothing; unlisted and revoked
-accounts are refused; `status: pending` is refused with a message naming the fix; a listed
-`active` account enters (case/whitespace insensitive); adding a record then pressing
-*Check again* admits the user live; an unreadable allowlist refuses rather than opening; and
-the shipped source contains no verification panel, no request-access button, no
-resend-verification control and no owner bootstrap.
+The gate was also driven in a browser against a mocked backend: an unverified account (or one
+with no verification state) makes zero collection requests and a direct data-layer call is
+refused; verifying the account then pressing *Check again* admits it; a verified account with
+no members record enters as an editor; a `revoked` members record blocks a verified account;
+and un-verifying an account mid-session locks it out.
 
 ## 8. Adding an entity type
 
