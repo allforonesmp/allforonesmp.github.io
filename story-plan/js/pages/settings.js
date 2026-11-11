@@ -2,7 +2,7 @@
    export/import, and an honest report of backend capabilities. */
 
 import { el, icon, downloadFile, fmtDateTime, relTime } from "../util.js";
-import { docs, prefs, savePrefs, exportPayload, loadCollection, flushPending } from "../store.js";
+import { docs, prefs, savePrefs, exportPayload, loadCollection, flushPending, EXPORT_EXTRA } from "../store.js";
 import { COLLECTIONS, auth, db } from "../api.js";
 import { ENTITIES } from "../schema.js";
 import { pageHead, card, badge, toast, toastError, confirmDialog, emptyState, openModal, closeModal } from "../components/ui.js";
@@ -278,7 +278,8 @@ function membersCard() {
 /* ----------------------------------------------------------------- export */
 
 function exportCard() {
-    const categories = Object.keys(ENTITIES);
+    const categories = [...Object.keys(ENTITIES), ...Object.keys(EXPORT_EXTRA)];
+    const labelFor = (c) => ENTITIES[c]?.plural || EXPORT_EXTRA[c] || c;
     const chosen = new Set(categories);
     const chips = el("div", { class: "chip-row" });
 
@@ -295,7 +296,7 @@ function exportCard() {
                         else chosen.add(c);
                         renderChips();
                     },
-                }, [ENTITIES[c].plural, el("span", { class: "n", text: String(docs(c).length) })])
+                }, [labelFor(c), el("span", { class: "n", text: String(docs(c).length) })])
             );
         });
     };
@@ -369,7 +370,7 @@ function previewImport(payload) {
                     let ok = 0;
                     let failed = 0;
                     for (const [collection, list] of Object.entries(payload.collections)) {
-                        if (!Array.isArray(list) || !ENTITIES[collection]) continue;
+                        if (!Array.isArray(list) || !(ENTITIES[collection] || EXPORT_EXTRA[collection])) continue;
                         for (const record of list) {
                             try {
                                 if (docs(collection).some((d) => String(d.id) === String(record.id))) {
