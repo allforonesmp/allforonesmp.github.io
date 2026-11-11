@@ -2,11 +2,11 @@
    export/import, and an honest report of backend capabilities. */
 
 import { el, icon, downloadFile, fmtDateTime, relTime } from "../util.js";
-import { docs, prefs, savePrefs, exportPayload, loadCollection, createRecord, updateRecord, deleteRecord, flushPending } from "../store.js";
+import { docs, prefs, savePrefs, exportPayload, loadCollection, flushPending } from "../store.js";
 import { COLLECTIONS, auth, db } from "../api.js";
 import { ENTITIES } from "../schema.js";
 import { pageHead, card, badge, toast, toastError, confirmDialog, emptyState, openModal, closeModal } from "../components/ui.js";
-import { getUser, getMember, isOwner, signOut } from "../auth.js";
+import { getUser, getMember, signOut } from "../auth.js";
 import { openWorkspaceSettings } from "./dashboard.js";
 
 export function settingsPage() {
@@ -26,24 +26,10 @@ export function settingsPage() {
                     el("div", { class: "sr-label" }, [el("strong", { text: user?.email || "—" }), el("span", { text: `Role: ${member?.role || "member"} · Status: ${member?.status || "active"}` })]),
                     el("div", { class: "sr-control" }, [
                         el("span", {
-                            class: `badge ${user?.isVerified === true ? "success" : "warning"}`,
-                            text: user?.isVerified === true ? "Email verified" : user?.isVerified === false ? "Email not verified" : "Verification unknown",
-                            title: "Unverified accounts cannot open the workspace.",
+                            class: `badge ${user?.isVerified === true ? "success" : "muted"}`,
+                            text: user?.isVerified === true ? "Email verified" : "Email unverified",
+                            title: "Informational only — access is decided by the members list, not by email verification. Verification is managed outside this app.",
                         }),
-                        user?.isVerified === true
-                            ? null
-                            : el("button", {
-                                  class: "btn btn-ghost btn-sm",
-                                  type: "button",
-                                  onclick: async () => {
-                                      try {
-                                          await auth.resendVerification(user.email);
-                                          toast("Verification email sent.", "success");
-                                      } catch (err) {
-                                          toastError(err, "Sending verification");
-                                      }
-                                  },
-                              }, "Resend verification"),
                     ]),
                 ]),
                 el("div", { class: "settings-row" }, [
@@ -200,16 +186,8 @@ export function settingsPage() {
         })
     );
 
-    /* ---------------- members ---------------- */
-    if (isOwner()) root.appendChild(membersCard());
-    else
-        root.appendChild(
-            card({
-                title: "Members",
-                iconName: "users",
-                body: [el("p", { class: "field-hint", text: "Only the workspace owner can approve or remove members." })],
-            })
-        );
+    /* ---------------- access list (read-only) ---------------- */
+    root.appendChild(membersCard());
 
     /* ---------------- export / import ---------------- */
     root.appendChild(exportCard());
@@ -254,81 +232,46 @@ function capability(name, level, detail) {
 function membersCard() {
     const host = el("div", {});
     const body = el("div", { class: "stack sm" }, [
-        el("p", { class: "field-hint", text: "Access needs both conditions: the account must have a verified email address, AND be approved here. Unverified accounts see nothing at all. The first account created is the owner." }),
+        el("p", {
+            class: "field-hint",
+            text: "This list is read-only. Access is granted manually by the operator in the BreadBackend database — no button here, and no email verification, can let an account in.",
+        }),
+        el("p", {
+            class: "field-hint",
+            text: "To add someone, create a record in the members collection: { email, role: \"editor\", status: \"active\" }. To revoke access, set status to \"revoked\" or delete the record.",
+        }),
         host,
-        el("button", {
-            class: "btn btn-ghost btn-sm",
-            type: "button",
-            style: { alignSelf: "flex-start" },
-            onclick: async () => {
-                const email = window.prompt("Email address to approve as an editor");
-                if (!email) return;
-                try {
-                    await createRecord(COLLECTIONS.members, { email: email.trim().toLowerCase(), role: "editor", status: "active", approvedAt: new Date().toISOString() });
-                    toast("Member approved.", "success");
-                    render();
-                } catch (err) {
-                    toastError(err, "Approving member");
-                }
-            },
-        }, [icon("plus"), "Approve a member"]),
     ]);
 
     function render() {
         host.innerHTML = "";
         const members = docs(COLLECTIONS.members);
         if (!members.length) {
-            host.appendChild(emptyState({ iconName: "users", title: "No members recorded", message: "Membership records appear once the collection is readable." }));
+            host.appendChild(
+                emptyState({
+                    iconName: "users",
+                    title: "No one is listed",
+                    message: "Nobody can open this workspace until the first member record is added in the database.",
+                })
+            );
             return;
         }
         members.forEach((m) => {
             const isMe = String(m.email).toLowerCase() === String(getUser()?.email || "").toLowerCase();
+            const active = ["active", "approved"].includes(String(m.status || "active").toLowerCase());
             host.appendChild(
                 el("div", { class: "session-item" }, [
                     el("div", { class: "si-main" }, [
                         el("strong", { text: m.email + (isMe ? " (you)" : "") }),
                         el("span", { text: `${m.role || "editor"} · ${m.status || "pending"}` }),
                     ]),
-                    m.status === "pending"
-                        ? el("button", {
-                              class: "btn btn-soft btn-sm",
-                              type: "button",
-                              onclick: async () => {
-                                  try {
-                                      await updateRecord(COLLECTIONS.members, m.id, { status: "active", approvedAt: new Date().toISOString() }, { immediate: true });
-                                      toast("Approved.", "success");
-                                      render();
-                                  } catch (err) {
-                                      toastError(err, "Approving");
-                                  }
-                              },
-                          }, "Approve")
-                        : badge("Active", "success"),
-                    m.role === "owner"
-                        ? badge("Owner", "gold")
-                        : el("button", {
-                              class: "icon-btn",
-                              type: "button",
-                              style: { width: "30px", height: "30px" },
-                              title: "Remove member",
-                              onclick: async () => {
-                                  const ok = await confirmDialog({ title: "Remove member?", message: `${m.email} will lose access to the workspace.`, confirmLabel: "Remove", danger: true });
-                                  if (!ok) return;
-                                  try {
-                                      await deleteRecord(COLLECTIONS.members, m.id);
-                                      toast("Member removed.", "success");
-                                      render();
-                                  } catch (err) {
-                                      toastError(err, "Removing member");
-                                  }
-                              },
-                          }, icon("trash")),
+                    active ? badge("Active", "success") : badge("Not active", "warning"),
+                    m.role === "owner" ? badge("Owner", "gold") : null,
                 ])
             );
         });
     }
     render();
-    return card({ title: "Members", iconName: "users", body: [body] });
 }
 
 /* ----------------------------------------------------------------- export */

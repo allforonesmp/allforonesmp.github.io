@@ -134,36 +134,23 @@
                     </div>
                 </div>
 
-                <div id="gateVerify" class="gate-panel" hidden>
-                    <h1>Verify your email</h1>
-                    <p class="gate-sub" id="verifyCopy">
-                        Your account email has not been verified yet.
-                    </p>
-                    <p class="gate-lock" role="note">
-                        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm0 2a3 3 0 0 1 3 3v3H9V7a3 3 0 0 1 3-3zm0 11a2 2 0 0 1 1 3.7V20h-2v-1.3A2 2 0 0 1 12 15z" fill="currentColor"/></svg>
-                        <span>The workspace stays locked until your email address is verified.</span>
-                    </p>
-                    <form id="verifyTokenForm" class="gate-form" novalidate>
-                        <label class="field">
-                            <span class="field-label">Verification token</span>
-                            <input type="text" name="token" id="verifyToken" autocomplete="one-time-code" spellcheck="false" placeholder="Paste the token from your email" required />
-                        </label>
-                        <p class="gate-error" id="verifyTokenError" role="alert" hidden></p>
-                        <button class="btn btn-primary btn-block" type="submit">Verify my email</button>
-                    </form>
-                    <div class="gate-stack">
-                        <button class="btn btn-ghost btn-block" type="button" id="verifyContinue">I've verified my email — check again</button>
-                        <button class="btn btn-ghost btn-block" type="button" id="verifyResend">Resend verification email</button>
-                        <button class="link-btn" type="button" id="verifyLogout">Sign out</button>
-                    </div>
-                </div>
-
                 <div id="gateDenied" class="gate-panel" hidden>
                     <h1>Access pending</h1>
                     <p class="gate-sub">
-                        Your account (<span id="deniedEmail">—</span>) is signed in but has not been approved for
-                        this workspace. Ask the story owner to approve it in <em>Settings → Members</em>, then reload.
+                        Your account (<span id="deniedEmail">—</span>) is signed in, but this workspace is
+                        <strong>invite-only</strong>. Access is granted by hand — there is no verification email or
+                        request button that will let you in.
                     </p>
+                    <p class="gate-sub" id="deniedReason"></p>
+                    <p class="gate-lock" id="deniedVerifyNote" role="note" hidden></p>
+                    <div class="gate-steps">
+                        <p class="gate-steps-title">How to get access</p>
+                        <ol>
+                            <li>Send the operator the email address shown above.</li>
+                            <li>They add you to the workspace's <code>members</code> list in the database.</li>
+                            <li>Press <em>Check again</em> below.</li>
+                        </ol>
+                    </div>
                     <div class="gate-stack">
                         <button class="btn btn-primary btn-block" type="button" id="deniedReload">Check again</button>
                         <button class="link-btn" type="button" id="deniedLogout">Sign out</button>

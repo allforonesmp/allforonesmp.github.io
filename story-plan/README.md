@@ -66,30 +66,45 @@ Every record carries `id`, `createdAt`, `updatedAt`, and (when archived) `archiv
 `previousStatus`. References are stored as singular IDs or arrays of IDs on the record that
 "owns" the relationship, so deleting nothing silently orphans anything.
 
-## 4. Email verification is mandatory
+## 4. Access is a manual allowlist — no self-service at all
 
-Access requires **both** of these, checked on every page load:
+There is **no** way for a person to let themselves in. Not an email verification
+link, not a "request access" button, not being the first account to sign up.
+The workspace opens only when the operator adds a record to the `members`
+collection in the BreadBackend database:
 
-1. BreadBackend reports `user.isVerified === true` for the account.
-2. The account is an approved member in the `members` collection.
+```json
+{ "email": "them@example.com", "role": "editor", "status": "active" }
+```
 
-There is no bypass. An unverified account — or one where the backend reports no
-verification state at all (the gate fails closed) — sees only the verification
-screen, which can:
+`role` may be `owner`, `admin`, `editor` or `viewer`. `status` must be `active`
+(or `approved`). Anything else — `pending`, `revoked`, a missing status, an
+unrecognised role — lands on the **Access pending** screen, which offers exactly
+two actions: *Check again* (re-reads the database) and *Sign out*.
 
-- verify with the token from the emailed link (auto-filled from `?token=…`, or pasted),
-- re-check the backend after verifying in another tab,
-- resend the verification email,
-- sign out.
+**To give someone access:** sign up their account (or have them sign up), then
+create the members record above with that exact email. Press *Check again*.
 
-The workspace shell and all collections stay untouched until verification passes;
-the token is scrubbed from the address bar once consumed and is never kept after a
-successful verification.
+**To revoke access:** set `status` to `revoked`, or delete the record. The gate
+re-reads the allowlist on every load, so this takes effect on their next
+navigation — no session needs to be manually killed.
 
-**Backend requirement:** enable email verification for project
-`allforone-story-planner`. If verification is disabled the backend returns no
-`isVerified` field, and the app will refuse access rather than assume the account
-is trustworthy.
+**What the app deliberately does not do:**
+
+- It never verifies an email (`auth.verifyEmail` is not wrapped at all).
+- It never sends verification mail (`resendVerification` is not wrapped).
+- It never creates, approves or deletes member records. Settings → Members is a
+  read-only view so you can confirm who is in.
+- It does not bootstrap an owner from the first signup. An empty `members`
+  collection means **nobody** gets in, including you — seed your own record.
+
+**Email verification is informational only.** The gate shows a note when the
+backend reports an address as unverified, but that note never grants or denies
+access; the members row is the sole authority. Still consider enabling
+verification on the backend so password-reset mail reaches a real inbox.
+
+**If the allowlist cannot be read** (wrong project rules, network failure), the
+gate refuses access rather than falling open.
 
 ## 5. Before using it — two required backend settings
 
@@ -100,14 +115,16 @@ is trustworthy.
    return `403 Forbidden by project rules` (the app surfaces this explicitly rather than failing
    silently).
 
-On first sign-in the first account is recorded as **owner** in `members`; everyone else signs in
-but sees an "Access pending" screen until the owner approves them in **Settings → Members**.
+No account is recorded automatically. Until you add the first `members` record by hand, every
+sign-in (yours included) stops at **Access pending**.
 
 ## 6. Known limitations (by design, not oversights)
 
 - The SDK exposes `limit` / `orderBy` only — **no `where` filters** — so each collection is
   fetched once and filtered client-side. Change history and storyboard scenes load lazily.
-- No server-side RBAC or validation; the gate is application-level (see §4).
+- No server-side RBAC; admission is an application check plus the project rules on the
+  `members` collection. A signed-up account could still call the API directly if collection
+  reads are open to all authenticated users — which is why §5 step 1 matters.
 - Version history is application-level: snapshots are written to `change_history` on save and
   can be restored from the record's **History** tab.
 - File uploads use `bread.files.upload`; URLs are stored, never base64.
@@ -121,11 +138,13 @@ gate, login/logout, every route and every detail tab, editor autosave → `PATCH
 create-with-failed-write resilience, archive/restore, history, Markdown XSS escaping, graph
 filter/select/fit, URL-driven filters, global search and session expiry.
 
-A dedicated 21-check verification suite additionally proves the email gate fails closed:
-unverified accounts never reach the workspace, the old "continue anyway" path is gone,
-re-checking a still-unverified account stays locked, a verified-but-unapproved account hits
-"Access pending", token links verify end-to-end and are scrubbed from the URL, and invalid
-tokens surface an error without unlocking anything.
+A dedicated 28-check allowlist suite proves the gate fails closed: an empty `members`
+collection refuses even the first signup and auto-creates nothing; unlisted and revoked
+accounts are refused; `status: pending` is refused with a message naming the fix; a listed
+`active` account enters (case/whitespace insensitive); adding a record then pressing
+*Check again* admits the user live; an unreadable allowlist refuses rather than opening; and
+the shipped source contains no verification panel, no request-access button, no
+resend-verification control and no owner bootstrap.
 
 ## 8. Adding an entity type
 

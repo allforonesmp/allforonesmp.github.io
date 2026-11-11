@@ -4,13 +4,23 @@
  * ever held by this app. Beyond authentication, access is gated by a `members`
  * collection so a signed-in but unapproved account cannot see story data:
  *
- *   • If the collection has no records, the first account becomes owner.
- *   • Owner approves/removes members from Settings → Members.
+ * ACCESS IS A MANUAL ALLOWLIST. There is no self-service path in — not by
+ * verifying an email, not by being the first account, not by any in-app button.
  *
- * Two conditions must BOTH hold before any story data is rendered:
- *   1. the account's email is verified (BreadBackend `user.isVerified === true`),
- *   2. the account is an approved member of the `members` collection.
- * There is no "continue anyway" path for an unverified account.
+ * A person gets in only when the operator adds an entry to the `members`
+ * collection in the BreadBackend database:
+ *
+ *     { email: "them@example.com", role: "editor", status: "active" }
+ *
+ * Accounts that merely exist, addresses that are unverified, and any in-app
+ * request all land on the Access pending screen. That screen offers exactly two
+ * actions: "check again" (re-reads the database) and "sign out".
+ *
+ * The app never verifies an email itself: it performs no verification call and
+ * sends no verification mail. An unverified address is surfaced as a note
+ * for the operator but is NOT the access decision — the members row is the sole
+ * authority. (Still enable verification on the backend so password resets reach
+ * a real inbox.)
  *
  * IMPORTANT LIMITATION: BreadBackend's public client key carries no per-user
  * roles, and collection reads are enforced only by project rules. A determined
@@ -41,25 +51,8 @@ export function isOwner() {
     return currentMember?.role === "owner";
 }
 
-/** True only when BreadBackend positively reports the email as verified. */
-export function isVerifiedUser() {
-    return currentUser?.isVerified === true;
-}
-
-/**
- * "verified" | "unverified" | "unknown".
- * "unknown" means the backend returned no isVerified field at all — treated as
- * not verified so the gate fails closed, with a message naming the setting to fix.
- */
-function verificationState(user) {
-    if (!user) return "unverified";
-    if (user.isVerified === true) return "verified";
-    if (user.isVerified === false) return "unverified";
-    return "unknown";
-}
-
 function showPanel(name) {
-    ["Booting", "Login", "Signup", "Forgot", "Verify", "Denied", "Fatal"].forEach((p) => {
+    ["Booting", "Login", "Signup", "Forgot", "Denied", "Fatal"].forEach((p) => {
         const node = $(`gate${p}`);
         if (node) node.hidden = p.toLowerCase() !== name.toLowerCase();
     });
@@ -101,59 +94,57 @@ function buttonBusy(btn, busy, label) {
 
 /* ------------------------------------------------------------- membership */
 
-const OWNER_EMAIL_KEY = "afo_storyplan_owner_email";
-/** Verification token preserved across the email round-trip (URL → form). */
-const VERIFY_TOKEN_KEY = "afo_storyplan_verify_token";
 
+/** Roles that may enter the workspace. Anything else is refused. */
+const ALLOWED_ROLES = ["owner", "admin", "editor", "viewer"];
+
+/** Statuses that mean "the operator has let this account in". */
+const ALLOWED_STATUSES = ["active", "approved"];
+
+function normaliseEmail(value) {
+    return String(value || "").trim().toLowerCase();
+}
+
+/**
+ * Look the signed-in account up in the operator-managed allowlist.
+ *
+ * Returns { allowed: boolean, member, reason, allMembers }.
+ * `reason` is one of: allowed | not-listed | not-approved | list-unavailable.
+ *
+ * There is deliberately NO bootstrap path: an empty members collection means
+ * nobody gets in, including whoever signed up first.
+ */
 async function resolveMembership(user) {
-    const email = String(user.email || "").toLowerCase();
+    const email = normaliseEmail(user.email);
     let members = [];
-    let listFailed = false;
     try {
         members = await db.list(COLLECTIONS.members, { limit: 500 });
     } catch (err) {
-        listFailed = true;
+        // An unreadable allowlist must refuse, never fall open.
         console.warn("[story-plan] members collection unavailable", err?.message || err);
+        return { allowed: false, member: null, reason: "list-unavailable", allMembers: [] };
+    }
+    members = Array.isArray(members) ? members : [];
+
+    if (!email) {
+        return { allowed: false, member: null, reason: "not-listed", allMembers: members };
     }
 
-    if (!members.length) {
-        // Bootstrap: the first account claims ownership. Recorded locally too,
-        // so a failed first write cannot hand ownership to a later visitor.
-        const claimed = localStorage.getItem(OWNER_EMAIL_KEY);
-        if (claimed && claimed !== email) {
-            return { role: "pending", status: "pending", email, note: "owner-claimed-elsewhere" };
-        }
-        try {
-            const created = await db.create(
-                COLLECTIONS.members,
-                { email, role: "owner", status: "active", approvedAt: new Date().toISOString(), note: "First account — workspace owner" },
-                `member_${email.replace(/[^a-z0-9]/g, "_")}`
-            );
-            localStorage.setItem(OWNER_EMAIL_KEY, email);
-            return created;
-        } catch (err) {
-            console.warn("[story-plan] could not persist owner membership", err?.message || err);
-            if (listFailed) {
-                // No members collection at all: run as owner for this session
-                // and surface the limitation in Settings.
-                localStorage.setItem(OWNER_EMAIL_KEY, email);
-                return { email, role: "owner", status: "active", ephemeral: true };
-            }
-            return { email, role: "pending", status: "pending" };
-        }
+    const entry = members.find((m) => normaliseEmail(m.email) === email);
+    if (!entry) {
+        return { allowed: false, member: null, reason: "not-listed", allMembers: members };
     }
 
-    const existing = members.find((m) => String(m.email || "").toLowerCase() === email);
-    if (existing) {
-        if (existing.role === "owner" && existing.status !== "active") {
-            return { ...existing, status: "active" };
-        }
-        return existing;
+    const role = String(entry.role || "editor").toLowerCase();
+    const status = String(entry.status || "").toLowerCase();
+    if (!ALLOWED_ROLES.includes(role)) {
+        return { allowed: false, member: entry, reason: "not-approved", allMembers: members };
     }
-    if (members.some((m) => m.role === "owner")) {
-        return { email, role: "pending", status: "pending" };
+    if (!ALLOWED_STATUSES.includes(status)) {
+        return { allowed: false, member: entry, reason: "not-approved", allMembers: members };
     }
-    return { email, role: "pending", status: "pending" };
+
+    return { allowed: true, member: entry, reason: "allowed", allMembers: members };
 }
 
 /* ------------------------------------------------------------------ flows */
@@ -170,39 +161,68 @@ async function afterLogin(user) {
         showPanel("Login");
         return;
     }
-    if (!showVerify(user)) return;
     await gateOnUser(user);
 }
 
-let pendingUser = null;
+/**
+ * Render the pending screen. Used for every refusal — unlisted account,
+ * unapproved row, unreadable collection. No path from here into the app.
+ */
+function showPending(user, reason) {
+    const emailNode = $("deniedEmail");
+    if (emailNode) emailNode.textContent = user?.email || "—";
 
-/** Render the verification wall. Returns true only when the user may proceed. */
-function showVerify(user) {
-    const state = verificationState(user);
-    if (state === "verified") return true;
-    const copy = $("verifyCopy");
-    if (copy) {
-        copy.textContent =
-            state === "unknown"
-                ? `${user.email || "Your account"} signed in, but the backend did not report an email-verification state. Access stays locked until it does — check that email verification is enabled for project allforone-story-planner.`
-                : `${user.email || "Your email"} has not been verified yet. Click the link in the verification email, then press "I've verified my email". Story data stays locked until then.`;
+    const reasonNode = $("deniedReason");
+    if (reasonNode) {
+        reasonNode.textContent =
+            reason === "not-approved"
+                ? "Your address is listed, but the operator has not set it to active yet."
+                : reason === "list-unavailable"
+                  ? "The access list could not be read, so access is refused for safety."
+                  : "Your account is not on this workspace's access list.";
     }
-    pendingUser = user;
-    showPanel("Verify");
-    primeVerifyPanel();
-    return false;
+
+    const noteNode = $("deniedVerifyNote");
+    if (noteNode) {
+        if (user && user.isVerified === false) {
+            noteNode.hidden = false;
+            noteNode.textContent =
+                "Note: this address is not email-verified either. Ask the operator to enable verification on the account — it does not grant access on its own.";
+        } else if (user && user.isVerified !== true) {
+            noteNode.hidden = false;
+            noteNode.textContent = "Note: the backend reported no email-verification state for this account.";
+        } else {
+            noteNode.hidden = true;
+            noteNode.textContent = "";
+        }
+    }
+
+    showPanel("Denied");
 }
 
+/**
+ * The single entry decision. `members` is the only source of truth and is
+ * re-read from the database every time — an operator's edit takes effect on the
+ * next navigation or "Check again", with no cached approval.
+ */
 async function gateOnUser(user) {
     showPanel("Booting");
-    const member = await resolveMembership(user);
-    if (member.status === "active" || member.status === "approved" || member.role === "owner" || member.role === "editor") {
-        await enterApp(user, member);
+    let resolved;
+    try {
+        resolved = await resolveMembership(user);
+    } catch (err) {
+        showPending(user, "list-unavailable");
         return;
     }
-    const deniedEmail = $("deniedEmail");
-    if (deniedEmail) deniedEmail.textContent = user.email || "—";
-    showPanel("Denied");
+    if (resolved.reason === "list-unavailable") {
+        showPending(user, "list-unavailable");
+        return;
+    }
+    if (resolved.allowed) {
+        await enterApp(user, resolved.member);
+        return;
+    }
+    showPending(user, resolved.reason);
 }
 
 async function checkSession() {
@@ -219,7 +239,6 @@ async function checkSession() {
         }
         currentUser = user;
         $("gate").hidden = true;
-        if (!showVerify(user)) return;
         await gateOnUser(user);
     } catch (err) {
         if (err?.status === 401) {
@@ -307,7 +326,10 @@ function wire() {
             }
             form.reset();
             showPanel("Login");
-            setError("loginError", "Account created. Sign in to continue — an owner must approve new accounts.");
+            setError(
+                "loginError",
+                "Account created. Sign in — access is granted by the operator, not by an automated email."
+            );
         } catch (err) {
             setError("signupError", errorText(err));
         } finally {
@@ -360,106 +382,29 @@ function wire() {
         }
     });
 
-    // --- verification panel: re-check with the backend, never a local bypass
-    $("verifyContinue").addEventListener("click", async () => {
-        const btn = $("verifyContinue");
+    // --- denied panel
+    $("deniedReload").addEventListener("click", async () => {
+        const btn = $("deniedReload");
         buttonBusy(btn, true, "Checking…");
         try {
             const fresh = await auth.me();
-            if (fresh) {
-                currentUser = fresh;
-                pendingUser = fresh;
-            }
-            const user = fresh || pendingUser;
-            if (!user) {
+            if (fresh) currentUser = fresh;
+            if (!currentUser) {
                 showPanel("Login");
                 return;
             }
-            if (verificationState(user) !== "verified") {
-                const copy = $("verifyCopy");
-                if (copy) {
-                    copy.textContent =
-                        verificationState(user) === "unknown"
-                            ? "The backend still reports no verification state for this account. Access stays locked."
-                            : `Still unverified. Open the link in the verification email sent to ${user.email || "your address"}, then try again.`;
-                }
-                return;
-            }
-            await gateOnUser(user);
+            await gateOnUser(currentUser);
         } catch (err) {
-            const copy = $("verifyCopy");
-            if (copy) copy.textContent = errorText(err);
-        } finally {
-            buttonBusy(btn, false);
-        }
-    });
-
-    // --- verification token: pasted by hand or delivered as ?token= in the email link
-    $("verifyTokenForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const form = e.currentTarget;
-        const input = field(form, "token");
-        const token = input.value.trim();
-        const err = $("verifyTokenError");
-        if (!token) {
-            if (err) {
-                err.hidden = false;
-                err.textContent = "Paste the verification token from your email.";
-            }
-            return;
-        }
-        const btn = form.querySelector("button[type=submit]");
-        buttonBusy(btn, true, "Verifying…");
-        try {
-            await auth.verifyEmail(token);
-            input.value = "";
-            if (err) err.hidden = true;
-            localStorage.removeItem(VERIFY_TOKEN_KEY);
-            const fresh = await auth.me();
-            if (fresh) {
-                currentUser = fresh;
-                pendingUser = fresh;
-            }
-            await afterLogin(fresh || pendingUser);
-        } catch (e2) {
-            if (err) {
-                err.hidden = false;
-                err.textContent = errorText(e2);
+            if (err?.status === 401) {
+                currentUser = null;
+                showPanel("Login");
+                setError("loginError", "Your session expired. Please sign in again.");
+            } else {
+                showPending(currentUser, "list-unavailable");
             }
         } finally {
             buttonBusy(btn, false);
         }
-    });
-    $("verifyResend").addEventListener("click", async () => {
-        const email = pendingUser?.email;
-        if (!email) return;
-        const btn = $("verifyResend");
-        buttonBusy(btn, true, "Sending…");
-        try {
-            await auth.resendVerification(email);
-            setError("loginError", "");
-            const copy = $("verifyCopy");
-            if (copy) copy.textContent = "Verification email sent — check your inbox, then continue.";
-        } catch (err) {
-            const copy = $("verifyCopy");
-            if (copy) copy.textContent = errorText(err);
-        } finally {
-            buttonBusy(btn, false);
-        }
-    });
-    $("verifyLogout").addEventListener("click", async () => {
-        await auth.logout();
-        pendingUser = null;
-        showPanel("Login");
-    });
-
-    // --- denied panel
-    $("deniedReload").addEventListener("click", async () => {
-        if (!currentUser) {
-            showPanel("Login");
-            return;
-        }
-        await gateOnUser(currentUser);
     });
     $("deniedLogout").addEventListener("click", async () => {
         await auth.logout();
@@ -483,54 +428,11 @@ function wire() {
     });
 }
 
-/**
- * BreadBackend verification emails link back to the site with a token in the
- * query string or fragment. Capture it before routing so the gate can offer
- * one-click verification, then scrub it from the address bar.
- */
-function captureVerificationToken() {
-    let token = "";
-    try {
-        const search = new URLSearchParams(window.location.search || "");
-        const hash = window.location.hash || "";
-        const hashQuery = hash.includes("?") ? new URLSearchParams(hash.split("?")[1]) : new URLSearchParams();
-        token = search.get("token") || search.get("verify") || hashQuery.get("token") || hashQuery.get("verify") || "";
-        if (!token) return "";
-        localStorage.setItem(VERIFY_TOKEN_KEY, token);
-        const url = `${window.location.pathname}#/dashboard`;
-        window.history.replaceState(null, "", url);
-    } catch (_) {
-        /* non-browser or blocked history access — the token can still be pasted */
-    }
-    return token;
-}
-
-function pendingVerificationToken() {
-    try {
-        return localStorage.getItem(VERIFY_TOKEN_KEY) || "";
-    } catch (_) {
-        return "";
-    }
-}
-
-/** Pre-fill and auto-submit the token form when the gate opens on a fresh link. */
-function primeVerifyPanel() {
-    const token = pendingVerificationToken();
-    const input = $("verifyToken");
-    if (token && input && !input.value) {
-        input.value = token;
-        const copy = $("verifyCopy");
-        if (copy) copy.textContent = "Verification link detected. Press Verify my email to finish.";
-    }
-}
-
 export async function startGate(ready) {
     onReady = ready;
-    captureVerificationToken();
     wire();
     showPanel("Booting");
     await checkSession();
-    if (!$("gateVerify").hidden) primeVerifyPanel();
     settled = true;
 }
 

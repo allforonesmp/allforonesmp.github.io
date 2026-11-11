@@ -695,6 +695,36 @@ button.chip:hover {
     margin-top: 0.1rem;
     color: var(--warning, #b8860b);
 }
+.gate-steps {
+    background: var(--lighter-blue);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.7rem 0.85rem;
+    font-size: 0.82rem;
+    color: var(--text-medium);
+}
+.gate-steps-title {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.35rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.gate-steps ol {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    line-height: 1.45;
+}
+.gate-steps code {
+    font-size: 0.78rem;
+    background: var(--light-blue);
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+}
 .gate-links {
     display: flex;
     justify-content: space-between;
