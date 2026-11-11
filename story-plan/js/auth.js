@@ -1,35 +1,34 @@
 /* AllForOne Story Planner — authentication & access control gate.
  *
  * Sessions live in the BreadBackend SDK's own token storage; no password is
- * ever held by this app. Beyond authentication, access is gated by a `members`
- * collection so a signed-in but unapproved account cannot see story data:
+ * ever held by this app. Beyond authentication, two operator-controlled checks
+ * decide access, in this order:
  *
- * ACCESS IS A MANUAL ALLOWLIST. There is no self-service path in — not by
- * verifying an email, not by being the first account, not by any in-app button.
+ * 1. VERIFIED EMAIL (hard requirement, checked first). The account's email
+ *    must be marked verified on the backend. The operator does that by hand in
+ *    the BreadBackend console. This app never verifies an address itself: it
+ *    makes no verification call, sends no verification mail and has no
+ *    "resend" button. Until the account is verified the app reads and writes
+ *    NOTHING — not even the members list — and the data layer stays locked
+ *    (api.js setDataAccess). A missing/unknown verification state counts as
+ *    unverified.
  *
- * A person gets in only when the operator adds an entry to the `members`
- * collection in the BreadBackend database:
+ * 2. MEMBERS ALLOWLIST. A verified account must also have an entry in the
+ *    `members` collection:
  *
- *     { email: "them@example.com", role: "editor", status: "active" }
+ *        { email: "them@example.com", role: "editor", status: "active" }
  *
- * Accounts that merely exist, addresses that are unverified, and any in-app
- * request all land on the Access pending screen. That screen offers exactly two
- * actions: "check again" (re-reads the database) and "sign out".
+ * Anything else lands on the Access pending screen, which offers exactly two
+ * actions: "check again" (re-asks the backend) and "sign out". Verification is
+ * re-checked while the app is open, so un-verifying an account locks it out.
  *
- * The app never verifies an email itself: it performs no verification call and
- * sends no verification mail. An unverified address is surfaced as a note
- * for the operator but is NOT the access decision — the members row is the sole
- * authority. (Still enable verification on the backend so password resets reach
- * a real inbox.)
- *
- * IMPORTANT LIMITATION: BreadBackend's public client key carries no per-user
- * roles, and collection reads are enforced only by project rules. A determined
- * signed-up account could still call the API directly, so open signup must be
- * disabled / invite-only in the BreadBackend dashboard. This gate is the second
- * line of defence, not a substitute for that setting.
+ * IMPORTANT LIMITATION: this is a client-side gate. BreadBackend's public
+ * client key carries no per-user roles, so a determined signed-up account could
+ * still call the API directly unless the project rules on the backend also
+ * require a verified email / restrict signup. Set that in the dashboard too.
  */
 
-import { auth, db, COLLECTIONS, onUnauthorized, ApiError } from "./api.js";
+import { auth, db, COLLECTIONS, onUnauthorized, setDataAccess, ApiError } from "./api.js";
 import { el, clear } from "./util.js";
 
 const $ = (id) => document.getElementById(id);
@@ -90,6 +89,63 @@ function buttonBusy(btn, busy, label) {
     } else if (btn.dataset.label) {
         btn.textContent = btn.dataset.label;
     }
+}
+
+/* ----------------------------------------------------------- verification */
+
+/**
+ * True only when the backend explicitly reports the email as verified. The
+ * flag is set by the operator in the backend console; nothing in this app can
+ * change it. Missing, null or non-boolean values are treated as unverified.
+ */
+export function isEmailVerified(user) {
+    if (!user || typeof user !== "object") return false;
+    return [user.isVerified, user.emailVerified, user.email_verified, user.verified].some((v) => v === true);
+}
+
+/** Lock the data layer and take the workspace off screen. */
+function lockWorkspace() {
+    setDataAccess(false);
+    currentMember = null;
+    stopVerificationWatch();
+    const app = $("app");
+    if (app) app.hidden = true;
+}
+
+/* While the app is open, periodically re-ask the backend whether the account
+ * is still verified, so the operator un-verifying it takes effect without a
+ * reload. Network hiccups are ignored; only an explicit "not verified" locks. */
+const RECHECK_MS = 2 * 60 * 1000;
+let recheckTimer = null;
+let rechecking = false;
+
+async function recheckVerification() {
+    if (rechecking || !currentMember || document.hidden) return;
+    rechecking = true;
+    try {
+        const fresh = await auth.me();
+        if (fresh && currentMember && !isEmailVerified(fresh)) {
+            currentUser = fresh;
+            lockWorkspace();
+            showPending(fresh, "unverified");
+        }
+    } catch (_) {
+        /* 401s are handled by onUnauthorized; anything else is transient */
+    } finally {
+        rechecking = false;
+    }
+}
+
+function startVerificationWatch() {
+    stopVerificationWatch();
+    recheckTimer = setInterval(recheckVerification, RECHECK_MS);
+    document.addEventListener("visibilitychange", recheckVerification);
+}
+
+function stopVerificationWatch() {
+    if (recheckTimer) clearInterval(recheckTimer);
+    recheckTimer = null;
+    document.removeEventListener("visibilitychange", recheckVerification);
 }
 
 /* ------------------------------------------------------------- membership */
@@ -153,6 +209,7 @@ async function enterApp(user, member) {
     currentUser = user;
     currentMember = member;
     $("gate").hidden = true;
+    startVerificationWatch();
     if (onReady) await onReady(user, member);
 }
 
@@ -165,8 +222,9 @@ async function afterLogin(user) {
 }
 
 /**
- * Render the pending screen. Used for every refusal — unlisted account,
- * unapproved row, unreadable collection. No path from here into the app.
+ * Render the pending screen. Used for every refusal — unverified email,
+ * unlisted account, unapproved row, unreadable collection. No path from here
+ * into the app.
  */
 function showPending(user, reason) {
     const emailNode = $("deniedEmail");
@@ -175,7 +233,9 @@ function showPending(user, reason) {
     const reasonNode = $("deniedReason");
     if (reasonNode) {
         reasonNode.textContent =
-            reason === "not-approved"
+            reason === "unverified"
+                ? "This account's email has not been verified by the operator. Until it is, nothing in this workspace can be read or changed."
+                : reason === "not-approved"
                 ? "Your address is listed, but the operator has not set it to active yet."
                 : reason === "list-unavailable"
                   ? "The access list could not be read, so access is refused for safety."
@@ -184,37 +244,40 @@ function showPending(user, reason) {
 
     const noteNode = $("deniedVerifyNote");
     if (noteNode) {
-        if (user && user.isVerified === false) {
-            noteNode.hidden = false;
-            noteNode.textContent =
-                "Note: this address is not email-verified either. Ask the operator to enable verification on the account — it does not grant access on its own.";
-        } else if (user && user.isVerified !== true) {
-            noteNode.hidden = false;
-            noteNode.textContent = "Note: the backend reported no email-verification state for this account.";
-        } else {
-            noteNode.hidden = true;
-            noteNode.textContent = "";
-        }
+        noteNode.hidden = reason !== "unverified";
+        noteNode.textContent =
+            reason === "unverified"
+                ? "Verification is done by the operator, by hand. No email will be sent to you and there is nothing to click — send them the address above and wait."
+                : "";
     }
 
     showPanel("Denied");
 }
 
 /**
- * The single entry decision. `members` is the only source of truth and is
- * re-read from the database every time — an operator's edit takes effect on the
- * next navigation or "Check again", with no cached approval.
+ * The single entry decision. Email verification comes first: an unverified
+ * account is refused before any collection is touched and the data layer stays
+ * locked. Only then is `members` read — fresh from the database every time, so
+ * an operator's edit takes effect on the next load or "Check again".
  */
 async function gateOnUser(user) {
     showPanel("Booting");
+    if (!isEmailVerified(user)) {
+        lockWorkspace();
+        showPending(user, "unverified");
+        return;
+    }
+    setDataAccess(true);
     let resolved;
     try {
         resolved = await resolveMembership(user);
     } catch (err) {
+        lockWorkspace();
         showPending(user, "list-unavailable");
         return;
     }
     if (resolved.reason === "list-unavailable") {
+        lockWorkspace();
         showPending(user, "list-unavailable");
         return;
     }
@@ -222,6 +285,7 @@ async function gateOnUser(user) {
         await enterApp(user, resolved.member);
         return;
     }
+    lockWorkspace();
     showPending(user, resolved.reason);
 }
 
@@ -328,7 +392,7 @@ function wire() {
             showPanel("Login");
             setError(
                 "loginError",
-                "Account created. Sign in — access is granted by the operator, not by an automated email."
+                "Account created. Sign in — the operator must verify your email by hand before the workspace opens."
             );
         } catch (err) {
             setError("signupError", errorText(err));
@@ -408,8 +472,8 @@ function wire() {
     });
     $("deniedLogout").addEventListener("click", async () => {
         await auth.logout();
+        lockWorkspace();
         currentUser = null;
-        currentMember = null;
         showPanel("Login");
     });
 
@@ -422,9 +486,7 @@ function wire() {
         showPanel("Login");
         setError("loginError", "Your session expired. Please sign in again.");
         currentUser = null;
-        currentMember = null;
-        const app = $("app");
-        if (app) app.hidden = true;
+        lockWorkspace();
     });
 }
 
@@ -439,9 +501,7 @@ export async function startGate(ready) {
 export async function signOut() {
     await auth.logout();
     currentUser = null;
-    currentMember = null;
-    const app = $("app");
-    if (app) app.hidden = true;
+    lockWorkspace();
     showPanel("Login");
     settled = false;
 }

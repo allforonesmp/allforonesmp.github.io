@@ -28,7 +28,7 @@ export function settingsPage() {
                         el("span", {
                             class: `badge ${user?.isVerified === true ? "success" : "muted"}`,
                             text: user?.isVerified === true ? "Email verified" : "Email unverified",
-                            title: "Informational only — access is decided by the members list, not by email verification. Verification is managed outside this app.",
+                            title: "Required for access. The operator sets this by hand in the backend console; this app never sends verification mail.",
                         }),
                     ]),
                 ]),
@@ -234,11 +234,11 @@ function membersCard() {
     const body = el("div", { class: "stack sm" }, [
         el("p", {
             class: "field-hint",
-            text: "This list is read-only. Access is granted manually by the operator in the BreadBackend database — no button here, and no email verification, can let an account in.",
+            text: "This list is read-only. Access is granted manually by the operator — no button here can let an account in. Every account also needs its email marked verified by the operator in the backend console.",
         }),
         el("p", {
             class: "field-hint",
-            text: "To add someone, create a record in the members collection: { email, role: \"editor\", status: \"active\" }. To revoke access, set status to \"revoked\" or delete the record.",
+            text: "To add someone, mark their account's email as verified in the backend console, then create a record in the members collection: { email, role: \"editor\", status: \"active\" }. To revoke access, set status to \"revoked\" or delete the record.",
         }),
         host,
     ]);
