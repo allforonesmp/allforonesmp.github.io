@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+        <meta name="googlebot" content="noindex, nofollow" />
+        <meta name="referrer" content="no-referrer" />
+        <title>AllForOne SMP | Story Planner</title>
+        <meta name="description" content="Private narrative planning workspace." />
+        <link rel="icon" type="image/x-icon" href="../images/logo.png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Spectral:wght@600;700&display=swap"
+            rel="stylesheet" />
+        <link rel="stylesheet" href="./css/app.css" />
+
+        <script>
+            (function () {
+                var STORAGE_KEY = "afo_theme";
+                function getStored() {
+                    try {
+                        return localStorage.getItem(STORAGE_KEY);
+                    } catch (_) {
+                        return null;
+                    }
+                }
+                function apply(theme) {
+                    document.documentElement.setAttribute("data-theme", theme === "dark" ? "dark" : "light");
+                }
+                window.__setTheme = function (theme) {
+                    try {
+                        localStorage.setItem(STORAGE_KEY, theme);
+                    } catch (_) {}
+                    apply(theme);
+                };
+                apply(getStored() || "light");
+            })();
+        </script>
+    </head>
+    <body>
+        <!-- ================= AUTH GATE ================= -->
+        <div id="gate" class="gate" aria-live="polite">
+            <div class="gate-card">
+                <div class="gate-brand">
+                    <img src="../images/logo.png" alt="" width="42" height="42" />
+                    <div>
+                        <strong>AllForOne SMP</strong>
+                        <span>Story Planner</span>
+                    </div>
+                </div>
+
+                <div id="gateBooting" class="gate-panel">
+                    <div class="gate-boot">
+                        <span class="spinner"></span>
+                        <p>Checking your session…</p>
+                    </div>
+                </div>
+
+                <div id="gateLogin" class="gate-panel" hidden>
+                    <h1>Sign in</h1>
+                    <p class="gate-sub">This workspace is private. Authorised storytellers only.</p>
+                    <form id="loginForm" class="gate-form" novalidate>
+                        <label class="field">
+                            <span class="field-label">Email</span>
+                            <input type="email" name="email" autocomplete="username" required />
+                        </label>
+                        <label class="field">
+                            <span class="field-label">Password</span>
+                            <input type="password" name="password" autocomplete="current-password" required />
+                        </label>
+                        <p class="gate-error" id="loginError" role="alert" hidden></p>
+                        <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+                    </form>
+                    <div class="gate-links">
+                        <button class="link-btn" type="button" data-gate-go="forgot">Forgot password?</button>
+                        <button class="link-btn" type="button" data-gate-go="signup">Create account</button>
+                    </div>
+                </div>
+
+                <div id="gateSignup" class="gate-panel" hidden>
+                    <h1>Create account</h1>
+                    <p class="gate-sub">
+                        New accounts are approved by the story owner before story data is loaded.
+                    </p>
+                    <form id="signupForm" class="gate-form" novalidate>
+                        <label class="field">
+                            <span class="field-label">Email</span>
+                            <input type="email" name="email" autocomplete="username" required />
+                        </label>
+                        <label class="field">
+                            <span class="field-label">Password</span>
+                            <input type="password" name="password" autocomplete="new-password" minlength="8" required />
+                            <span class="field-hint">At least 8 characters.</span>
+                        </label>
+                        <label class="field">
+                            <span class="field-label">Confirm password</span>
+                            <input type="password" name="confirm" autocomplete="new-password" minlength="8" required />
+                        </label>
+                        <p class="gate-error" id="signupError" role="alert" hidden></p>
+                        <button class="btn btn-primary btn-block" type="submit">Create account</button>
+                    </form>
+                    <div class="gate-links">
+                        <button class="link-btn" type="button" data-gate-go="login">Back to sign in</button>
+                    </div>
+                </div>
+
+                <div id="gateForgot" class="gate-panel" hidden>
+                    <h1>Reset password</h1>
+                    <p class="gate-sub">We'll email you a reset token.</p>
+                    <form id="forgotForm" class="gate-form" novalidate>
+                        <label class="field">
+                            <span class="field-label">Email</span>
+                            <input type="email" name="email" autocomplete="username" required />
+                        </label>
+                        <p class="gate-note" id="forgotNote" hidden></p>
+                        <button class="btn btn-primary btn-block" type="submit">Send reset email</button>
+                    </form>
+                    <form id="resetForm" class="gate-form" hidden novalidate>
+                        <label class="field">
+                            <span class="field-label">Reset token</span>
+                            <input type="text" name="token" autocomplete="one-time-code" required />
+                        </label>
+                        <label class="field">
+                            <span class="field-label">New password</span>
+                            <input type="password" name="password" autocomplete="new-password" minlength="8" required />
+                        </label>
+                        <p class="gate-error" id="resetError" role="alert" hidden></p>
+                        <button class="btn btn-primary btn-block" type="submit">Update password</button>
+                    </form>
+                    <div class="gate-links">
+                        <button class="link-btn" type="button" data-gate-go="login">Back to sign in</button>
+                    </div>
+                </div>
+
+                <div id="gateVerify" class="gate-panel" hidden>
+                    <h1>Verify your email</h1>
+                    <p class="gate-sub" id="verifyCopy">
+                        Your account email has not been verified yet.
+                    </p>
+                    <div class="gate-stack">
+                        <button class="btn btn-primary btn-block" type="button" id="verifyContinue">Continue to workspace</button>
+                        <button class="btn btn-ghost btn-block" type="button" id="verifyResend">Resend verification email</button>
+                        <button class="link-btn" type="button" id="verifyLogout">Sign out</button>
+                    </div>
+                </div>
+
+                <div id="gateDenied" class="gate-panel" hidden>
+                    <h1>Access pending</h1>
+                    <p class="gate-sub">
+                        Your account (<span id="deniedEmail">—</span>) is signed in but has not been approved for
+                        this workspace. Ask the story owner to approve it in <em>Settings → Members</em>, then reload.
+                    </p>
+                    <div class="gate-stack">
+                        <button class="btn btn-primary btn-block" type="button" id="deniedReload">Check again</button>
+                        <button class="link-btn" type="button" id="deniedLogout">Sign out</button>
+                    </div>
+                </div>
+
+                <div id="gateFatal" class="gate-panel" hidden>
+                    <h1>Cannot reach backend</h1>
+                    <p class="gate-sub" id="fatalCopy">
+                        The BreadBackend API did not respond. Check your connection and try again.
+                    </p>
+                    <button class="btn btn-primary btn-block" type="button" id="fatalRetry">Retry</button>
+                </div>
+
+                <p class="gate-foot">Private workspace · not indexed · BreadBackend</p>
+            </div>
+        </div>
+
+        <!-- ================= APPLICATION ================= -->
+        <div id="app" class="app" hidden>
+            <div class="scrim" id="scrim" hidden></div>
+
+            <aside class="sidebar" id="sidebar" aria-label="Sections">
+                <div class="sidebar-head">
+                    <a class="brand" href="#/dashboard">
+                        <img src="../images/logo.png" alt="" width="30" height="30" />
+                        <span class="brand-text">
+                            <strong>AllForOne</strong>
+                            <em>Story Planner</em>
+                        </span>
+                    </a>
+                    <button class="icon-btn sidebar-close" id="sidebarClose" type="button" aria-label="Close menu">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </button>
+                </div>
+
+                <nav class="nav" id="nav"></nav>
+
+                <div class="sidebar-foot">
+                    <div class="sync" id="sidebarSync">
+                        <span class="dot"></span>
+                        <span class="sync-text">Idle</span>
+                    </div>
+                    <div class="sidebar-user" id="sidebarUser"></div>
+                </div>
+            </aside>
+
+            <div class="app-main">
+                <header class="topbar">
+                    <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Open menu">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+                    </button>
+                    <div class="topbar-title">
+                        <span class="crumb" id="crumbSection">Dashboard</span>
+                        <span class="crumb-sub" id="crumbSub"></span>
+                    </div>
+
+                    <button class="search-trigger" id="searchTrigger" type="button" aria-label="Global search">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="M16.5 16.5L21 21" />
+                        </svg>
+                        <span>Search everything…</span>
+                        <kbd>⌘K</kbd>
+                    </button>
+
+                    <div class="topbar-actions">
+                        <button class="save-state" id="saveState" type="button" title="Save status">
+                            <span class="dot"></span>
+                            <span class="save-label">Saved</span>
+                        </button>
+                        <button class="icon-btn" id="activityBtn" type="button" aria-label="Activity">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 8v4l2.5 2" />
+                                <circle cx="12" cy="12" r="8" />
+                            </svg>
+                            <span class="activity-dot" id="activityDot" hidden></span>
+                        </button>
+                        <div class="profile" id="profile">
+                            <button class="profile-btn" id="profileBtn" type="button" aria-haspopup="true" aria-expanded="false">
+                                <span class="avatar" id="avatar">A</span>
+                            </button>
+                            <div class="profile-menu" id="profileMenu" hidden>
+                                <div class="profile-meta">
+                                    <strong id="profileEmail">—</strong>
+                                    <span id="profileRole">Member</span>
+                                </div>
+                                <button type="button" data-menu="settings">Settings</button>
+                                <button type="button" data-menu="sessions">Active sessions</button>
+                                <button type="button" data-menu="theme">Toggle theme</button>
+                                <button type="button" data-menu="export">Export data</button>
+                                <hr />
+                                <button type="button" data-menu="logout" class="danger">Sign out</button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="workspace" id="workspace" tabindex="-1"></main>
+            </div>
+        </div>
+
+        <div class="toasts" id="toasts" aria-live="polite"></div>
+        <div id="modalRoot"></div>
+
+        <script src="https://kaidaz18.duckdns.org/sdk/bread-client.js"></script>
+        <script type="module" src="./js/app.js"></script>
+    </body>
+</html>

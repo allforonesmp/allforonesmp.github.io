@@ -1,0 +1,3 @@
+# The Story Planner is private: no crawling, no indexing, no archiving.
+User-agent: *
+Disallow: /

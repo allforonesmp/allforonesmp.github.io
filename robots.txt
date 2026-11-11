@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 
+# Private story-planning workspace — never crawled.
+Disallow: /story-plan
+Disallow: /story-plan/
+
 Sitemap: https://allforonesmp.github.io/sitemap.xml
