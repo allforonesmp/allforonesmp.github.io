@@ -272,6 +272,7 @@ function membersCard() {
         });
     }
     render();
+    return card({ title: "Members", iconName: "users", body: [body] });
 }
 
 /* ----------------------------------------------------------------- export */
