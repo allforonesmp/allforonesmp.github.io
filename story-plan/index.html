@@ -134,24 +134,23 @@
                     </div>
                 </div>
 
-                <div id="gateVerify" class="gate-panel" hidden>
-                    <h1>Verify your email</h1>
-                    <p class="gate-sub" id="verifyCopy">
-                        Your account email has not been verified yet.
-                    </p>
-                    <div class="gate-stack">
-                        <button class="btn btn-primary btn-block" type="button" id="verifyContinue">Continue to workspace</button>
-                        <button class="btn btn-ghost btn-block" type="button" id="verifyResend">Resend verification email</button>
-                        <button class="link-btn" type="button" id="verifyLogout">Sign out</button>
-                    </div>
-                </div>
-
                 <div id="gateDenied" class="gate-panel" hidden>
                     <h1>Access pending</h1>
                     <p class="gate-sub">
-                        Your account (<span id="deniedEmail">—</span>) is signed in but has not been approved for
-                        this workspace. Ask the story owner to approve it in <em>Settings → Members</em>, then reload.
+                        Your account (<span id="deniedEmail">—</span>) is signed in, but this workspace is
+                        <strong>invite-only</strong>. Access is granted by hand — there is no verification email or
+                        request button that will let you in.
                     </p>
+                    <p class="gate-sub" id="deniedReason"></p>
+                    <p class="gate-lock" id="deniedVerifyNote" role="note" hidden></p>
+                    <div class="gate-steps">
+                        <p class="gate-steps-title">How to get access</p>
+                        <ol>
+                            <li>Send the operator the email address shown above.</li>
+                            <li>They add you to the workspace's <code>members</code> list in the database.</li>
+                            <li>Press <em>Check again</em> below.</li>
+                        </ol>
+                    </div>
                     <div class="gate-stack">
                         <button class="btn btn-primary btn-block" type="button" id="deniedReload">Check again</button>
                         <button class="link-btn" type="button" id="deniedLogout">Sign out</button>

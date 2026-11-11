@@ -4,8 +4,9 @@
  * (https://kaidaz18.duckdns.org/sdk/bread-client.js). Only documented methods
  * are used:
  *   bread.auth.{signup,login,me,refresh,logout,forgotPassword,resetPassword,
- *               verifyEmail,resendVerification,listSessions,revokeSession,
- *               revokeOtherSessions}
+ *               listSessions,revokeSession,revokeOtherSessions}
+ * (Email verification is intentionally NOT wrapped: accounts are admitted by an
+ * operator-created `members` record, never by self-service verification.)
  *   bread.collection(name).{get,getById,create,update,delete,subscribe}
  *   bread.files.upload
  *   bread.analytics.logEvent
@@ -374,11 +375,6 @@ export const auth = {
     async resetPassword(token, newPassword) {
         const c = getClient();
         return guarded(() => c.auth.resetPassword(token.trim(), newPassword), { allowRefresh: false });
-    },
-
-    async resendVerification(email) {
-        const c = getClient();
-        return guarded(() => c.auth.resendVerification(email.trim()), { allowRefresh: false });
     },
 
     async listSessions() {
