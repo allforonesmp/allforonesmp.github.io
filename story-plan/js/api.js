@@ -5,8 +5,10 @@
  * are used:
  *   bread.auth.{signup,login,me,refresh,logout,forgotPassword,resetPassword,
  *               listSessions,revokeSession,revokeOtherSessions}
- * (Email verification is intentionally NOT wrapped: accounts are admitted by an
- * operator-created `members` record, never by self-service verification.)
+ * (Email verification is intentionally NOT wrapped: the app never verifies an
+ * address or sends verification mail. The operator marks accounts verified in
+ * the backend console; this layer only refuses data calls until the gate has
+ * seen a verified account — see setDataAccess below.)
  *   bread.collection(name).{get,getById,create,update,delete,subscribe}
  *   bread.files.upload
  *   bread.analytics.logEvent
@@ -399,6 +401,26 @@ export const auth = {
     },
 };
 
+/* -------------------------------------------------------------- data lock */
+
+/* Collection reads, writes, uploads and subscriptions are refused until the
+ * access gate (auth.js) has confirmed the signed-in account's email is marked
+ * verified by the operator. Locked by default; re-locked on sign-out. */
+let dataUnlocked = false;
+
+export function setDataAccess(allowed) {
+    dataUnlocked = allowed === true;
+}
+
+function assertDataAccess() {
+    if (!dataUnlocked) {
+        throw new ApiError("This account's email is not verified, so workspace data is locked.", {
+            status: 403,
+            code: "email-unverified",
+        });
+    }
+}
+
 /* -------------------------------------------------------------- collections */
 
 export const db = {
@@ -408,6 +430,7 @@ export const db = {
      * honours it, falling back to client-side slicing in store.js.
      */
     async list(name, params = {}) {
+        assertDataAccess();
         const c = getClient();
         const query = {};
         if (params.limit) query.limit = params.limit;
@@ -428,6 +451,7 @@ export const db = {
     },
 
     async get(name, id) {
+        assertDataAccess();
         const c = getClient();
         const res = await guarded(() => c.collection(name).getById(id));
         const doc = res?.document || res?.doc || res?.data || res;
@@ -435,6 +459,7 @@ export const db = {
     },
 
     async create(name, data, id) {
+        assertDataAccess();
         const c = getClient();
         const payload = { ...data };
         const res = await guarded(() => c.collection(name).create(payload, id || payload.id), { allowRefresh: true });
@@ -443,6 +468,7 @@ export const db = {
     },
 
     async update(name, id, data) {
+        assertDataAccess();
         const c = getClient();
         const res = await guarded(() => c.collection(name).update(id, data));
         const doc = normalizeDoc(res?.document || res?.doc || res?.data || res);
@@ -450,11 +476,13 @@ export const db = {
     },
 
     async remove(name, id) {
+        assertDataAccess();
         const c = getClient();
         return guarded(() => c.collection(name).delete(id));
     },
 
     async upload(file) {
+        assertDataAccess();
         const c = getClient();
         if (!c.files || typeof c.files.upload !== "function") {
             throw new ApiError("This BreadBackend SDK build does not expose file uploads.", { code: "unsupported" });
@@ -467,6 +495,7 @@ export const db = {
 
     /** Realtime subscription; silently no-ops when the backend does not stream. */
     subscribe(name, handler) {
+        if (!dataUnlocked) return () => {};
         try {
             const c = getClient();
             const fn = c.collection(name).subscribe((event) => handler(event));

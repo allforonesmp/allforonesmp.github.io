@@ -66,12 +66,18 @@ Every record carries `id`, `createdAt`, `updatedAt`, and (when archived) `archiv
 `previousStatus`. References are stored as singular IDs or arrays of IDs on the record that
 "owns" the relationship, so deleting nothing silently orphans anything.
 
-## 4. Access is a manual allowlist — no self-service at all
+## 4. Access: operator-verified email + manual allowlist — no self-service
 
-There is **no** way for a person to let themselves in. Not an email verification
-link, not a "request access" button, not being the first account to sign up.
-The workspace opens only when the operator adds a record to the `members`
-collection in the BreadBackend database:
+There is **no** way for a person to let themselves in. Two things must both be
+true, and only the operator can make either of them true:
+
+1. **The account's email is marked verified on the backend.** You do this by
+   hand in the BreadBackend console. The gate checks this first: an unverified
+   account (or one whose verification state is missing) is stopped before any
+   collection is touched, and the data layer refuses every read, write, upload
+   and subscription. Verification is re-checked while the app is open, so
+   un-verifying an account locks it out within a couple of minutes.
+2. **The account has a record in the `members` collection:**
 
 ```json
 { "email": "them@example.com", "role": "editor", "status": "active" }
@@ -82,10 +88,11 @@ collection in the BreadBackend database:
 unrecognised role — lands on the **Access pending** screen, which offers exactly
 two actions: *Check again* (re-reads the database) and *Sign out*.
 
-**To give someone access:** sign up their account (or have them sign up), then
-create the members record above with that exact email. Press *Check again*.
+**To give someone access:** have them sign up, mark their email verified in the
+backend console, and create the members record above with that exact email.
+They then press *Check again*.
 
-**To revoke access:** set `status` to `revoked`, or delete the record. The gate
+**To revoke access:** un-verify the email, set `status` to `revoked`, or delete the record. The gate
 re-reads the allowlist on every load, so this takes effect on their next
 navigation — no session needs to be manually killed.
 
@@ -98,10 +105,10 @@ navigation — no session needs to be manually killed.
 - It does not bootstrap an owner from the first signup. An empty `members`
   collection means **nobody** gets in, including you — seed your own record.
 
-**Email verification is informational only.** The gate shows a note when the
-backend reports an address as unverified, but that note never grants or denies
-access; the members row is the sole authority. Still consider enabling
-verification on the backend so password-reset mail reaches a real inbox.
+**The app never performs verification.** It only reads the verified flag the
+backend reports (`isVerified`) and requires it to be exactly `true`. If your
+backend also emails self-service verification links on signup, turn that off —
+otherwise people could verify themselves outside this app.
 
 **If the allowlist cannot be read** (wrong project rules, network failure), the
 gate refuses access rather than falling open.
@@ -122,8 +129,8 @@ sign-in (yours included) stops at **Access pending**.
 
 - The SDK exposes `limit` / `orderBy` only — **no `where` filters** — so each collection is
   fetched once and filtered client-side. Change history and storyboard scenes load lazily.
-- No server-side RBAC; admission is an application check plus the project rules on the
-  `members` collection. A signed-up account could still call the API directly if collection
+- No server-side RBAC; the verified-email and members checks run in the browser. For a hard
+  guarantee, also require a verified email in the backend project rules. A signed-up account could still call the API directly if collection
   reads are open to all authenticated users — which is why §5 step 1 matters.
 - Version history is application-level: snapshots are written to `change_history` on save and
   can be restored from the record's **History** tab.

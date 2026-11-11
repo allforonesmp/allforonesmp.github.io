@@ -82,7 +82,8 @@
                 <div id="gateSignup" class="gate-panel" hidden>
                     <h1>Create account</h1>
                     <p class="gate-sub">
-                        New accounts are approved by the story owner before story data is loaded.
+                        New accounts stay locked until the story owner verifies the email by hand. No verification
+                        email is sent.
                     </p>
                     <form id="signupForm" class="gate-form" novalidate>
                         <label class="field">
@@ -138,8 +139,8 @@
                     <h1>Access pending</h1>
                     <p class="gate-sub">
                         Your account (<span id="deniedEmail">—</span>) is signed in, but this workspace is
-                        <strong>invite-only</strong>. Access is granted by hand — there is no verification email or
-                        request button that will let you in.
+                        <strong>invite-only</strong>. Access is granted by hand: the operator must mark your email as
+                        verified. No verification email is sent and there is no request button.
                     </p>
                     <p class="gate-sub" id="deniedReason"></p>
                     <p class="gate-lock" id="deniedVerifyNote" role="note" hidden></p>
@@ -147,7 +148,7 @@
                         <p class="gate-steps-title">How to get access</p>
                         <ol>
                             <li>Send the operator the email address shown above.</li>
-                            <li>They add you to the workspace's <code>members</code> list in the database.</li>
+                            <li>They verify your email by hand and add you to the workspace's members list.</li>
                             <li>Press <em>Check again</em> below.</li>
                         </ol>
                     </div>
