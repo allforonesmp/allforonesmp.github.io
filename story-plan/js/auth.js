@@ -1,31 +1,30 @@
 /* AllForOne Story Planner — authentication & access control gate.
  *
  * Sessions live in the BreadBackend SDK's own token storage; no password is
- * ever held by this app. Beyond authentication, two operator-controlled checks
- * decide access, in this order:
+ * ever held by this app.
  *
- * 1. VERIFIED EMAIL (hard requirement, checked first). The account's email
- *    must be marked verified on the backend. The operator does that by hand in
- *    the BreadBackend console. This app never verifies an address itself: it
- *    makes no verification call, sends no verification mail and has no
- *    "resend" button. Until the account is verified the app reads and writes
- *    NOTHING — not even the members list — and the data layer stays locked
- *    (api.js setDataAccess). A missing/unknown verification state counts as
- *    unverified.
+ * ACCESS = A VERIFIED EMAIL. The account's email must be marked verified on
+ * the backend. The operator does that by hand in the BreadBackend console.
+ * This app never verifies an address itself: it makes no verification call,
+ * sends no verification mail and has no "resend" button. Until the account is
+ * verified the app reads and writes NOTHING and the data layer stays locked
+ * (api.js setDataAccess). A missing/unknown verification state counts as
+ * unverified. Verification is re-checked while the app is open, so
+ * un-verifying an account locks it out.
  *
- * 2. MEMBERS ALLOWLIST. A verified account must also have an entry in the
- *    `members` collection:
+ * The `members` collection is OPTIONAL. A verified account needs no record
+ * there and enters as an editor. A record matching the account's email can:
+ *   - set its role:   { email, role: "owner" | "admin" | "editor" | "viewer" }
+ *   - block it:       { email, status: "revoked" }  (any status other than
+ *                     active/approved, or an unrecognised role, blocks)
  *
- *        { email: "them@example.com", role: "editor", status: "active" }
- *
- * Anything else lands on the Access pending screen, which offers exactly two
- * actions: "check again" (re-asks the backend) and "sign out". Verification is
- * re-checked while the app is open, so un-verifying an account locks it out.
+ * Unverified and blocked accounts land on the Access pending screen, which
+ * offers exactly two actions: "check again" and "sign out".
  *
  * IMPORTANT LIMITATION: this is a client-side gate. BreadBackend's public
  * client key carries no per-user roles, so a determined signed-up account could
  * still call the API directly unless the project rules on the backend also
- * require a verified email / restrict signup. Set that in the dashboard too.
+ * require a verified email. Set that in the dashboard too.
  */
 
 import { auth, db, COLLECTIONS, onUnauthorized, setDataAccess, ApiError } from "./api.js";
@@ -161,46 +160,36 @@ function normaliseEmail(value) {
     return String(value || "").trim().toLowerCase();
 }
 
+/** Role given to a verified account that has no members record. */
+const DEFAULT_ROLE = "editor";
+
 /**
- * Look the signed-in account up in the operator-managed allowlist.
+ * Work out the role of a verified account, and whether the operator has
+ * blocked it. The members collection is optional: no record (or an unreadable
+ * collection) means "verified, default role".
  *
- * Returns { allowed: boolean, member, reason, allMembers }.
- * `reason` is one of: allowed | not-listed | not-approved | list-unavailable.
- *
- * There is deliberately NO bootstrap path: an empty members collection means
- * nobody gets in, including whoever signed up first.
+ * Returns { allowed: boolean, member, reason } with reason allowed | not-approved.
  */
 async function resolveMembership(user) {
     const email = normaliseEmail(user.email);
+    const fallback = { email: user.email || "", role: DEFAULT_ROLE, status: "active", implicit: true };
     let members = [];
     try {
         members = await db.list(COLLECTIONS.members, { limit: 500 });
     } catch (err) {
-        // An unreadable allowlist must refuse, never fall open.
         console.warn("[story-plan] members collection unavailable", err?.message || err);
-        return { allowed: false, member: null, reason: "list-unavailable", allMembers: [] };
     }
     members = Array.isArray(members) ? members : [];
 
-    if (!email) {
-        return { allowed: false, member: null, reason: "not-listed", allMembers: members };
-    }
+    const entry = email ? members.find((m) => normaliseEmail(m.email) === email) : null;
+    if (!entry) return { allowed: true, member: fallback, reason: "allowed" };
 
-    const entry = members.find((m) => normaliseEmail(m.email) === email);
-    if (!entry) {
-        return { allowed: false, member: null, reason: "not-listed", allMembers: members };
+    const role = String(entry.role || DEFAULT_ROLE).toLowerCase();
+    const status = String(entry.status || "active").toLowerCase();
+    if (!ALLOWED_ROLES.includes(role) || !ALLOWED_STATUSES.includes(status)) {
+        return { allowed: false, member: entry, reason: "not-approved" };
     }
-
-    const role = String(entry.role || "editor").toLowerCase();
-    const status = String(entry.status || "").toLowerCase();
-    if (!ALLOWED_ROLES.includes(role)) {
-        return { allowed: false, member: entry, reason: "not-approved", allMembers: members };
-    }
-    if (!ALLOWED_STATUSES.includes(status)) {
-        return { allowed: false, member: entry, reason: "not-approved", allMembers: members };
-    }
-
-    return { allowed: true, member: entry, reason: "allowed", allMembers: members };
+    return { allowed: true, member: { ...entry, role, status }, reason: "allowed" };
 }
 
 /* ------------------------------------------------------------------ flows */
@@ -222,9 +211,8 @@ async function afterLogin(user) {
 }
 
 /**
- * Render the pending screen. Used for every refusal — unverified email,
- * unlisted account, unapproved row, unreadable collection. No path from here
- * into the app.
+ * Render the pending screen. Used for every refusal — unverified email or a
+ * blocked members record. No path from here into the app.
  */
 function showPending(user, reason) {
     const emailNode = $("deniedEmail");
@@ -236,9 +224,9 @@ function showPending(user, reason) {
             reason === "unverified"
                 ? "This account's email has not been verified by the operator. Until it is, nothing in this workspace can be read or changed."
                 : reason === "not-approved"
-                ? "Your address is listed, but the operator has not set it to active yet."
+                ? "Your email is verified, but the operator has blocked this account in the members list."
                 : reason === "list-unavailable"
-                  ? "The access list could not be read, so access is refused for safety."
+                  ? "The backend could not be reached to confirm your access, so it is refused for safety. Try again."
                   : "Your account is not on this workspace's access list.";
     }
 
@@ -257,8 +245,7 @@ function showPending(user, reason) {
 /**
  * The single entry decision. Email verification comes first: an unverified
  * account is refused before any collection is touched and the data layer stays
- * locked. Only then is `members` read — fresh from the database every time, so
- * an operator's edit takes effect on the next load or "Check again".
+ * locked. A verified account is in, unless a `members` record blocks it.
  */
 async function gateOnUser(user) {
     showPanel("Booting");
