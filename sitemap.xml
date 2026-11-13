@@ -16,4 +16,8 @@
     <loc>https://allforonesmp.github.io/make-skin/</loc>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://allforonesmp.github.io/stats/</loc>
+    <priority>0.6</priority>
+  </url>
 </urlset>

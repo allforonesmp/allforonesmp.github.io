@@ -1,0 +1,1427 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AllForOne | Server Stats</title>
+        <meta name="description" content="Live hardware, network, battery and Minecraft stats for the AllForOne SMP server." />
+        <link rel="icon" type="image/x-icon" href="https://allforonesmp.github.io/images/logo.png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Spectral:wght@600;700&display=swap"
+            rel="stylesheet" />
+
+        <script>
+            (function () {
+                var STORAGE_KEY = "afo_theme";
+                function getStored() {
+                    try { return localStorage.getItem(STORAGE_KEY); } catch (_) { return null; }
+                }
+                function setStored(v) {
+                    try { localStorage.setItem(STORAGE_KEY, v); } catch (_) {}
+                }
+                function apply(theme) {
+                    document.documentElement.setAttribute("data-theme", theme === "dark" ? "dark" : "light");
+                    if (window.__onThemeChange) window.__onThemeChange();
+                }
+                window.__setTheme = function (theme) {
+                    setStored(theme);
+                    apply(theme);
+                    try {
+                        if (window.parent && window.parent !== window) {
+                            window.parent.postMessage({ type: "afo-theme", theme: theme }, "*");
+                        }
+                    } catch (_) {}
+                };
+                apply(getStored() || "light");
+                document.addEventListener("DOMContentLoaded", function () {
+                    apply(getStored() || "light");
+                });
+                window.addEventListener("message", function (e) {
+                    if (e.data && e.data.type === "afo-theme") {
+                        setStored(e.data.theme);
+                        apply(e.data.theme);
+                    }
+                });
+            })();
+        </script>
+
+        <script src="https://kaidaz18.duckdns.org/sdk/bread-client.js"></script>
+
+        <style>
+            :root {
+                --primary-blue: #4a90e2;
+                --light-blue: #e8f4f8;
+                --lighter-blue: #f5fbfd;
+                --dark-blue: #2c5f8d;
+                --accent-blue: #5ba3f5;
+                --text-dark: #1a2332;
+                --text-medium: #4a5568;
+                --text-light: #718096;
+                --border-color: #d4e8f0;
+                --white: #ffffff;
+                --error: #e74c3c;
+                --success: #27ae60;
+                --warning: #e69a00;
+                --tx: #e67e22;
+                --track: #e3eef4;
+                --shadow-sm: 0 1px 3px rgba(74, 144, 226, 0.08);
+                --shadow-md: 0 4px 12px rgba(74, 144, 226, 0.12);
+                --shadow-lg: 0 10px 30px rgba(74, 144, 226, 0.15);
+            }
+
+            :root[data-theme="dark"] {
+                --primary-blue: #5ba3f5;
+                --light-blue: #1e2a38;
+                --lighter-blue: #141c26;
+                --dark-blue: #7db8f8;
+                --accent-blue: #5ba3f5;
+                --text-dark: #eef2f7;
+                --text-medium: #b7c2cf;
+                --text-light: #8a97a6;
+                --border-color: #2c3b4a;
+                --white: #1a232e;
+                --error: #ff6b5b;
+                --success: #3ecf7e;
+                --warning: #f6c344;
+                --tx: #f39c4a;
+                --track: #243243;
+                --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+                --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+                --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+            }
+
+            html {
+                transition: background-color 0.25s ease;
+            }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: "DM Sans", sans-serif;
+                background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
+                background-attachment: fixed;
+                color: var(--text-dark);
+                min-height: 100vh;
+                line-height: 1.6;
+                transition: background-color 0.25s ease, color 0.25s ease;
+            }
+            h1, h2, h3 {
+                font-family: "Spectral", serif;
+                font-weight: 700;
+            }
+            .card, .tile, .alert, footer, .pill {
+                transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .container {
+                max-width: 1180px;
+                margin: 0 auto;
+                padding: 1.5rem 1.25rem 3rem;
+            }
+
+            /* ---------- header ---------- */
+            .hero {
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 1rem;
+                margin-bottom: 1.25rem;
+            }
+            .hero h1 {
+                font-size: 2.1rem;
+                line-height: 1.15;
+                color: var(--dark-blue);
+            }
+            .hero .sub {
+                color: var(--text-medium);
+                font-size: 0.98rem;
+                margin-top: 0.2rem;
+            }
+            .hero-right {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 0.35rem;
+            }
+            .pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.4rem 0.95rem;
+                border-radius: 999px;
+                font-weight: 700;
+                font-size: 0.88rem;
+                background: var(--white);
+                border: 1.5px solid var(--border-color);
+                box-shadow: var(--shadow-sm);
+                color: var(--text-medium);
+            }
+            .dot {
+                width: 9px;
+                height: 9px;
+                border-radius: 50%;
+                background: var(--text-light);
+                flex-shrink: 0;
+            }
+            .pill.live { color: var(--success); border-color: color-mix(in srgb, var(--success) 45%, transparent); }
+            .pill.live .dot { background: var(--success); animation: pulse 1.8s ease-out infinite; }
+            .pill.stale { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 45%, transparent); }
+            .pill.stale .dot { background: var(--warning); }
+            .pill.down { color: var(--error); border-color: color-mix(in srgb, var(--error) 45%, transparent); }
+            .pill.down .dot { background: var(--error); }
+            @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent); }
+                100% { box-shadow: 0 0 0 9px transparent; }
+            }
+            .updated {
+                font-size: 0.82rem;
+                color: var(--text-light);
+            }
+
+            .alert {
+                background: var(--light-blue);
+                border-left: 4px solid var(--primary-blue);
+                border-radius: 8px;
+                padding: 0.95rem 1.25rem;
+                color: var(--text-medium);
+                font-size: 0.95rem;
+                margin-bottom: 1.25rem;
+                display: none;
+            }
+            .alert.show { display: block; }
+            .alert.err {
+                background: color-mix(in srgb, var(--error) 10%, var(--white));
+                border-left-color: var(--error);
+            }
+            .alert b { color: var(--text-dark); }
+
+            /* ---------- overview tiles ---------- */
+            .tiles {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .tile {
+                background: var(--white);
+                border: 1px solid var(--border-color);
+                border-radius: 16px;
+                box-shadow: var(--shadow-md);
+                padding: 1rem 1.1rem 0.85rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.15rem;
+                min-width: 0;
+                cursor: pointer;
+                text-decoration: none;
+                color: inherit;
+            }
+            .tile:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-lg);
+            }
+            .tile { transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.2s ease, border-color 0.2s ease; }
+            .tile-label {
+                font-size: 0.74rem;
+                font-weight: 700;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: var(--primary-blue);
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+            }
+            .tile-value {
+                font-size: 1.75rem;
+                font-weight: 700;
+                line-height: 1.2;
+                font-variant-numeric: tabular-nums;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .tile-value small {
+                font-size: 0.95rem;
+                font-weight: 500;
+                color: var(--text-light);
+                margin-left: 0.15rem;
+            }
+            .tile-sub {
+                font-size: 0.82rem;
+                color: var(--text-medium);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .tile canvas {
+                width: 100%;
+                height: 34px;
+                margin-top: 0.35rem;
+                display: block;
+            }
+
+            /* ---------- detail cards ---------- */
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 1.25rem;
+            }
+            .card {
+                background: var(--white);
+                border-radius: 16px;
+                box-shadow: var(--shadow-md);
+                border: 1px solid var(--border-color);
+                padding: 1.4rem 1.6rem;
+                min-width: 0;
+                scroll-margin-top: 1rem;
+            }
+            .card.wide { grid-column: 1 / -1; }
+            .section-title {
+                font-size: 1.35rem;
+                color: var(--dark-blue);
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+                margin-bottom: 1rem;
+                padding-bottom: 0.55rem;
+                border-bottom: 2px solid var(--border-color);
+            }
+            .section-title .right {
+                margin-left: auto;
+                font-family: "DM Sans", sans-serif;
+                font-size: 0.9rem;
+                font-weight: 700;
+                color: var(--text-medium);
+                font-variant-numeric: tabular-nums;
+            }
+            .chart-wrap {
+                position: relative;
+                height: 150px;
+                margin-bottom: 1rem;
+            }
+            .chart-wrap canvas {
+                width: 100%;
+                height: 100%;
+                display: block;
+            }
+            .chart-tip {
+                position: absolute;
+                top: 4px;
+                pointer-events: none;
+                background: var(--text-dark);
+                color: var(--white);
+                font-size: 0.78rem;
+                font-weight: 500;
+                padding: 0.3rem 0.55rem;
+                border-radius: 6px;
+                white-space: nowrap;
+                opacity: 0;
+                transition: opacity 0.12s;
+                transform: translateX(-50%);
+                font-variant-numeric: tabular-nums;
+                z-index: 2;
+            }
+            .chart-tip.show { opacity: 0.95; }
+            .legend {
+                display: flex;
+                gap: 1rem;
+                font-size: 0.82rem;
+                color: var(--text-medium);
+                margin: -0.5rem 0 0.9rem;
+            }
+            .legend i {
+                display: inline-block;
+                width: 10px;
+                height: 10px;
+                border-radius: 3px;
+                margin-right: 0.35rem;
+                vertical-align: -1px;
+            }
+
+            .kv {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                gap: 0.6rem;
+            }
+            .kv div {
+                background: var(--lighter-blue);
+                border: 1px solid var(--border-color);
+                border-radius: 10px;
+                padding: 0.55rem 0.8rem;
+                min-width: 0;
+            }
+            .kv span {
+                display: block;
+                font-size: 0.72rem;
+                font-weight: 700;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                color: var(--text-light);
+            }
+            .kv b {
+                display: block;
+                font-size: 1.02rem;
+                font-variant-numeric: tabular-nums;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .bar {
+                height: 10px;
+                background: var(--track);
+                border-radius: 99px;
+                overflow: hidden;
+            }
+            .bar > i {
+                display: block;
+                height: 100%;
+                width: 0;
+                border-radius: 99px;
+                background: var(--primary-blue);
+                transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s;
+            }
+            .bar-row {
+                display: grid;
+                grid-template-columns: 4.2rem 1fr 3.4rem;
+                align-items: center;
+                gap: 0.6rem;
+                font-size: 0.86rem;
+                color: var(--text-medium);
+                margin-bottom: 0.45rem;
+                font-variant-numeric: tabular-nums;
+            }
+            .bar-row b { text-align: right; color: var(--text-dark); }
+            .sub-title {
+                font-size: 0.78rem;
+                font-weight: 700;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                color: var(--primary-blue);
+                margin: 1.1rem 0 0.6rem;
+            }
+
+            /* ---------- battery ---------- */
+            .battery-hero {
+                display: flex;
+                align-items: center;
+                gap: 1.4rem;
+                margin-bottom: 1.1rem;
+                flex-wrap: wrap;
+            }
+            .batt {
+                position: relative;
+                width: 128px;
+                height: 58px;
+                border: 3px solid var(--text-medium);
+                border-radius: 10px;
+                padding: 4px;
+                flex-shrink: 0;
+            }
+            .batt::after {
+                content: "";
+                position: absolute;
+                right: -10px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 6px;
+                height: 20px;
+                background: var(--text-medium);
+                border-radius: 0 4px 4px 0;
+            }
+            .batt-fill {
+                height: 100%;
+                width: 0;
+                border-radius: 5px;
+                background: var(--success);
+                transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s;
+            }
+            .batt.charging .batt-fill {
+                background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+                background-size: 60px 100%;
+                background-repeat: no-repeat;
+                animation: shimmer 1.6s linear infinite;
+            }
+            @keyframes shimmer {
+                from { background-position: -60px 0; }
+                to { background-position: 140px 0; }
+            }
+            .batt-bolt {
+                position: absolute;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+            }
+            .batt.charging .batt-bolt, .batt.plugged .batt-bolt { display: flex; }
+            .batt-bolt svg {
+                width: 26px;
+                height: 26px;
+                fill: #fff;
+                stroke: var(--text-dark);
+                stroke-width: 1.2;
+            }
+            .batt-big {
+                font-size: 2.4rem;
+                font-weight: 700;
+                line-height: 1;
+                font-variant-numeric: tabular-nums;
+            }
+            .batt-status {
+                font-weight: 700;
+                margin-top: 0.3rem;
+            }
+            .batt-status.charging { color: var(--success); }
+            .batt-status.discharging { color: var(--warning); }
+
+            /* ---------- minecraft ---------- */
+            .mc-head {
+                display: flex;
+                align-items: center;
+                gap: 0.9rem;
+                margin-bottom: 1rem;
+                flex-wrap: wrap;
+            }
+            .mc-count {
+                font-size: 2.4rem;
+                font-weight: 700;
+                line-height: 1;
+                font-variant-numeric: tabular-nums;
+            }
+            .mc-count small { font-size: 1.1rem; color: var(--text-light); font-weight: 500; }
+            .motd {
+                font-style: italic;
+                color: var(--text-medium);
+                font-size: 0.95rem;
+            }
+            .players {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+            .player {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.45rem;
+                background: var(--light-blue);
+                border: 1px solid var(--border-color);
+                border-radius: 999px;
+                padding: 0.22rem 0.8rem 0.22rem 0.25rem;
+                font-weight: 500;
+                font-size: 0.9rem;
+            }
+            .player img {
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                image-rendering: pixelated;
+                background: var(--track);
+            }
+            .muted { color: var(--text-light); font-size: 0.9rem; }
+
+            /* ---------- ping table / services ---------- */
+            table.ping {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.9rem;
+                font-variant-numeric: tabular-nums;
+            }
+            table.ping th {
+                text-align: left;
+                font-size: 0.72rem;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                color: var(--text-light);
+                padding: 0.35rem 0.4rem;
+                border-bottom: 1.5px solid var(--border-color);
+            }
+            table.ping td {
+                padding: 0.45rem 0.4rem;
+                border-bottom: 1px solid var(--border-color);
+            }
+            table.ping tr:last-child td { border-bottom: none; }
+            table.ping td:not(:first-child), table.ping th:not(:first-child) { text-align: right; }
+            .good { color: var(--success); }
+            .warn { color: var(--warning); }
+            .bad { color: var(--error); }
+
+            .services {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+                gap: 0.5rem;
+            }
+            .svc {
+                display: flex;
+                align-items: center;
+                gap: 0.55rem;
+                padding: 0.5rem 0.75rem;
+                background: var(--lighter-blue);
+                border: 1px solid var(--border-color);
+                border-radius: 10px;
+                font-size: 0.9rem;
+                min-width: 0;
+            }
+            .svc span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .svc em { margin-left: auto; font-style: normal; font-size: 0.78rem; color: var(--text-light); }
+            .svc.ok .dot { background: var(--success); }
+            .svc.fail .dot { background: var(--error); }
+
+            footer {
+                background: var(--text-dark);
+                color: #a0aec0;
+                text-align: center;
+                padding: 2rem;
+                font-size: 0.9rem;
+            }
+            :root[data-theme="dark"] footer { background: #0d1319; }
+            footer a { color: var(--accent-blue); text-decoration: none; }
+
+            .loading .tile-value, .loading .kv b { color: var(--text-light); }
+
+            @media (max-width: 860px) {
+                .grid { grid-template-columns: minmax(0, 1fr); }
+            }
+            @media (max-width: 640px) {
+                .container { padding: 1rem 1rem 2.5rem; }
+                .hero h1 { font-size: 1.7rem; }
+                .hero-right { align-items: flex-start; }
+                .card { padding: 1.15rem 1.1rem; }
+                .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+                .tile { padding: 0.8rem 0.85rem 0.7rem; }
+                .tile-value { font-size: 1.4rem; }
+                .chart-wrap { height: 130px; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                *, *::before, *::after { animation: none !important; transition: none !important; }
+            }
+        </style>
+    </head>
+    <body class="loading">
+        <div class="container">
+            <header class="hero">
+                <div>
+                    <h1>Server Stats</h1>
+                    <div class="sub" id="heroSub">Live stats from the AllForOne server</div>
+                </div>
+                <div class="hero-right">
+                    <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">Connecting…</span></span>
+                    <span class="updated" id="updatedText">&nbsp;</span>
+                </div>
+            </header>
+
+            <div class="alert" id="alert"></div>
+
+            <!-- Overview -->
+            <section class="tiles">
+                <a class="tile" href="#cpuCard">
+                    <span class="tile-label">CPU</span>
+                    <span class="tile-value" id="tCpu">–</span>
+                    <span class="tile-sub" id="tCpuSub">&nbsp;</span>
+                    <canvas data-spark="cpu"></canvas>
+                </a>
+                <a class="tile" href="#memCard">
+                    <span class="tile-label">RAM</span>
+                    <span class="tile-value" id="tMem">–</span>
+                    <span class="tile-sub" id="tMemSub">&nbsp;</span>
+                    <canvas data-spark="mem"></canvas>
+                </a>
+                <a class="tile" href="#pingCard">
+                    <span class="tile-label">Ping</span>
+                    <span class="tile-value" id="tPing">–</span>
+                    <span class="tile-sub" id="tPingSub">&nbsp;</span>
+                    <canvas data-spark="ping"></canvas>
+                </a>
+                <a class="tile" href="#netCard">
+                    <span class="tile-label">Network</span>
+                    <span class="tile-value" id="tNet">–</span>
+                    <span class="tile-sub" id="tNetSub">&nbsp;</span>
+                    <canvas data-spark="net"></canvas>
+                </a>
+                <a class="tile" href="#battCard">
+                    <span class="tile-label">Battery</span>
+                    <span class="tile-value" id="tBatt">–</span>
+                    <span class="tile-sub" id="tBattSub">&nbsp;</span>
+                    <canvas data-spark="battery"></canvas>
+                </a>
+                <a class="tile" href="#mcCard">
+                    <span class="tile-label">Players</span>
+                    <span class="tile-value" id="tPlayers">–</span>
+                    <span class="tile-sub" id="tPlayersSub">&nbsp;</span>
+                    <canvas data-spark="players"></canvas>
+                </a>
+            </section>
+
+            <section class="grid">
+                <!-- CPU -->
+                <article class="card" id="cpuCard">
+                    <h2 class="section-title">CPU <span class="right" id="cpuNow">–</span></h2>
+                    <div class="chart-wrap"><canvas id="cpuChart"></canvas><div class="chart-tip"></div></div>
+                    <div class="kv">
+                        <div><span>Temperature</span><b id="cpuTemp">–</b></div>
+                        <div><span>Clock</span><b id="cpuFreq">–</b></div>
+                        <div><span>Load (1/5/15m)</span><b id="cpuLoad">–</b></div>
+                    </div>
+                    <div class="sub-title">Per core</div>
+                    <div id="cpuCores"></div>
+                </article>
+
+                <!-- Memory -->
+                <article class="card" id="memCard">
+                    <h2 class="section-title">Memory <span class="right" id="memNow">–</span></h2>
+                    <div class="chart-wrap"><canvas id="memChart"></canvas><div class="chart-tip"></div></div>
+                    <div class="kv">
+                        <div><span>Used</span><b id="memUsed">–</b></div>
+                        <div><span>Available</span><b id="memAvail">–</b></div>
+                        <div><span>Cache</span><b id="memCache">–</b></div>
+                        <div><span>Total</span><b id="memTotal">–</b></div>
+                    </div>
+                    <div class="sub-title">Swap</div>
+                    <div class="bar-row"><span>Swap</span><div class="bar"><i id="swapBar"></i></div><b id="swapPct">–</b></div>
+                    <div class="muted" id="swapText">&nbsp;</div>
+                </article>
+
+                <!-- Network -->
+                <article class="card" id="netCard">
+                    <h2 class="section-title">Network <span class="right" id="netIface">–</span></h2>
+                    <div class="legend">
+                        <span><i style="background: var(--primary-blue)"></i>Download</span>
+                        <span><i style="background: var(--tx)"></i>Upload</span>
+                    </div>
+                    <div class="chart-wrap"><canvas id="netChart"></canvas><div class="chart-tip"></div></div>
+                    <div class="kv">
+                        <div><span>↓ Download</span><b id="netRx">–</b></div>
+                        <div><span>↑ Upload</span><b id="netTx">–</b></div>
+                        <div><span>Received (boot)</span><b id="netRxTot">–</b></div>
+                        <div><span>Sent (boot)</span><b id="netTxTot">–</b></div>
+                        <div><span>Link speed</span><b id="netLink">–</b></div>
+                    </div>
+                </article>
+
+                <!-- Ping -->
+                <article class="card" id="pingCard">
+                    <h2 class="section-title">Ping <span class="right" id="pingNow">–</span></h2>
+                    <div class="chart-wrap"><canvas id="pingChart"></canvas><div class="chart-tip"></div></div>
+                    <table class="ping">
+                        <thead><tr><th>Target</th><th>Now</th><th>Avg</th><th>Loss</th></tr></thead>
+                        <tbody id="pingRows"></tbody>
+                    </table>
+                    <div class="muted" style="margin-top: 0.7rem" id="yourPing">&nbsp;</div>
+                </article>
+
+                <!-- Battery -->
+                <article class="card" id="battCard">
+                    <h2 class="section-title">Battery <span class="right" id="battPlug">–</span></h2>
+                    <div class="battery-hero">
+                        <div class="batt" id="battIcon">
+                            <div class="batt-fill" id="battFill"></div>
+                            <div class="batt-bolt">
+                                <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="batt-big" id="battPct">–</div>
+                            <div class="batt-status" id="battStatus">&nbsp;</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height: 110px"><canvas id="battChart"></canvas><div class="chart-tip"></div></div>
+                    <div class="kv">
+                        <div><span>Power draw</span><b id="battPower">–</b></div>
+                        <div><span>Time left</span><b id="battTime">–</b></div>
+                        <div><span>Energy</span><b id="battEnergy">–</b></div>
+                        <div><span>Health</span><b id="battHealth">–</b></div>
+                        <div><span>Cycles</span><b id="battCycles">–</b></div>
+                        <div><span>Voltage</span><b id="battVolt">–</b></div>
+                    </div>
+                </article>
+
+                <!-- Minecraft -->
+                <article class="card" id="mcCard">
+                    <h2 class="section-title">Minecraft <span class="right" id="mcState">–</span></h2>
+                    <div class="mc-head">
+                        <div class="mc-count" id="mcCount">–</div>
+                        <div>
+                            <div style="font-weight: 700" id="mcVersion">&nbsp;</div>
+                            <div class="motd" id="mcMotd">&nbsp;</div>
+                        </div>
+                    </div>
+                    <div class="players" id="mcPlayers"></div>
+                    <div class="chart-wrap" style="height: 100px"><canvas id="playersChart"></canvas><div class="chart-tip"></div></div>
+                    <div class="kv">
+                        <div><span>Server RAM</span><b id="mcRam">–</b></div>
+                        <div><span>Server CPU</span><b id="mcCpu">–</b></div>
+                        <div><span>Uptime</span><b id="mcUptime">–</b></div>
+                        <div><span>World size</span><b id="mcWorld">–</b></div>
+                        <div><span>Threads</span><b id="mcThreads">–</b></div>
+                        <div><span>Response</span><b id="mcLatency">–</b></div>
+                    </div>
+                </article>
+
+                <!-- Storage -->
+                <article class="card" id="diskCard">
+                    <h2 class="section-title">Storage <span class="right" id="diskNow">–</span></h2>
+                    <div class="bar-row" style="grid-template-columns: 1fr 3.4rem"><div class="bar" style="height: 14px"><i id="diskBar"></i></div><b id="diskPct">–</b></div>
+                    <div class="muted" id="diskText" style="margin-bottom: 1rem">&nbsp;</div>
+                    <div class="kv">
+                        <div><span>Disk read</span><b id="diskRead">–</b></div>
+                        <div><span>Disk write</span><b id="diskWrite">–</b></div>
+                        <div><span>Free</span><b id="diskFree">–</b></div>
+                    </div>
+                </article>
+
+                <!-- System -->
+                <article class="card" id="sysCard">
+                    <h2 class="section-title">System <span class="right" id="sysUptime">–</span></h2>
+                    <div class="kv" style="margin-bottom: 1rem">
+                        <div><span>Hostname</span><b id="sysHost">–</b></div>
+                        <div><span>OS</span><b id="sysOs">–</b></div>
+                        <div><span>Kernel</span><b id="sysKernel">–</b></div>
+                        <div style="grid-column: 1 / -1"><span>Processor</span><b id="sysCpu">–</b></div>
+                    </div>
+                    <div class="sub-title">Services</div>
+                    <div class="services" id="services"></div>
+                </article>
+            </section>
+        </div>
+
+        <footer>
+            <p>AllForOne SMP &middot; Stats refresh every few seconds &middot; <a href="https://allforonesmp.github.io/" target="_top">Back to home</a></p>
+        </footer>
+
+        <script>
+            (function () {
+                "use strict";
+
+                // ---------------------------------------------------------------- config
+                const CONFIG = {
+                    baseUrl: "https://kaidaz18.duckdns.org",
+                    projectSlug: "allforone-server-stats",
+                    apiKey: "pk_live_KqlrVV35ciHJRjrRegSYuVC3",
+                    collection: "server_stats",
+                    docId: "live",
+                };
+                const PING_LABELS = {
+                    "1.1.1.1": "Cloudflare (1.1.1.1)",
+                    "8.8.8.8": "Google (8.8.8.8)",
+                    "kaidaz18.duckdns.org": "Stats backend",
+                };
+                // Optional for testing: ?source=<url-to-json> reads a JSON file instead of the backend.
+                const params = new URLSearchParams(location.search);
+                const SOURCE = params.get("source");
+
+                // --------------------------------------------------------------- helpers
+                const $ = (id) => document.getElementById(id);
+                const set = (id, txt) => {
+                    const el = $(id);
+                    if (el) el.textContent = txt == null || txt === "" ? "–" : txt;
+                };
+                const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+                const num = (v) => typeof v === "number" && isFinite(v);
+
+                function bytes(b, dp) {
+                    if (!num(b)) return "–";
+                    const u = ["B", "KB", "MB", "GB", "TB"];
+                    let i = 0;
+                    while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+                    return b.toFixed(dp != null ? dp : b >= 100 || i === 0 ? 0 : 1) + " " + u[i];
+                }
+                function rate(bps) {
+                    if (!num(bps)) return "–";
+                    // network speeds read best in bits
+                    const bits = bps * 8;
+                    if (bits >= 1e6) return (bits / 1e6).toFixed(bits >= 1e8 ? 0 : 1) + " Mbps";
+                    if (bits >= 1e3) return (bits / 1e3).toFixed(bits >= 1e5 ? 0 : 1) + " Kbps";
+                    return Math.round(bits) + " bps";
+                }
+                const pct = (v) => (num(v) ? (v >= 10 ? Math.round(v) : v.toFixed(1)) + "%" : "–");
+                const ms = (v) => (num(v) ? (v >= 100 ? Math.round(v) : v.toFixed(1)) + " ms" : "–");
+                function duration(sec) {
+                    if (!num(sec)) return "–";
+                    const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60);
+                    if (d) return d + "d " + h + "h";
+                    if (h) return h + "h " + m + "m";
+                    return m + "m " + Math.floor(sec % 60) + "s";
+                }
+                function minutes(m) {
+                    if (!num(m)) return "–";
+                    return m >= 60 ? Math.floor(m / 60) + "h " + (m % 60) + "m" : m + "m";
+                }
+                function ago(ms) {
+                    const s = Math.max(0, Math.round(ms / 1000));
+                    if (s < 5) return "just now";
+                    if (s < 60) return s + "s ago";
+                    if (s < 3600) return Math.floor(s / 60) + "m ago";
+                    if (s < 86400) return Math.floor(s / 3600) + "h ago";
+                    return Math.floor(s / 86400) + "d ago";
+                }
+                const levelColor = (v, warn, bad) => (!num(v) ? css("--primary-blue") : v >= bad ? css("--error") : v >= warn ? css("--warning") : css("--primary-blue"));
+                const pingClass = (v) => (!num(v) ? "bad" : v < 60 ? "good" : v < 150 ? "warn" : "bad");
+                function bar(id, value, warn, bad) {
+                    const el = $(id);
+                    if (!el) return;
+                    el.style.width = Math.max(0, Math.min(100, num(value) ? value : 0)) + "%";
+                    el.style.backgroundColor = levelColor(value, warn, bad);
+                }
+
+                // ---------------------------------------------------------------- charts
+                // Tiny canvas line chart: no library needed. series = [{values, color, fill}]
+                function drawChart(canvas, times, series, opts) {
+                    opts = opts || {};
+                    const dpr = window.devicePixelRatio || 1;
+                    const w = canvas.clientWidth, h = canvas.clientHeight;
+                    if (!w || !h) return;
+                    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+                        canvas.width = Math.round(w * dpr);
+                        canvas.height = Math.round(h * dpr);
+                    }
+                    const ctx = canvas.getContext("2d");
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    ctx.clearRect(0, 0, w, h);
+
+                    const spark = !!opts.spark;
+                    const padL = spark ? 0 : 34, padR = spark ? 0 : 4, padT = spark ? 3 : 8, padB = spark ? 2 : 16;
+                    const all = [];
+                    series.forEach((s) => s.values.forEach((v) => num(v) && all.push(v)));
+                    let max = opts.max != null ? opts.max : Math.max(1, ...all) * 1.15;
+                    let min = opts.min != null ? opts.min : 0;
+                    if (opts.niceMax && !opts.max) max = niceCeil(max);
+                    const n = times.length;
+                    const x = (i) => padL + (n <= 1 ? 0 : (i / (n - 1)) * (w - padL - padR));
+                    const y = (v) => padT + (1 - (v - min) / (max - min || 1)) * (h - padT - padB);
+
+                    if (!spark) {
+                        ctx.strokeStyle = css("--border-color");
+                        ctx.fillStyle = css("--text-light");
+                        ctx.lineWidth = 1;
+                        ctx.font = "11px 'DM Sans', sans-serif";
+                        ctx.textAlign = "right";
+                        ctx.textBaseline = "middle";
+                        for (let k = 0; k <= 3; k++) {
+                            const v = min + ((max - min) * k) / 3;
+                            const yy = Math.round(y(v)) + 0.5;
+                            ctx.beginPath();
+                            ctx.setLineDash(k === 0 ? [] : [3, 4]);
+                            ctx.moveTo(padL, yy);
+                            ctx.lineTo(w - padR, yy);
+                            ctx.stroke();
+                            ctx.fillText(opts.axis ? opts.axis(v) : Math.round(v), padL - 6, yy);
+                        }
+                        ctx.setLineDash([]);
+                        if (n > 1) {
+                            ctx.textBaseline = "bottom";
+                            ctx.textAlign = "left";
+                            ctx.fillText(clock(times[0]), padL, h);
+                            ctx.textAlign = "right";
+                            ctx.fillText("now", w - padR, h);
+                        }
+                    }
+
+                    series.forEach((s) => {
+                        const color = s.color;
+                        // build segments, breaking on gaps (null)
+                        const segs = [];
+                        let cur = [];
+                        s.values.forEach((v, i) => {
+                            if (num(v)) cur.push([x(i), y(Math.min(max, Math.max(min, v)))]);
+                            else if (cur.length) { segs.push(cur); cur = []; }
+                        });
+                        if (cur.length) segs.push(cur);
+                        segs.forEach((pts) => {
+                            if (s.fill !== false) {
+                                const g = ctx.createLinearGradient(0, padT, 0, h - padB);
+                                g.addColorStop(0, hexA(color, spark ? 0.28 : 0.22));
+                                g.addColorStop(1, hexA(color, 0));
+                                ctx.fillStyle = g;
+                                ctx.beginPath();
+                                ctx.moveTo(pts[0][0], h - padB);
+                                pts.forEach((p) => ctx.lineTo(p[0], p[1]));
+                                ctx.lineTo(pts[pts.length - 1][0], h - padB);
+                                ctx.closePath();
+                                ctx.fill();
+                            }
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = spark ? 1.6 : 2;
+                            ctx.lineJoin = "round";
+                            ctx.beginPath();
+                            pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+                            ctx.stroke();
+                            if (pts.length === 1) {
+                                ctx.fillStyle = color;
+                                ctx.beginPath();
+                                ctx.arc(pts[0][0], pts[0][1], 2.5, 0, Math.PI * 2);
+                                ctx.fill();
+                            }
+                        });
+                    });
+
+                    if (opts.hover != null && n) {
+                        const i = opts.hover;
+                        ctx.strokeStyle = css("--text-light");
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(Math.round(x(i)) + 0.5, padT);
+                        ctx.lineTo(Math.round(x(i)) + 0.5, h - padB);
+                        ctx.stroke();
+                        series.forEach((s) => {
+                            const v = s.values[i];
+                            if (!num(v)) return;
+                            ctx.fillStyle = s.color;
+                            ctx.beginPath();
+                            ctx.arc(x(i), y(Math.min(max, v)), 3.5, 0, Math.PI * 2);
+                            ctx.fill();
+                        });
+                    }
+                    canvas._geom = { padL, padR, n, w };
+                }
+                function niceCeil(v) {
+                    const p = Math.pow(10, Math.floor(Math.log10(v)));
+                    for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p;
+                    return 10 * p;
+                }
+                function hexA(color, a) {
+                    const m = /^#([0-9a-f]{6})$/i.exec(color);
+                    if (!m) return color;
+                    const n = parseInt(m[1], 16);
+                    return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
+                }
+                function clock(t) {
+                    const d = new Date(t);
+                    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+                }
+
+                // Chart definitions: which history columns go where.
+                const CHARTS = {};
+                function defineChart(id, build) {
+                    const canvas = $(id);
+                    const tip = canvas.parentElement.querySelector(".chart-tip");
+                    const state = { canvas, tip, build, hover: null };
+                    CHARTS[id] = state;
+                    const move = (clientX) => {
+                        const g = canvas._geom;
+                        if (!g || !g.n) return;
+                        const r = canvas.getBoundingClientRect();
+                        const rel = (clientX - r.left - g.padL) / (g.w - g.padL - g.padR);
+                        state.hover = Math.max(0, Math.min(g.n - 1, Math.round(rel * (g.n - 1))));
+                        renderChart(state);
+                    };
+                    canvas.addEventListener("mousemove", (e) => move(e.clientX));
+                    canvas.addEventListener("touchmove", (e) => move(e.touches[0].clientX), { passive: true });
+                    const leave = () => { state.hover = null; tip.classList.remove("show"); renderChart(state); };
+                    canvas.addEventListener("mouseleave", leave);
+                    canvas.addEventListener("touchend", leave);
+                }
+                function renderChart(state) {
+                    if (!HIST.t.length) return;
+                    const cfg = state.build();
+                    drawChart(state.canvas, HIST.t, cfg.series, Object.assign({}, cfg.opts, { hover: state.hover }));
+                    if (state.hover != null) {
+                        const i = state.hover;
+                        const parts = cfg.series.map((s) => (cfg.series.length > 1 ? s.name + " " : "") + cfg.fmt(s.values[i]));
+                        state.tip.textContent = clock(HIST.t[i]) + "  ·  " + parts.join("  ");
+                        const g = state.canvas._geom;
+                        const px = g.padL + (g.n <= 1 ? 0 : (i / (g.n - 1)) * (g.w - g.padL - g.padR));
+                        const tw = state.tip.offsetWidth / 2;
+                        state.tip.style.left = Math.max(tw, Math.min(g.w - tw, px)) + "px";
+                        state.tip.classList.add("show");
+                    }
+                }
+
+                // History columns sent by the reporter.
+                let HIST = { t: [] };
+                function parseHistory(doc) {
+                    const fields = doc.historyFields || ["t", "cpu", "mem", "rx", "tx", "ping", "battery", "players", "temp"];
+                    const h = {};
+                    fields.forEach((f) => (h[f] = []));
+                    (doc.history || []).forEach((row) => fields.forEach((f, i) => h[f].push(row[i])));
+                    return h;
+                }
+
+                function setupCharts() {
+                    const blue = () => css("--primary-blue");
+                    defineChart("cpuChart", () => ({
+                        series: [{ name: "CPU", values: HIST.cpu, color: blue() }],
+                        opts: { max: 100, axis: (v) => Math.round(v) + "%" },
+                        fmt: pct,
+                    }));
+                    defineChart("memChart", () => ({
+                        series: [{ name: "RAM", values: HIST.mem, color: css("--success") }],
+                        opts: { max: 100, axis: (v) => Math.round(v) + "%" },
+                        fmt: pct,
+                    }));
+                    defineChart("netChart", () => ({
+                        series: [
+                            { name: "↓", values: HIST.rx, color: blue() },
+                            { name: "↑", values: HIST.tx, color: css("--tx") },
+                        ],
+                        opts: { niceMax: true, axis: (v) => shortRate(v) },
+                        fmt: rate,
+                    }));
+                    defineChart("pingChart", () => ({
+                        series: [{ name: "Ping", values: HIST.ping, color: blue() }],
+                        opts: { niceMax: true, axis: (v) => Math.round(v) + "ms" },
+                        fmt: ms,
+                    }));
+                    defineChart("battChart", () => ({
+                        series: [{ name: "Battery", values: HIST.battery, color: css("--success") }],
+                        opts: { max: 100, axis: (v) => Math.round(v) + "%" },
+                        fmt: pct,
+                    }));
+                    defineChart("playersChart", () => ({
+                        series: [{ name: "Players", values: HIST.players, color: blue() }],
+                        opts: { niceMax: true, max: Math.max(4, ...(HIST.players || []).filter(num)), axis: (v) => Math.round(v) },
+                        fmt: (v) => (num(v) ? v + " online" : "offline"),
+                    }));
+                }
+                function shortRate(bps) {
+                    const bits = bps * 8;
+                    if (bits >= 1e6) return +(bits / 1e6).toFixed(1) + "M";
+                    if (bits >= 1e3) return Math.round(bits / 1e3) + "K";
+                    return Math.round(bits) + "";
+                }
+                function drawSparks() {
+                    document.querySelectorAll("canvas[data-spark]").forEach((c) => {
+                        const k = c.getAttribute("data-spark");
+                        let series, opts = { spark: true };
+                        if (k === "net") {
+                            series = [
+                                { values: HIST.rx || [], color: css("--primary-blue") },
+                                { values: HIST.tx || [], color: css("--tx"), fill: false },
+                            ];
+                        } else {
+                            const color = k === "mem" || k === "battery" ? css("--success") : css("--primary-blue");
+                            series = [{ values: HIST[k] || [], color }];
+                            if (k === "cpu" || k === "mem" || k === "battery") opts.max = 100;
+                            if (k === "players") opts.max = Math.max(4, ...(HIST.players || []).filter(num)) * 1.1;
+                        }
+                        drawChart(c, HIST.t, series, opts);
+                    });
+                }
+                function drawAll() {
+                    Object.values(CHARTS).forEach(renderChart);
+                    drawSparks();
+                }
+
+                // ---------------------------------------------------------------- render
+                let lastDoc = null;
+                function render(doc) {
+                    lastDoc = doc;
+                    document.body.classList.remove("loading");
+                    HIST = parseHistory(doc);
+                    const sys = doc.system || {}, cpu = doc.cpu || {}, mem = doc.memory || {}, disk = doc.disk || {};
+                    const net = doc.network || {}, png = doc.ping || {}, bat = doc.battery, mc = doc.minecraft || {};
+
+                    set("heroSub", [sys.hostname, sys.os].filter(Boolean).join(" · ") || "AllForOne server");
+
+                    // tiles
+                    set("tCpu", pct(cpu.usage));
+                    set("tCpuSub", [num(cpu.temp) ? cpu.temp.toFixed(0) + "°C" : null, cpu.freqMhz ? (cpu.freqMhz / 1000).toFixed(2) + " GHz" : null].filter(Boolean).join(" · "));
+                    set("tMem", pct(mem.usage));
+                    set("tMemSub", bytes(mem.used) + " / " + bytes(mem.total, 0));
+                    $("tPing").innerHTML = num(png.ms) ? Math.round(png.ms) + "<small>ms</small>" : "–";
+                    set("tPingSub", png.online === false ? "No internet!" : (png.targets && png.targets[0] ? (PING_LABELS[png.targets[0].host] || png.targets[0].host) : ""));
+                    set("tNet", "↓ " + rate(net.rxRate));
+                    set("tNetSub", "↑ " + rate(net.txRate));
+                    if (bat) {
+                        set("tBatt", bat.percent != null ? bat.percent + "%" : "–");
+                        set("tBattSub", batteryLabel(bat));
+                    } else {
+                        set("tBatt", "N/A");
+                        set("tBattSub", "No battery");
+                    }
+                    const pOn = Number(mc.playersOnline) || 0, pMax = Number(mc.playersMax) || 0;
+                    if (mc.online) {
+                        $("tPlayers").innerHTML = pOn + "<small>/ " + pMax + "</small>";
+                        set("tPlayersSub", "Minecraft " + (mc.version || "online"));
+                    } else {
+                        set("tPlayers", "Offline");
+                        set("tPlayersSub", "Minecraft server is down");
+                    }
+
+                    // CPU
+                    set("cpuNow", pct(cpu.usage));
+                    set("cpuTemp", num(cpu.temp) ? cpu.temp.toFixed(0) + " °C" : "–");
+                    $("cpuTemp").className = num(cpu.temp) ? (cpu.temp >= 85 ? "bad" : cpu.temp >= 70 ? "warn" : "") : "";
+                    set("cpuFreq", cpu.freqMhz ? (cpu.freqMhz / 1000).toFixed(2) + " GHz" : "–");
+                    set("cpuLoad", (cpu.load || []).join(" / "));
+                    const cores = $("cpuCores");
+                    const coreVals = cpu.cores || [];
+                    if (cores.children.length !== coreVals.length) {
+                        cores.innerHTML = "";
+                        coreVals.forEach((_, i) => {
+                            const row = document.createElement("div");
+                            row.className = "bar-row";
+                            row.innerHTML = `<span>Core ${i}</span><div class="bar"><i></i></div><b></b>`;
+                            cores.appendChild(row);
+                        });
+                    }
+                    coreVals.forEach((v, i) => {
+                        const row = cores.children[i];
+                        const fill = row.querySelector("i");
+                        fill.style.width = Math.min(100, v) + "%";
+                        fill.style.backgroundColor = levelColor(v, 70, 90);
+                        row.querySelector("b").textContent = pct(v);
+                    });
+
+                    // Memory
+                    set("memNow", pct(mem.usage));
+                    set("memUsed", bytes(mem.used));
+                    set("memAvail", bytes(mem.available));
+                    set("memCache", bytes(mem.cached));
+                    set("memTotal", bytes(mem.total, 0));
+                    const swapPct = mem.swapTotal ? (100 * mem.swapUsed) / mem.swapTotal : 0;
+                    bar("swapBar", swapPct, 50, 80);
+                    set("swapPct", mem.swapTotal ? pct(swapPct) : "–");
+                    set("swapText", mem.swapTotal ? bytes(mem.swapUsed) + " of " + bytes(mem.swapTotal, 0) + " swap used" : "No swap configured");
+
+                    // Network
+                    set("netIface", net.iface || "–");
+                    set("netRx", rate(net.rxRate));
+                    set("netTx", rate(net.txRate));
+                    set("netRxTot", bytes(net.rxTotal));
+                    set("netTxTot", bytes(net.txTotal));
+                    set("netLink", num(net.linkSpeedMbps) && net.linkSpeedMbps > 0 ? (net.linkSpeedMbps >= 1000 ? net.linkSpeedMbps / 1000 + " Gbps" : net.linkSpeedMbps + " Mbps") : "–");
+
+                    // Ping
+                    set("pingNow", png.online === false ? "No internet" : ms(png.ms));
+                    $("pingNow").className = "right " + (png.online === false ? "bad" : "");
+                    const tbody = $("pingRows");
+                    tbody.innerHTML = "";
+                    (png.targets || []).forEach((t) => {
+                        const tr = document.createElement("tr");
+                        const cells = [PING_LABELS[t.host] || t.host, num(t.ms) ? ms(t.ms) : "timeout", ms(t.avg), num(t.loss) ? t.loss + "%" : "–"];
+                        cells.forEach((c, i) => {
+                            const td = document.createElement("td");
+                            td.textContent = c;
+                            if (i === 1) td.className = pingClass(t.ms);
+                            if (i === 3 && num(t.loss)) td.className = t.loss === 0 ? "good" : t.loss < 10 ? "warn" : "bad";
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+
+                    // Battery
+                    if (bat) {
+                        const p = bat.percent || 0;
+                        $("battFill").style.width = p + "%";
+                        $("battFill").style.backgroundColor = p <= 15 ? css("--error") : p <= 35 ? css("--warning") : css("--success");
+                        $("battIcon").classList.toggle("charging", !!bat.charging);
+                        $("battIcon").classList.toggle("plugged", !!bat.pluggedIn && !bat.charging);
+                        set("battPct", p + "%");
+                        set("battStatus", batteryLabel(bat));
+                        $("battStatus").className = "batt-status " + (bat.charging ? "charging" : bat.status === "Discharging" ? "discharging" : "");
+                        set("battPlug", bat.pluggedIn == null ? "–" : bat.pluggedIn ? "⚡ Plugged in" : "On battery");
+                        $("battPlug").className = "right " + (bat.pluggedIn === false ? "warn" : "");
+                        set("battPower", num(bat.powerW) ? bat.powerW.toFixed(1) + " W" : "–");
+                        set("battTime", bat.timeLeftMin != null ? minutes(bat.timeLeftMin) + (bat.charging ? " to full" : "") : bat.status === "Full" ? "Full" : "–");
+                        set("battEnergy", num(bat.energyWh) ? bat.energyWh.toFixed(1) + " / " + (bat.energyFullWh || 0).toFixed(1) + " Wh" : "–");
+                        set("battHealth", num(bat.health) ? bat.health.toFixed(0) + "%" : "–");
+                        $("battHealth").className = num(bat.health) ? (bat.health < 50 ? "bad" : bat.health < 75 ? "warn" : "good") : "";
+                        set("battCycles", num(bat.cycles) && bat.cycles > 0 ? bat.cycles : "–");
+                        set("battVolt", num(bat.voltage) ? bat.voltage.toFixed(2) + " V" : "–");
+                    } else {
+                        set("battStatus", "No battery detected");
+                    }
+
+                    // Minecraft
+                    set("mcState", mc.online ? "Online" : "Offline");
+                    $("mcState").className = "right " + (mc.online ? "good" : "bad");
+                    $("mcCount").innerHTML = mc.online ? pOn + " <small>/ " + pMax + " players</small>" : "<small>Server offline</small>";
+                    set("mcVersion", mc.online ? "Minecraft " + (mc.version || "") : "Not responding");
+                    $("mcMotd").textContent = mc.motd || "";
+                    const pl = $("mcPlayers");
+                    pl.innerHTML = "";
+                    const names = mc.players || [];
+                    if (mc.online && names.length) {
+                        names.forEach((name) => {
+                            const chip = document.createElement("span");
+                            chip.className = "player";
+                            const img = document.createElement("img");
+                            img.alt = "";
+                            img.loading = "lazy";
+                            img.src = "https://mc-heads.net/avatar/" + encodeURIComponent(name) + "/48";
+                            img.onerror = () => (img.style.visibility = "hidden");
+                            chip.appendChild(img);
+                            chip.appendChild(document.createTextNode(name));
+                            pl.appendChild(chip);
+                        });
+                    } else if (mc.online) {
+                        const m = document.createElement("span");
+                        m.className = "muted";
+                        m.textContent = mc.playersOnline > 0 ? "Player names are hidden by the server." : "Nobody is online right now.";
+                        pl.appendChild(m);
+                    }
+                    const proc = mc.process || {};
+                    set("mcRam", bytes(proc.rss));
+                    set("mcCpu", pct(proc.cpu));
+                    set("mcUptime", duration(proc.uptimeSec));
+                    set("mcWorld", bytes(mc.worldSize));
+                    set("mcThreads", proc.threads);
+                    set("mcLatency", ms(mc.latencyMs));
+
+                    // Disk
+                    set("diskNow", pct(disk.usage));
+                    bar("diskBar", disk.usage, 75, 90);
+                    set("diskPct", pct(disk.usage));
+                    set("diskText", bytes(disk.used) + " used of " + bytes(disk.total, 0));
+                    set("diskRead", num(disk.readRate) ? bytes(disk.readRate) + "/s" : "–");
+                    set("diskWrite", num(disk.writeRate) ? bytes(disk.writeRate) + "/s" : "–");
+                    set("diskFree", bytes(disk.free));
+
+                    // System
+                    set("sysUptime", "Up " + duration(sys.uptimeSec));
+                    set("sysHost", sys.hostname);
+                    set("sysOs", sys.os);
+                    set("sysKernel", sys.kernel);
+                    set("sysCpu", [sys.cpuModel, sys.cpuThreads ? sys.cpuThreads + " threads" : null].filter(Boolean).join(" · "));
+                    const svc = $("services");
+                    svc.innerHTML = "";
+                    Object.entries(doc.services || {}).forEach(([name, state]) => {
+                        const d = document.createElement("div");
+                        d.className = "svc " + (state === "active" ? "ok" : "fail");
+                        d.innerHTML = '<span class="dot"></span><span></span><em></em>';
+                        d.children[1].textContent = name;
+                        d.children[2].textContent = state;
+                        svc.appendChild(d);
+                    });
+
+                    drawAll();
+                    updateFreshness();
+                }
+
+                function batteryLabel(bat) {
+                    if (bat.charging) return "Charging" + (bat.timeLeftMin != null ? " · " + minutes(bat.timeLeftMin) + " to full" : "");
+                    if (bat.status === "Discharging") return "On battery" + (bat.timeLeftMin != null ? " · " + minutes(bat.timeLeftMin) + " left" : "");
+                    if (bat.status === "Full") return "Fully charged";
+                    if (bat.pluggedIn) return "Plugged in, not charging";
+                    return bat.status || "";
+                }
+
+                // ----------------------------------------------------------- status pill
+                let fetchError = null;
+                function setStatus(kind, text) {
+                    $("statusPill").className = "pill " + kind;
+                    set("statusText", text);
+                }
+                function showAlert(html, isErr) {
+                    const a = $("alert");
+                    if (!html) { a.className = "alert"; return; }
+                    a.innerHTML = html;
+                    a.className = "alert show" + (isErr ? " err" : "");
+                }
+                function updateFreshness() {
+                    if (!lastDoc) {
+                        if (fetchError) setStatus("down", "Can't reach backend");
+                        return;
+                    }
+                    const age = Date.now() - lastDoc.updatedAt;
+                    const staleAfter = Math.max(20000, (lastDoc.interval || 5) * 4000);
+                    set("updatedText", "Updated " + ago(age));
+                    if (fetchError) {
+                        setStatus("down", "Backend offline");
+                        showAlert("<b>Can't reach the stats backend.</b> Showing the last data we received.", true);
+                    } else if (age > staleAfter) {
+                        setStatus("down", "Server offline");
+                        showAlert("<b>The server stopped reporting " + ago(age) + ".</b> It may be offline, restarting, or without internet. These are the last stats it sent.", true);
+                    } else {
+                        setStatus("live", "Live");
+                        showAlert(null);
+                    }
+                }
+
+                // ------------------------------------------------------------ data feed
+                let bread = null;
+                async function fetchDoc() {
+                    if (SOURCE) {
+                        const r = await fetch(SOURCE, { cache: "no-store" });
+                        if (!r.ok) throw { status: r.status };
+                        return r.json();
+                    }
+                    if (!bread) {
+                        if (typeof BreadClient === "undefined") throw { error: "SDK failed to load" };
+                        bread = new BreadClient({ baseUrl: CONFIG.baseUrl, projectSlug: CONFIG.projectSlug, apiKey: CONFIG.apiKey });
+                    }
+                    const res = await bread.collection(CONFIG.collection).getById(CONFIG.docId);
+                    return unwrap(res);
+                }
+                // Accept {data:{...}}, {document:{data}}, or the raw object.
+                function unwrap(res) {
+                    let d = res && (res.document || res.doc || res);
+                    for (let i = 0; i < 3 && d && d.data && typeof d.data === "object" && !d.updatedAt; i++) d = d.data;
+                    return d;
+                }
+
+                let busy = false;
+                async function poll() {
+                    if (busy) return;
+                    busy = true;
+                    const t0 = performance.now();
+                    try {
+                        const doc = await fetchDoc();
+                        const rtt = performance.now() - t0;
+                        fetchError = null;
+                        set("yourPing", "Your connection to the stats backend: " + Math.round(rtt) + " ms");
+                        if (doc && doc.updatedAt && (!lastDoc || doc.updatedAt !== lastDoc.updatedAt)) render(doc);
+                        else updateFreshness();
+                    } catch (err) {
+                        fetchError = err || {};
+                        const st = err && err.status;
+                        if (st === 404) {
+                            fetchError = null;
+                            setStatus("stale", "Waiting for server");
+                            showAlert("<b>No stats yet.</b> The server hasn't sent any data. Make sure the stats reporter is running on the server.");
+                        } else if (st === 401 || st === 403) {
+                            setStatus("down", "Access denied");
+                            showAlert("<b>The backend refused to share the stats (HTTP " + st + ").</b> In the BreadBackend dashboard, allow public <i>read</i> on the <code>" + CONFIG.collection + "</code> collection.", true);
+                        } else {
+                            updateFreshness();
+                            if (!lastDoc) showAlert("<b>Can't reach the stats backend.</b> Retrying…", true);
+                        }
+                    } finally {
+                        busy = false;
+                    }
+                }
+
+                function schedule() {
+                    const every = Math.max(3000, ((lastDoc && lastDoc.interval) || 5) * 1000);
+                    setTimeout(async () => {
+                        if (!document.hidden) await poll();
+                        schedule();
+                    }, every);
+                }
+
+                // Realtime: refresh immediately when the backend pushes a change.
+                function subscribe() {
+                    if (SOURCE || !bread) return;
+                    try {
+                        bread.collection(CONFIG.collection).subscribe((evt) => {
+                            const d = evt && evt.doc;
+                            const id = d && (d.id || d._id);
+                            if (!id || id === CONFIG.docId) poll();
+                        });
+                    } catch (_) {}
+                }
+
+                // ------------------------------------------------------------------ boot
+                setupCharts();
+                let resizeRaf = null;
+                window.addEventListener("resize", () => {
+                    cancelAnimationFrame(resizeRaf);
+                    resizeRaf = requestAnimationFrame(drawAll);
+                });
+                window.__onThemeChange = () => requestAnimationFrame(drawAll);
+                document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+                setInterval(updateFreshness, 1000);
+
+                poll().then(() => {
+                    subscribe();
+                    schedule();
+                });
+            })();
+        </script>
+    </body>
+</html>

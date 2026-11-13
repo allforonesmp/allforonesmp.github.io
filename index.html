@@ -658,6 +658,7 @@
                     <li><button data-path="/" onclick="navigate('/', event)">Home</button></li>
                     <li><button data-path="/rules" onclick="navigate('/rules', event)">Rules</button></li>
                     <li><button data-path="/make-skin" onclick="navigate('/make-skin', event)">Create A Skin</button></li>
+                    <li><button data-path="/stats" onclick="navigate('/stats', event)">Server Stats</button></li>
                     <li><button data-path="/admin" onclick="navigate('/admin', event)">Admin Page</button></li>
                 </ul>
 
@@ -698,6 +699,9 @@
                     <button data-path="/make-skin" onclick="navigate('/make-skin', event); closeDrawer()">
                         Create A Skin
                     </button>
+                </li>
+                <li>
+                    <button data-path="/stats" onclick="navigate('/stats', event); closeDrawer()">Server Stats</button>
                 </li>
                 <li>
                     <button data-path="/admin" onclick="navigate('/admin', event); closeDrawer()">Admin Page</button>
@@ -780,12 +784,14 @@
                 "/": BASE + "main.html",
                 "/rules": BASE + "rules/index.html",
                 "/make-skin": BASE + "make-skin/index.html",
+                "/stats": BASE + "stats/index.html",
                 "/admin": BASE + "admin/index.html"
             };
             const PAGE_TITLES = {
                 "/": "AllForOne SMP",
                 "/rules": "Rules | AllForOne SMP",
                 "/make-skin": "Create Skin | AllForOne SMP",
+                "/stats": "Server Stats | AllForOne SMP",
                 "/admin": "Admin | AllForOne SMP"
             };
             const REFRESH_INTERVAL = 2 * 60 * 1000;
