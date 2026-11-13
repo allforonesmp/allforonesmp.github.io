@@ -1318,7 +1318,7 @@
                         if (fetchError) setStatus("down", "Can't reach backend");
                         return;
                     }
-                    const age = Date.now() - lastDoc.updatedAt;
+                    const age = Date.now() - lastDoc._ts;
                     const staleAfter = Math.max(20000, (lastDoc.interval || 5) * 4000);
                     set("updatedText", "Updated " + ago(age));
                     if (fetchError) {
@@ -1339,7 +1339,7 @@
                     if (SOURCE) {
                         const r = await fetch(SOURCE, { cache: "no-store" });
                         if (!r.ok) throw { status: r.status };
-                        return r.json();
+                        return unwrap(await r.json());
                     }
                     if (!bread) {
                         if (typeof BreadClient === "undefined") throw { error: "SDK failed to load" };
@@ -1351,7 +1351,9 @@
                 // Accept {data:{...}}, {document:{data}}, or the raw object.
                 function unwrap(res) {
                     let d = res && (res.document || res.doc || res);
-                    for (let i = 0; i < 3 && d && d.data && typeof d.data === "object" && !d.updatedAt; i++) d = d.data;
+                    for (let i = 0; i < 3 && d && d.data && typeof d.data === "object" && !d.cpu && !d.system; i++) d = d.data;
+                    // The reporter's own clock (ms) is reportedAt; the backend's updatedAt is an ISO string.
+                    if (d) d._ts = num(d.reportedAt) ? d.reportedAt : num(d.updatedAt) ? d.updatedAt : Date.parse(d.updatedAt || d.updated);
                     return d;
                 }
 
@@ -1365,7 +1367,7 @@
                         const rtt = performance.now() - t0;
                         fetchError = null;
                         set("yourPing", "Your connection to the stats backend: " + Math.round(rtt) + " ms");
-                        if (doc && doc.updatedAt && (!lastDoc || doc.updatedAt !== lastDoc.updatedAt)) render(doc);
+                        if (doc && num(doc._ts) && (!lastDoc || doc._ts !== lastDoc._ts)) render(doc);
                         else updateFreshness();
                     } catch (err) {
                         fetchError = err || {};
