@@ -572,6 +572,41 @@
             .svc.ok .dot { background: var(--success); }
             .svc.fail .dot { background: var(--error); }
 
+            /* ---------- cooling ---------- */
+            .cool-hero {
+                display: flex;
+                gap: 1.25rem;
+                flex-wrap: wrap;
+                margin-bottom: 1rem;
+            }
+            .cool-stat {
+                display: flex;
+                align-items: center;
+                gap: 0.8rem;
+                flex: 1 1 180px;
+            }
+            .cool-big {
+                font-size: 2.2rem;
+                font-weight: 700;
+                line-height: 1;
+                font-variant-numeric: tabular-nums;
+            }
+            .cool-big small { font-size: 1rem; color: var(--text-light); font-weight: 500; }
+            .cool-cap { font-size: 0.82rem; color: var(--text-medium); margin-top: 0.25rem; }
+            .fan-icon {
+                width: 46px;
+                height: 46px;
+                flex-shrink: 0;
+                color: var(--primary-blue);
+            }
+            .fan-icon svg { width: 100%; height: 100%; display: block; animation: spin 1s linear infinite; animation-play-state: paused; }
+            .fan-icon.on svg { animation-play-state: running; }
+            @keyframes spin { to { transform: rotate(360deg); } }
+            .therm-icon { width: 46px; height: 46px; flex-shrink: 0; color: var(--error); }
+            .therm-icon svg { width: 100%; height: 100%; display: block; }
+            .sensor-row { grid-template-columns: minmax(6rem, 9rem) 1fr 3.6rem; }
+            .sensor-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
             footer {
                 background: var(--text-dark);
                 color: #a0aec0;
@@ -625,6 +660,12 @@
                     <span class="tile-sub" id="tCpuSub">&nbsp;</span>
                     <canvas data-spark="cpu"></canvas>
                 </a>
+                <a class="tile" href="#coolCard">
+                    <span class="tile-label">Temp &amp; Fan</span>
+                    <span class="tile-value" id="tTemp">–</span>
+                    <span class="tile-sub" id="tTempSub">&nbsp;</span>
+                    <canvas data-spark="temp"></canvas>
+                </a>
                 <a class="tile" href="#memCard">
                     <span class="tile-label">RAM</span>
                     <span class="tile-value" id="tMem">–</span>
@@ -669,6 +710,39 @@
                     </div>
                     <div class="sub-title">Per core</div>
                     <div id="cpuCores"></div>
+                </article>
+
+                <!-- Cooling -->
+                <article class="card" id="coolCard">
+                    <h2 class="section-title">Temperature &amp; Fan <span class="right" id="coolNow">–</span></h2>
+                    <div class="cool-hero">
+                        <div class="cool-stat">
+                            <div class="therm-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
+                            </div>
+                            <div>
+                                <div class="cool-big" id="coolTemp">–</div>
+                                <div class="cool-cap" id="coolTempCap">CPU temperature</div>
+                            </div>
+                        </div>
+                        <div class="cool-stat">
+                            <div class="fan-icon" id="fanIcon">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm.5-9C17 2 17 5.5 14.6 8.4c-.6.7-.9 1.5-.9 2.3 1.2.1 2.3.6 3 1.4 2.9-2.4 6.4-2.4 6.4 2.1 0 4.5-3.6 3.6-6.6 1.3-.7-.6-1.5-.9-2.3-.9-.1 1.2-.6 2.3-1.4 3 2.4 2.9 2.4 6.4-2.1 6.4-4.5 0-3.6-3.6-1.3-6.6.6-.7.9-1.5.9-2.3-1.2-.1-2.3-.6-3-1.4C4.4 15.1.9 15.1.9 10.6c0-4.5 3.6-3.6 6.6-1.3.7.6 1.5.9 2.3.9.1-1.2.6-2.3 1.4-3C8.8 4.3 8 2 12.5 2z" /></svg>
+                            </div>
+                            <div>
+                                <div class="cool-big" id="fanRpm">–</div>
+                                <div class="cool-cap" id="fanCap">Fan speed</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="legend">
+                        <span><i style="background: var(--error)"></i>CPU °C</span>
+                        <span><i style="background: var(--primary-blue)"></i>Fan RPM</span>
+                    </div>
+                    <div class="chart-wrap" style="height: 120px"><canvas id="tempChart"></canvas><div class="chart-tip"></div></div>
+                    <div class="chart-wrap" style="height: 90px"><canvas id="fanChart"></canvas><div class="chart-tip"></div></div>
+                    <div class="sub-title">All sensors (average · peak)</div>
+                    <div id="sensors"></div>
                 </article>
 
                 <!-- Memory -->
@@ -1034,7 +1108,7 @@
                 // History columns sent by the reporter.
                 let HIST = { t: [] };
                 function parseHistory(doc) {
-                    const fields = doc.historyFields || ["t", "cpu", "mem", "rx", "tx", "ping", "battery", "players", "temp"];
+                    const fields = doc.historyFields || ["t", "cpu", "mem", "rx", "tx", "ping", "battery", "players", "temp", "fan"];
                     const h = {};
                     fields.forEach((f) => (h[f] = []));
                     (doc.history || []).forEach((row) => fields.forEach((f, i) => h[f].push(row[i])));
@@ -1047,6 +1121,16 @@
                         series: [{ name: "CPU", values: HIST.cpu, color: blue() }],
                         opts: { max: 100, axis: (v) => Math.round(v) + "%" },
                         fmt: pct,
+                    }));
+                    defineChart("tempChart", () => ({
+                        series: [{ name: "CPU", values: HIST.temp || [], color: css("--error") }],
+                        opts: { min: 30, max: Math.max(90, ...(HIST.temp || []).filter(num)), axis: (v) => Math.round(v) + "°" },
+                        fmt: (v) => (num(v) ? v.toFixed(0) + " °C" : "–"),
+                    }));
+                    defineChart("fanChart", () => ({
+                        series: [{ name: "Fan", values: HIST.fan || [], color: blue() }],
+                        opts: { niceMax: true, axis: (v) => (v >= 1000 ? +(v / 1000).toFixed(1) + "k" : Math.round(v)) },
+                        fmt: (v) => (num(v) ? Math.round(v).toLocaleString() + " RPM" : "–"),
                     }));
                     defineChart("memChart", () => ({
                         series: [{ name: "RAM", values: HIST.mem, color: css("--success") }],
@@ -1093,9 +1177,10 @@
                                 { values: HIST.tx || [], color: css("--tx"), fill: false },
                             ];
                         } else {
-                            const color = k === "mem" || k === "battery" ? css("--success") : css("--primary-blue");
+                            const color = k === "mem" || k === "battery" ? css("--success") : k === "temp" ? css("--error") : css("--primary-blue");
                             series = [{ values: HIST[k] || [], color }];
                             if (k === "cpu" || k === "mem" || k === "battery") opts.max = 100;
+                            if (k === "temp") { opts.min = 30; opts.max = Math.max(90, ...(HIST.temp || []).filter(num)); }
                             if (k === "players") opts.max = Math.max(4, ...(HIST.players || []).filter(num)) * 1.1;
                         }
                         drawChart(c, HIST.t, series, opts);
@@ -1142,10 +1227,47 @@
                         set("tPlayersSub", "Minecraft server is down");
                     }
 
+                    // Cooling
+                    const th = doc.thermal || {};
+                    const fan = (th.fans || [])[0];
+                    set("tTemp", num(cpu.temp) ? cpu.temp.toFixed(0) + "°C" : "–");
+                    $("tTemp").className = "tile-value " + tempClass(cpu.temp);
+                    set("tTempSub", fan ? "Fan " + Math.round(fan.rpm).toLocaleString() + " RPM" : num(cpu.tempPeak) ? "Peak " + cpu.tempPeak.toFixed(0) + "°C" : "");
+                    set("coolNow", tempWord(cpu.temp));
+                    $("coolNow").className = "right " + tempClass(cpu.temp);
+                    set("coolTemp", num(cpu.temp) ? cpu.temp.toFixed(0) + "°C" : "–");
+                    $("coolTemp").className = "cool-big " + tempClass(cpu.temp);
+                    set("coolTempCap", "CPU (hottest core)" + (num(cpu.tempPeak) ? " · peak " + cpu.tempPeak.toFixed(0) + "°C" : ""));
+                    if (fan) {
+                        $("fanRpm").innerHTML = Math.round(Number(fan.rpm) || 0).toLocaleString() + " <small>RPM</small>";
+                        set("fanCap", fan.rpm > 0 ? (fan.label || "Fan") + " · max seen " + Math.round(Number(fan.maxSeen) || 0).toLocaleString() : "Fan is stopped");
+                        const icon = $("fanIcon");
+                        icon.classList.toggle("on", fan.rpm > 0);
+                        // spin faster as RPM goes up (visual only)
+                        icon.firstElementChild.style.animationDuration = Math.max(0.15, Math.min(2, 2400 / Math.max(1, fan.rpm))) + "s";
+                    } else {
+                        set("fanRpm", "N/A");
+                        set("fanCap", "No fan sensor found");
+                    }
+                    const sens = $("sensors");
+                    sens.innerHTML = "";
+                    (th.sensors || []).forEach((t) => {
+                        const row = document.createElement("div");
+                        row.className = "bar-row sensor-row";
+                        row.innerHTML = '<span></span><div class="bar"><i></i></div><b></b>';
+                        row.children[0].textContent = t.label;
+                        row.children[0].title = t.label;
+                        const fill = row.querySelector("i");
+                        fill.style.width = Math.max(0, Math.min(100, (t.c / 105) * 100)) + "%";
+                        fill.style.backgroundColor = t.c >= 85 ? css("--error") : t.c >= 70 ? css("--warning") : css("--primary-blue");
+                        row.children[2].textContent = Math.round(t.c) + "°" + (num(t.peak) && t.peak - t.c >= 1 ? " ·" + Math.round(t.peak) : "");
+                        sens.appendChild(row);
+                    });
+
                     // CPU
                     set("cpuNow", pct(cpu.usage));
                     set("cpuTemp", num(cpu.temp) ? cpu.temp.toFixed(0) + " °C" : "–");
-                    $("cpuTemp").className = num(cpu.temp) ? (cpu.temp >= 85 ? "bad" : cpu.temp >= 70 ? "warn" : "") : "";
+                    $("cpuTemp").className = tempClass(cpu.temp);
                     set("cpuFreq", cpu.freqMhz ? (cpu.freqMhz / 1000).toFixed(2) + " GHz" : "–");
                     set("cpuLoad", (cpu.load || []).join(" / "));
                     const cores = $("cpuCores");
@@ -1293,6 +1415,13 @@
                     updateFreshness();
                 }
 
+                function tempClass(c) {
+                    return !num(c) ? "" : c >= 85 ? "bad" : c >= 70 ? "warn" : "good";
+                }
+                function tempWord(c) {
+                    return !num(c) ? "–" : c >= 85 ? "Hot" : c >= 70 ? "Warm" : "Normal";
+                }
+
                 function batteryLabel(bat) {
                     if (bat.charging) return "Charging" + (bat.timeLeftMin != null ? " · " + minutes(bat.timeLeftMin) + " to full" : "");
                     if (bat.status === "Discharging") return "On battery" + (bat.timeLeftMin != null ? " · " + minutes(bat.timeLeftMin) + " left" : "");
@@ -1389,7 +1518,7 @@
                 }
 
                 function schedule() {
-                    const every = Math.max(3000, ((lastDoc && lastDoc.interval) || 5) * 1000);
+                    const every = Math.max(2000, ((lastDoc && lastDoc.interval) || 2) * 1000);
                     setTimeout(async () => {
                         if (!document.hidden) await poll();
                         schedule();
