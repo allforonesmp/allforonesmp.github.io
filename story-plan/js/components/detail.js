@@ -8,6 +8,7 @@
 import { el, clear, icon, toArray, fmtDate, relTime, truncate, parseDate, MONTHS, debounce } from "../util.js";
 import { ENTITIES } from "../schema.js";
 import { renderMarkdown } from "../md.js";
+import { storyTimeNode, storyTimeText, storyTimeRank, eventRank, eventNumber } from "../storytime.js";
 import { byId, docs, referencesGrouped, historyFor, archiveRecord, subscribe, ensureHistory, updateRecord } from "../store.js";
 import { openEditor, createAndEdit } from "./editor.js";
 import { toast, toastError, emptyState, statusBadge, importanceBadge, knowledgeBadge, badge, refChip, avatarFor, confirmDialog } from "./ui.js";
@@ -44,6 +45,9 @@ function fieldValueNode(field, doc) {
         case "multiselect":
             return el("div", { class: "chip-row" }, toArray(value).map((t) => badge(t)));
 
+        case "storytime":
+            return storyTimeNode(value);
+
         case "date":
             return el("span", { text: fmtDate(value) || value });
 
@@ -77,7 +81,8 @@ function fieldValueNode(field, doc) {
                 { class: "relation-hist", style: { flexWrap: "wrap" } },
                 toArray(value).flatMap((step, i) => {
                     const parts = [el("span", { class: "rh-step cur", title: step.note || "", text: step.type || "—" })];
-                    if (step.date) parts.push(el("span", { class: "field-hint", style: { marginLeft: "0.15rem" }, text: fmtDate(step.date) }));
+                    const when = storyTimeText(step.story || step.date);
+                    if (when) parts.push(el("span", { class: "field-hint", style: { marginLeft: "0.15rem" }, text: when }));
                     if (i < value.length - 1) parts.push(el("span", { class: "rh-arrow", text: "→" }));
                     return parts;
                 })
@@ -89,12 +94,12 @@ function fieldValueNode(field, doc) {
                 { class: "list" },
                 toArray(value)
                     .slice()
-                    .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+                    .sort((a, b) => storyTimeRank(a.story || a.date) - storyTimeRank(b.story || b.date))
                     .map((row) =>
                         el("div", { class: "row", style: { gap: "0.4rem", padding: "0.2rem 0" } }, [
                             el("span", { class: "badge ghost", text: row.action || "—" }),
                             el("span", { text: row.name || "(unnamed)" }),
-                            row.date ? el("span", { class: "field-hint", text: fmtDate(row.date) }) : null,
+                            row.story || row.date ? el("span", { class: "field-hint", text: storyTimeText(row.story || row.date) }) : null,
                         ])
                     )
             );
@@ -285,6 +290,7 @@ function stringify(v) {
     if (v === null || v === undefined) return "";
     if (typeof v === "string") return v;
     if (Array.isArray(v)) return v.map((x) => (typeof x === "object" ? "…" : x)).join(", ");
+    if (v && typeof v === "object" && v.eventId) return storyTimeText(v);
     return JSON.stringify(v);
 }
 
@@ -561,13 +567,17 @@ function characterTimeline(doc) {
 
     const rows = [];
     if (doc.firstAppearance) {
-        rows.push({ when: doc.firstAppearance, label: "First appearance", kind: "milestone" });
+        rows.push({ rank: storyTimeRank(doc.firstAppearance), whenText: storyTimeText(doc.firstAppearance), label: "First appearance", kind: "milestone" });
     }
-    events.forEach((e) => rows.push({ when: e.actualDate || e.plannedDate || (e.month ? `${e.month}-01` : ""), label: e.title, event: e }));
-    relationships.forEach((r) => {
-        if (r.startDate) rows.push({ when: r.startDate, label: `Relationship begins: ${otherName(r, doc)}` });
+    events.forEach((e) => {
+        const n = eventNumber(e.id);
+        const dt = e.actualDate || e.plannedDate || (e.month ? `${e.month}-01` : "");
+        rows.push({ rank: eventRank(e), whenText: [n ? `Event ${n}` : "", dt ? fmtDate(dt) : ""].filter(Boolean).join(" · "), label: e.title, event: e });
     });
-    rows.sort((a, b) => (parseDate(a.when)?.getTime() || 0) - (parseDate(b.when)?.getTime() || 0));
+    relationships.forEach((r) => {
+        if (r.startDate) rows.push({ rank: storyTimeRank(r.startDate), whenText: storyTimeText(r.startDate), label: `Relationship begins: ${otherName(r, doc)}` });
+    });
+    rows.sort((a, b) => a.rank - b.rank);
 
     rows.forEach((row) => {
         const inner = el("div", { class: "li-main" }, [
@@ -576,7 +586,7 @@ function characterTimeline(doc) {
                 row.event ? badge(row.event.kind === "Main Event" ? "Main" : "Normal", row.event.kind === "Main Event" ? "gold" : "ghost") : null,
             ]),
             el("div", { class: "li-meta" }, [
-                el("span", { text: row.when ? fmtDate(row.when) : "Undated" }),
+                el("span", { text: row.whenText || "Not placed in story time" }),
                 row.event?.status ? el("span", { class: "sep", text: "·" }) : null,
                 row.event?.status ? el("span", { text: row.event.status }) : null,
             ]),

@@ -3,6 +3,7 @@
 import { el, icon, toArray } from "../util.js";
 import {activeDocs, byId} from "../store.js";
 import { OPTIONS } from "../schema.js";
+import { storyTimeRank, storyTimeText } from "../storytime.js";
 import { listView } from "../components/datatable.js";
 import {pageHead, badge, knowledgeBadge} from "../components/ui.js";
 import {createAndEdit} from "../components/editor.js";
@@ -24,7 +25,7 @@ export function lorePage(params = new URLSearchParams()) {
         sorts: [
             { key: "title", label: "Alphabetical" },
             { key: "updatedAt", label: "Last modified" },
-            { key: "discoveryDate", label: "Discovery date" },
+            { key: "discoveryDate", label: "Discovered (story time)", get: (d) => storyTimeRank(d.discoveryDate) },
         ],
         defaultSort: "title",
         columns: [
@@ -55,7 +56,7 @@ export function lorePage(params = new URLSearchParams()) {
                     return String(n);
                 },
             },
-            { key: "discoveryDate", label: "Discovered", get: (d) => d.discoveryDate || "—" },
+            { key: "discoveryDate", label: "Discovered", sortable: false, get: (d) => storyTimeText(d.discoveryDate) || "—" },
         ],
         emptyTitle: "No lore yet",
         emptyMessage: "Capture world rules, ancient history, artefacts and secrets. Link them to characters and events as the story develops.",

@@ -8,6 +8,7 @@
 import { el, clear, icon, toArray, debounce } from "../util.js";
 import {ENTITIES} from "../schema.js";
 import {byId, createRecord, updateRecord, flushDoc, nextNumber, generateCode} from "../store.js";
+import { storyTimeInput } from "../storytime.js";
 import {markdownField, refPicker, imageUploader, tagsInput, toast, toastError, confirmDialog} from "./ui.js";
 
 let activePanel = null;
@@ -238,6 +239,9 @@ function renderField(field, doc, collection, save, onTitleChange) {
             return input;
         }
 
+        case "storytime":
+            return storyTimeInput(value, (v) => save(field.key, v));
+
         case "date":
         case "month": {
             const input = el("input", { type: field.type, value: value || "" });
@@ -405,19 +409,21 @@ export function historyStepsEditor(steps, onChange) {
         }
         list.forEach((step, idx) => {
             const typeInput = el("input", { type: "text", value: step.type || "", placeholder: "Type (e.g. Friends)", style: { flex: "1 1 110px" } });
-            const dateInput = el("input", { type: "date", value: step.date || "", style: { flex: "0 1 150px" } });
+            let story = step.story || step.date || "";
             const noteInput = el("input", { type: "text", value: step.note || "", placeholder: "What changed?", style: { flex: "2 1 140px" } });
             const commit = () => {
-                list[idx] = { ...list[idx], type: typeInput.value, date: dateInput.value, note: noteInput.value };
+                const next = { ...list[idx], type: typeInput.value, story, note: noteInput.value };
+                if (story) delete next.date;
+                list[idx] = next;
                 onChange(list.slice());
             };
+            const storyInput = storyTimeInput(story, (v) => { story = v; commit(); }, { compact: true });
             typeInput.addEventListener("change", commit);
-            dateInput.addEventListener("change", commit);
             noteInput.addEventListener("change", commit);
             wrap.appendChild(
-                el("div", { class: "row nowrap", style: { gap: "0.3rem" } }, [
+                el("div", { class: "row", style: { gap: "0.3rem", flexWrap: "wrap" } }, [
                     typeInput,
-                    dateInput,
+                    storyInput,
                     noteInput,
                     el("button", {
                         type: "button",
@@ -438,7 +444,7 @@ export function historyStepsEditor(steps, onChange) {
                 type: "button",
                 class: "btn btn-ghost btn-sm",
                 onclick: () => {
-                    list.push({ type: "", date: "", note: "", at: new Date().toISOString() });
+                    list.push({ type: "", story: "", note: "", at: new Date().toISOString() });
                     render();
                     onChange(list.slice());
                 },
@@ -459,17 +465,20 @@ export function memberHistoryEditor(rows, onChange) {
             const actionInput = el("select", { style: { flex: "0 1 120px" } }, ["Joined", "Left", "Expelled", "Promoted", "Demoted", "Returned", "Deceased"].map((o) =>
                 el("option", { value: o, selected: row.action === o, text: o })
             ));
-            const dateInput = el("input", { type: "date", value: row.date || "", style: { flex: "0 1 140px" } });
+            let story = row.story || row.date || "";
             const commit = () => {
-                list[idx] = { name: nameInput.value, action: actionInput.value, date: dateInput.value };
+                list[idx] = story && typeof story === "object"
+                    ? { name: nameInput.value, action: actionInput.value, story }
+                    : { name: nameInput.value, action: actionInput.value, date: row.date || "" };
                 onChange(list.slice());
             };
-            [nameInput, actionInput, dateInput].forEach((i) => i.addEventListener("change", commit));
+            const storyInput = storyTimeInput(story, (v) => { story = v; commit(); }, { compact: true });
+            [nameInput, actionInput].forEach((i) => i.addEventListener("change", commit));
             wrap.appendChild(
-                el("div", { class: "row nowrap", style: { gap: "0.3rem" } }, [
+                el("div", { class: "row", style: { gap: "0.3rem", flexWrap: "wrap" } }, [
                     nameInput,
                     actionInput,
-                    dateInput,
+                    storyInput,
                     el("button", {
                         type: "button",
                         class: "icon-btn",
@@ -489,7 +498,7 @@ export function memberHistoryEditor(rows, onChange) {
                 type: "button",
                 class: "btn btn-ghost btn-sm",
                 onclick: () => {
-                    list.push({ name: "", action: "Joined", date: "" });
+                    list.push({ name: "", action: "Joined", story: "" });
                     render();
                     onChange(list.slice());
                 },
