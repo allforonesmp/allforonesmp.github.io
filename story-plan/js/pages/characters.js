@@ -3,6 +3,7 @@
 import {el, icon, toArray, compareText} from "../util.js";
 import {docs, activeDocs, byId} from "../store.js";
 import {OPTIONS} from "../schema.js";
+import { storyTimeRank } from "../storytime.js";
 import { listView } from "../components/datatable.js";
 import {pageHead, card, emptyState, badge, statusBadge, avatarFor} from "../components/ui.js";
 import { createAndEdit, openEditor } from "../components/editor.js";
@@ -30,7 +31,7 @@ export function charactersPage(params = new URLSearchParams()) {
         sorts: [
             { key: "title", label: "Alphabetical" },
             { key: "updatedAt", label: "Last modified" },
-            { key: "firstAppearance", label: "First appearance" },
+            { key: "firstAppearance", label: "First appearance (story time)", get: (d) => storyTimeRank(d.firstAppearance) },
         ],
         defaultSort: "title",
         columns: [

@@ -1,8 +1,9 @@
 /* Story Planner — Factions and the faction relationship diagram. */
 
-import { el, icon, toArray, fmtDate, compareText } from "../util.js";
+import { el, icon, toArray, compareText } from "../util.js";
 import {activeDocs, byId} from "../store.js";
 import { OPTIONS } from "../schema.js";
+import { storyTimeRank, storyTimeText } from "../storytime.js";
 import { listView } from "../components/datatable.js";
 import { pageHead, badge, statusBadge, emptyState } from "../components/ui.js";
 ;
@@ -52,7 +53,7 @@ export function factionsPage(params) {
                     f.logo ? el("img", { src: f.logo, alt: "", class: "avatar-img sm", loading: "lazy" }) : el("span", { class: "li-mark", style: { background: "var(--error-soft)", color: "var(--c-faction)" } }, icon("flag")),
                     el("h3", {}, [el("span", { text: f.name || "Unnamed faction" })]),
                 ]),
-                el("div", { class: "row", style: { gap: "0.3rem" } }, [statusBadge(f.status), f.foundedDate ? badge(fmtDate(f.foundedDate), "ghost") : null]),
+                el("div", { class: "row", style: { gap: "0.3rem" } }, [statusBadge(f.status), f.foundedDate ? badge(`Founded: ${storyTimeText(f.foundedDate)}`, "ghost") : null]),
                 f.description ? el("p", { text: stripMd(f.description) }) : null,
                 el("div", { class: "arc-foot" }, [
                     el("span", { text: `${members.length} members` }),
@@ -192,7 +193,7 @@ export function locationsPage(params = new URLSearchParams()) {
         sorts: [
             { key: "title", label: "Alphabetical" },
             { key: "updatedAt", label: "Last modified" },
-            { key: "discoveryDate", label: "Discovery date" },
+            { key: "discoveryDate", label: "Discovered (story time)", get: (d) => storyTimeRank(d.discoveryDate) },
         ],
         defaultSort: "title",
         columns: [
