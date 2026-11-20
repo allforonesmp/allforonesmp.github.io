@@ -118,6 +118,7 @@ export function rulesFor(emails) {
     const team = emails.map((e) => `request.auth.email == ${q(e)}`).join(" || ");
     const owner = `request.auth.email == ${q(OWNER_EMAIL)}`;
     return {
+        version: 1, // required by the BreadBackend dashboard
         default: {
             read: { expr: team },
             write: { expr: team },
