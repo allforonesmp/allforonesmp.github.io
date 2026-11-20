@@ -239,6 +239,8 @@ function approvalsCard() {
     const host = el("div", { class: "stack sm" }, [el("p", { class: "field-hint", text: "Loading requests…" })]);
     const refreshBtn = el("button", { class: "btn btn-ghost btn-sm", type: "button", onclick: () => load() }, [icon("refresh"), "Refresh"]);
     let timer = null;
+    let latest = [];
+    const pendingLocationsOf = (r) => latest.filter((x) => x.kind === "location" && x.status === "pending" && String(x.uid) === String(r.uid));
 
     const fmtWho = (r) => r.email || r.uid || "(unknown account)";
     const shortAgent = (ua) => {
@@ -251,7 +253,16 @@ function approvalsCard() {
     async function act(r, status) {
         try {
             await decide(r.id, status, getUser()?.email);
-            toast(`${r.kind === "account" ? "Account" : "Location"} ${status === "approved" ? "approved" : status === "denied" ? "refused" : "updated"}: ${fmtWho(r)}${r.ip ? ` · ${r.ip}` : ""}`, "success", 3500);
+            // Approving a new account also approves the location(s) it's waiting from.
+            const alsoLocations = r.kind === "account" && status === "approved" ? pendingLocationsOf(r) : [];
+            for (const loc of alsoLocations) await decide(loc.id, "approved", getUser()?.email);
+            const where = alsoLocations.length ? ` and location ${alsoLocations.map((l) => l.ip).join(", ")}` : r.ip ? ` · ${r.ip}` : "";
+            toast(
+                `${r.kind === "account" ? "Account" : "Location"} ${status === "approved" ? "approved" : status === "denied" ? "refused" : "updated"}: ${fmtWho(r)}${where}.` +
+                    (r.kind === "account" ? " Now copy the backend rules below into the dashboard so they can load the story." : ""),
+                "success",
+                r.kind === "account" ? 9000 : 3500
+            );
             load();
         } catch (err) {
             toastError(err, "Updating access");
@@ -277,15 +288,18 @@ function approvalsCard() {
     function row(r) {
         const pending = r.status === "pending";
         const approved = r.status === "approved";
+        const waitingFrom = r.kind === "account" && pending ? pendingLocationsOf(r).map((l) => l.ip) : [];
         const detail =
             r.kind === "account"
-                ? `New account · requested ${r.requestedAt ? relTime(r.requestedAt) : r.createdAt ? relTime(r.createdAt) : ""}`
+                ? `New account${waitingFrom.length ? ` · signing in from ${waitingFrom.join(", ")}` : ""} · requested ${r.requestedAt ? relTime(r.requestedAt) : r.createdAt ? relTime(r.createdAt) : ""}`
                 : `Location ${r.ip || "?"}${shortAgent(r.userAgent) ? ` · ${shortAgent(r.userAgent)}` : ""} · ${r.requestedAt ? relTime(r.requestedAt) : ""}`;
         return el("div", { class: "session-item" }, [
             el("div", { class: "si-main" }, [el("strong", { text: fmtWho(r) }), el("span", { text: detail })]),
             badge(r.kind === "account" ? "Account" : "Location", "ghost"),
             badge(r.status || "pending", approved ? "success" : pending ? "warning" : "muted"),
-            !approved ? el("button", { class: "btn btn-primary btn-sm", type: "button", onclick: () => act(r, "approved") }, "Approve") : null,
+            !approved
+                ? el("button", { class: "btn btn-primary btn-sm", type: "button", onclick: () => act(r, "approved") }, waitingFrom.length ? "Approve + location" : "Approve")
+                : null,
             pending || approved ? el("button", { class: "btn btn-ghost btn-sm", type: "button", onclick: () => act(r, "denied") }, approved ? "Revoke" : "Refuse") : null,
             el("button", { class: "icon-btn", type: "button", title: "Remove request", "aria-label": "Remove request", onclick: () => forget(r) }, icon("trash")),
         ]);
@@ -345,6 +359,7 @@ function approvalsCard() {
     async function load() {
         try {
             const requests = await listRequests();
+            latest = requests;
             host.innerHTML = "";
             const pending = requests.filter((r) => r.status === "pending");
             const others = requests.filter((r) => r.status !== "pending");

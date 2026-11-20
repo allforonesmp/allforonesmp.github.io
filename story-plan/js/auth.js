@@ -233,7 +233,7 @@ function showPending(user, info) {
 
     const reason = typeof info === "string" ? info : info?.stage === "location" ? `location-${info.status}` : `account-${info?.status || "pending"}`;
     const title = $("deniedTitle");
-    if (title) title.textContent = reason.endsWith("denied") || reason === "not-approved" ? "Access refused" : "Waiting for approval";
+    if (title) title.textContent = reason.endsWith("denied") || reason === "not-approved" ? "Access refused" : reason === "rules-missing" ? "Almost there" : "Waiting for approval";
 
     const messages = {
         "account-pending": "Your account is waiting for the owner to approve it. This page checks again by itself every 20 seconds — you can leave it open.",
@@ -241,6 +241,7 @@ function showPending(user, info) {
         "location-pending": `Your account is approved, but you're signing in from a new location (${info?.ip || "unknown IP"}). The owner needs to approve this location first. This page checks again by itself every 20 seconds.`,
         "location-denied": `The owner has refused access from this location (${info?.ip || "unknown IP"}).`,
         "not-approved": "The owner has blocked this account in the members list.",
+        "rules-missing": "You're approved! The owner just needs to finish one last step: copying the updated rules (Settings → Access approvals → Copy rules) into the BreadBackend dashboard. This page lets you in by itself once that's done.",
         "list-unavailable": "The backend could not be reached to confirm your access, so it is refused for safety. Try again.",
     };
     const reasonNode = $("deniedReason");
@@ -253,7 +254,7 @@ function showPending(user, info) {
     }
 
     showPanel("Denied");
-    if (reason.endsWith("pending")) startPendingPoll();
+    if (reason.endsWith("pending") || reason === "rules-missing") startPendingPoll();
     else stopPendingPoll();
 }
 
@@ -281,6 +282,19 @@ async function gateOnUser(user) {
         return;
     }
     setDataAccess(true);
+    // Approved in the app but not yet in the backend rules? Every data read
+    // would fail with 403, so say exactly what's missing instead.
+    if (!isOwnerEmail(user.email)) {
+        try {
+            await db.list(COLLECTIONS.seasons, { limit: 1 });
+        } catch (err) {
+            if (err?.status === 403) {
+                lockWorkspace();
+                showPending(user, "rules-missing");
+                return;
+            }
+        }
+    }
     let resolved;
     try {
         resolved = await resolveMembership(user);
