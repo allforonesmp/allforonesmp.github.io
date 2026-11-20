@@ -2,7 +2,7 @@
    export/import, and an honest report of backend capabilities. */
 
 import { el, icon, downloadFile, fmtDateTime, relTime } from "../util.js";
-import { docs, prefs, savePrefs, exportPayload, loadCollection, flushPending, EXPORT_EXTRA } from "../store.js";
+import { docs, state, prefs, savePrefs, exportPayload, loadCollection, flushPending, EXPORT_EXTRA } from "../store.js";
 import { COLLECTIONS, auth, db } from "../api.js";
 import { ENTITIES } from "../schema.js";
 import { pageHead, card, badge, toast, toastError, confirmDialog, emptyState, openModal, closeModal } from "../components/ui.js";
@@ -358,39 +358,124 @@ function previewImport(payload) {
         el("div", { class: "notice" }, [icon("alert"), el("span", { text: "Importing creates or overwrites records with matching IDs. Existing records that are not in the file are left alone." })]),
         el("div", { class: "defs" }, counts.map(([c, n]) => el("div", { class: "def" }, [el("span", { class: "def-label", text: c }), el("span", { class: "def-value", text: String(n) })]))),
     ]);
+    const progress = el("p", { class: "field-hint", text: "" });
+    body.appendChild(progress);
+    const cancelBtn = el("button", { class: "btn btn-ghost", type: "button", onclick: () => closeModal(modal) }, "Cancel");
+    const applyBtn = el("button", {
+        class: "btn btn-primary",
+        type: "button",
+        onclick: async () => {
+            if (importRunning) return; // a second click must never start a parallel import
+            importRunning = true;
+            applyBtn.disabled = true;
+            cancelBtn.disabled = true;
+            applyBtn.textContent = "Importing…";
+            try {
+                const result = await runImport(payload, (done, total, note) => {
+                    progress.textContent = `Imported ${done} of ${total}${note ? ` — ${note}` : ""}. Keep this tab open.`;
+                });
+                closeModal(modal);
+                if (result.failed.length) {
+                    console.warn("[story-plan] import failures", result.failed);
+                    toast(
+                        `Import finished — ${result.ok} applied, ${result.failed.length} failed (${result.failed.slice(0, 4).map((f) => f.id).join(", ")}${result.failed.length > 4 ? "…" : ""}). Importing the same file again is safe and retries only what's needed.`,
+                        "warning",
+                        12000
+                    );
+                } else {
+                    toast(`Import finished — ${result.ok} records applied.`, "success", 6000);
+                }
+            } catch (err) {
+                progress.textContent = "";
+                toastError(err, "Importing");
+            } finally {
+                importRunning = false;
+                applyBtn.disabled = false;
+                cancelBtn.disabled = false;
+                applyBtn.textContent = "Apply import";
+            }
+        },
+    }, "Apply import");
     const modal = openModal({
         title: "Import preview",
         body,
         footer: [
-            el("button", { class: "btn btn-ghost", type: "button", onclick: () => closeModal(modal) }, "Cancel"),
-            el("button", {
-                class: "btn btn-primary",
-                type: "button",
-                onclick: async () => {
-                    let ok = 0;
-                    let failed = 0;
-                    for (const [collection, list] of Object.entries(payload.collections)) {
-                        if (!Array.isArray(list) || !(ENTITIES[collection] || EXPORT_EXTRA[collection])) continue;
-                        for (const record of list) {
-                            try {
-                                if (docs(collection).some((d) => String(d.id) === String(record.id))) {
-                                    const { id, ...rest } = record;
-                                    await db.update(collection, id, rest);
-                                } else {
-                                    await db.create(collection, record, record.id);
-                                }
-                                ok++;
-                            } catch (_) {
-                                failed++;
-                            }
-                        }
-                        await loadCollection(collection, { force: true }).catch(() => {});
-                    }
-                    closeModal(modal);
-                    toast(`Import finished — ${ok} applied${failed ? `, ${failed} failed` : ""}.`, failed ? "warning" : "success", 6000);
-                },
-            }, "Apply import"),
+            cancelBtn,
+            applyBtn,
         ],
         wide: true,
     });
+}
+
+/* ------------------------------------------------------------------ import */
+
+let importRunning = false;
+const IMPORT_GAP_MS = 250; // pace writes so the backend's rate limit is never hit
+
+const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Writes an export file into the backend one record at a time.
+ * - Loads each target collection first, so existing IDs are updated rather
+ *   than re-created (a create for an existing ID falls back to update).
+ * - Pauses realtime refetches for the duration, then reloads each touched
+ *   collection exactly once at the end.
+ * - Rate-limit (429) errors are retried with long back-off inside db.*.
+ */
+async function runImport(payload, onProgress) {
+    const targets = Object.entries(payload.collections).filter(
+        ([collection, list]) => Array.isArray(list) && (ENTITIES[collection] || EXPORT_EXTRA[collection])
+    );
+    const total = targets.reduce((n, [, list]) => n + list.length, 0);
+    let done = 0;
+    let ok = 0;
+    const failed = [];
+
+    state.bulk = true;
+    try {
+        for (const [collection] of targets) {
+            onProgress(done, total, `checking existing ${collection}`);
+            try {
+                await loadCollection(collection);
+            } catch (err) {
+                // Without the current list we can't tell create from update, so stop
+                // before writing anything rather than risk duplicates.
+                throw new Error(`Couldn't load the existing ${collection} (${err?.message || err}). Nothing was imported — wait a minute and try again.`);
+            }
+            await sleepMs(IMPORT_GAP_MS);
+        }
+        for (const [collection, list] of targets) {
+            const existing = new Set(docs(collection).map((d) => String(d.id)));
+            for (const record of list) {
+                onProgress(done, total, collection);
+                const { id, ...rest } = record;
+                try {
+                    if (id && existing.has(String(id))) {
+                        await db.update(collection, id, rest);
+                    } else {
+                        try {
+                            await db.create(collection, record, id);
+                        } catch (err) {
+                            if (err?.status !== 409 || !id) throw err;
+                            await db.update(collection, id, rest);
+                        }
+                        if (id) existing.add(String(id));
+                    }
+                    ok++;
+                } catch (err) {
+                    failed.push({ collection, id, error: err?.message || String(err) });
+                }
+                done++;
+                await sleepMs(IMPORT_GAP_MS);
+            }
+        }
+    } finally {
+        state.bulk = false;
+    }
+    for (const [collection] of targets) {
+        onProgress(done, total, `reloading ${collection}`);
+        await loadCollection(collection, { force: true }).catch(() => {});
+        await sleepMs(IMPORT_GAP_MS);
+    }
+    return { ok, failed };
 }

@@ -71,6 +71,7 @@ export const state = {
     member: null,
     log: [], // recent local activity
     realtimeOn: false,
+    bulk: false, // true while an import runs: realtime refetches are paused
 };
 
 const typed = new Set(); // collections the user explicitly opened
@@ -709,6 +710,7 @@ export function enableRealtimeSync({ onRemoteChange } = {}) {
         const off = db.subscribe(collection, () => {
             // Ignore our own echo: a save here already updated the cache, so
             // refetching the whole collection would re-render for nothing.
+            if (state.bulk) return;
             if (state.saving.size > 0) return;
             if (state.pending.size > 0) return;
             clearTimeout(timers.get(collection));
@@ -716,7 +718,7 @@ export function enableRealtimeSync({ onRemoteChange } = {}) {
                 collection,
                 setTimeout(async () => {
                     if (!state.loaded.has(collection)) return;
-                    if (state.saving.size > 0 || state.pending.size > 0) return;
+                    if (state.bulk || state.saving.size > 0 || state.pending.size > 0) return;
                     try {
                         await loadCollection(collection, { force: true });
                         if (onRemoteChange) onRemoteChange(collection);

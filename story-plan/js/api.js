@@ -273,20 +273,25 @@ export function normalizeDoc(doc) {
 /* ------------------------------------------------------------- transport */
 
 const RETRY_DELAYS = [600, 1600, 3600];
+/* Rate limiting (429) needs real breathing room: hammering the backend again
+   after half a second only extends the lockout. */
+const RATE_LIMIT_DELAYS = [3000, 7000, 15000, 30000];
 
 async function withRetry(fn, { attempts = 3 } = {}) {
     let lastErr;
-    for (let i = 0; i < attempts; i++) {
+    for (let i = 0; ; i++) {
         try {
             return await fn();
         } catch (err) {
             const e = friendly(err);
             lastErr = e;
-            if (!e.retryable || i === attempts - 1) throw e;
-            await new Promise((r) => setTimeout(r, RETRY_DELAYS[i] || 4000));
+            const limited = e.status === 429;
+            const max = limited ? RATE_LIMIT_DELAYS.length + 1 : attempts;
+            if (!e.retryable || i >= max - 1) throw lastErr;
+            const delay = limited ? RATE_LIMIT_DELAYS[i] : RETRY_DELAYS[i] || 4000;
+            await new Promise((r) => setTimeout(r, delay));
         }
     }
-    throw lastErr;
 }
 
 let refreshPromise = null;
