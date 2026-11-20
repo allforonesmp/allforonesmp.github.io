@@ -17,7 +17,8 @@ import {
     markTyped,
     enableRealtimeSync,
 } from "./store.js";
-import {startGate, signOut, getMember, isOwner} from "./auth.js";
+import {startGate, signOut, getMember, isOwner, isApprover} from "./auth.js";
+import { listRequests } from "./access.js";
 import * as R from "./router.js";
 import {toast, toastError, emptyState, loadingState, errorState, openModal, closeModal, confirmDialog} from "./components/ui.js";
 import {isEditorOpen, closeEditor, createAndEdit} from "./components/editor.js";
@@ -642,6 +643,25 @@ function startRealtime() {
     });
 }
 
+/* Owner only: nudge when someone is waiting for approval. */
+function watchAccessRequests() {
+    let lastSeen = -1;
+    const check = async () => {
+        if (document.hidden) return;
+        try {
+            const waiting = (await listRequests()).filter((r) => r.status === "pending").length;
+            if (waiting > 0 && waiting !== lastSeen && !location.hash.startsWith("#/settings")) {
+                toast(`${waiting} access request${waiting === 1 ? " is" : "s are"} waiting for your approval — open Settings → Access approvals.`, "info", 9000);
+            }
+            lastSeen = waiting;
+        } catch (_) {
+            /* rules not updated yet, or offline — Settings shows the details */
+        }
+    };
+    check();
+    setInterval(check, 60 * 1000);
+}
+
 async function boot() {
     initClient();
     wireShell();
@@ -650,7 +670,13 @@ async function boot() {
     setSaveIndicator("saved");
 
     await startGate(async (user) => {
-        if (bootstrapped) return;
+        if (bootstrapped) {
+            // Re-entry after an access re-check locked the workspace (e.g. a
+            // new location that has since been approved): just show it again.
+            $("app").hidden = false;
+            $("gate").hidden = true;
+            return;
+        }
         bootstrapped = true;
         $("app").hidden = false;
         $("gate").hidden = true;
@@ -687,6 +713,7 @@ async function boot() {
 
         await loadInitialData();
         R.start((route) => renderRoute(route));
+        if (isApprover()) watchAccessRequests();
     });
 }
 

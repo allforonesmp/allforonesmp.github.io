@@ -83,8 +83,8 @@
                 <div id="gateSignup" class="gate-panel" hidden>
                     <h1>Create account</h1>
                     <p class="gate-sub">
-                        New accounts stay locked until the story owner verifies the email by hand. No verification
-                        email is sent.
+                        New accounts stay locked until the story owner approves them. Each new location you sign in
+                        from also needs the owner's approval.
                     </p>
                     <form id="signupForm" class="gate-form" novalidate>
                         <label class="field">
@@ -137,20 +137,20 @@
                 </div>
 
                 <div id="gateDenied" class="gate-panel" hidden>
-                    <h1>Access pending</h1>
+                    <h1 id="deniedTitle">Waiting for approval</h1>
                     <p class="gate-sub">
                         Your account (<span id="deniedEmail">—</span>) is signed in, but this workspace is
-                        <strong>invite-only</strong>. Access is granted by hand: the operator must mark your email as
-                        verified. No verification email is sent and there is no request button.
+                        <strong>private</strong>. The owner approves every account, and every new location an account
+                        signs in from.
                     </p>
                     <p class="gate-sub" id="deniedReason"></p>
                     <p class="gate-lock" id="deniedVerifyNote" role="note" hidden></p>
                     <div class="gate-steps">
                         <p class="gate-steps-title">How to get access</p>
                         <ol>
-                            <li>Send the operator the email address shown above.</li>
-                            <li>They verify your email by hand in the backend console.</li>
-                            <li>Press <em>Check again</em> below.</li>
+                            <li>Your request has already been sent to the owner automatically.</li>
+                            <li>Let the owner know you're waiting, so they can approve you.</li>
+                            <li>Keep this page open — it lets you in as soon as you're approved.</li>
                         </ol>
                     </div>
                     <div class="gate-stack">

@@ -273,20 +273,25 @@ export function normalizeDoc(doc) {
 /* ------------------------------------------------------------- transport */
 
 const RETRY_DELAYS = [600, 1600, 3600];
+/* Rate limiting (429) needs real breathing room: hammering the backend again
+   after half a second only extends the lockout. */
+const RATE_LIMIT_DELAYS = [3000, 7000, 15000, 30000];
 
 async function withRetry(fn, { attempts = 3 } = {}) {
     let lastErr;
-    for (let i = 0; i < attempts; i++) {
+    for (let i = 0; ; i++) {
         try {
             return await fn();
         } catch (err) {
             const e = friendly(err);
             lastErr = e;
-            if (!e.retryable || i === attempts - 1) throw e;
-            await new Promise((r) => setTimeout(r, RETRY_DELAYS[i] || 4000));
+            const limited = e.status === 429;
+            const max = limited ? RATE_LIMIT_DELAYS.length + 1 : attempts;
+            if (!e.retryable || i >= max - 1) throw lastErr;
+            const delay = limited ? RATE_LIMIT_DELAYS[i] : RETRY_DELAYS[i] || 4000;
+            await new Promise((r) => setTimeout(r, delay));
         }
     }
-    throw lastErr;
 }
 
 let refreshPromise = null;
@@ -414,12 +419,52 @@ export function setDataAccess(allowed) {
 
 function assertDataAccess() {
     if (!dataUnlocked) {
-        throw new ApiError("This account's email is not verified, so workspace data is locked.", {
+        throw new ApiError("This account or location has not been approved yet, so workspace data is locked.", {
             status: 403,
             code: "email-unverified",
         });
     }
 }
+
+/* ---------------------------------------------------------- access gate */
+
+/* The sign-in gate must read and write approval requests BEFORE the workspace
+   data lock opens, so it gets its own narrow client that can only ever touch
+   the access_requests collection. Its backend rules let each user see and
+   create only their own requests; only the owner may approve. */
+export const ACCESS_COLLECTION = "access_requests";
+
+export const accessDb = {
+    async get(id) {
+        const c = getClient();
+        try {
+            const res = await guarded(() => c.collection(ACCESS_COLLECTION).getById(id));
+            return normalizeDoc(res?.document || res?.doc || res?.data || res);
+        } catch (err) {
+            if (err?.status === 404) return null;
+            throw err;
+        }
+    },
+    async create(id, data) {
+        const c = getClient();
+        const res = await guarded(() => c.collection(ACCESS_COLLECTION).create({ ...data }, id));
+        return normalizeDoc(res?.document || res?.doc || res?.data || res) || { ...data, id };
+    },
+    async list() {
+        const c = getClient();
+        const res = await guarded(() => c.collection(ACCESS_COLLECTION).get({ limit: 500, orderBy: "createdAt", order: "desc" }));
+        return unwrapList(res).map(normalizeDoc).filter(Boolean);
+    },
+    async update(id, data) {
+        const c = getClient();
+        const res = await guarded(() => c.collection(ACCESS_COLLECTION).update(id, data));
+        return normalizeDoc(res?.document || res?.doc || res?.data || res) || { ...data, id };
+    },
+    async remove(id) {
+        const c = getClient();
+        return guarded(() => c.collection(ACCESS_COLLECTION).delete(id));
+    },
+};
 
 /* -------------------------------------------------------------- collections */
 
