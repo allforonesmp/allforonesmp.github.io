@@ -6,7 +6,8 @@ import { docs, state, prefs, savePrefs, exportPayload, loadCollection, flushPend
 import { COLLECTIONS, auth, db } from "../api.js";
 import { ENTITIES } from "../schema.js";
 import { pageHead, card, badge, toast, toastError, confirmDialog, emptyState, openModal, closeModal } from "../components/ui.js";
-import { getUser, getMember, signOut } from "../auth.js";
+import { getUser, getMember, signOut, isApprover } from "../auth.js";
+import { listRequests, decide, removeRequest, approvedEmails, rulesFor, OWNER_EMAIL } from "../access.js";
 import { openWorkspaceSettings } from "./dashboard.js";
 
 export function settingsPage() {
@@ -26,9 +27,9 @@ export function settingsPage() {
                     el("div", { class: "sr-label" }, [el("strong", { text: user?.email || "—" }), el("span", { text: `Role: ${member?.role || "editor"} · Status: ${member?.status || "active"}` })]),
                     el("div", { class: "sr-control" }, [
                         el("span", {
-                            class: `badge ${user?.isVerified === true ? "success" : "muted"}`,
-                            text: user?.isVerified === true ? "Email verified" : "Email unverified",
-                            title: "Required for access. The operator sets this by hand in the backend console; this app never sends verification mail.",
+                            class: "badge success",
+                            text: isApprover() ? "Owner — approves access" : "Approved",
+                            title: "The owner approves every account and every new sign-in location.",
                         }),
                     ]),
                 ]),
@@ -48,6 +49,9 @@ export function settingsPage() {
             ],
         })
     );
+
+    /* ---------------- access approvals (owner only) ---------------- */
+    if (isApprover()) root.appendChild(approvalsCard());
 
     /* ---------------- sessions ---------------- */
     const sessionHost = el("div", {}, [el("p", { class: "field-hint", text: "Loading sessions…" })]);
@@ -90,7 +94,7 @@ export function settingsPage() {
                     el("div", { class: "session-item" }, [
                         el("div", { class: "si-main" }, [
                             el("strong", { text: s.device || s.userAgent || `Session ${i + 1}` }),
-                            el("span", { text: [s.ip, s.createdAt ? `started ${fmtDateTime(s.createdAt)}` : null, s.lastActive ? `last active ${relTime(s.lastActive)}` : null].filter(Boolean).join(" · ") || "No details provided" }),
+                            el("span", { text: [s.ipAddress || s.ip, s.createdAt ? `started ${fmtDateTime(s.createdAt)}` : null, s.lastActive ? `last active ${relTime(s.lastActive)}` : null].filter(Boolean).join(" · ") || "No details provided" }),
                         ]),
                         s.current ? badge("This device", "success") : null,
                         !s.current && id
@@ -203,7 +207,7 @@ export function settingsPage() {
                     el("div", { class: "defs" }, [
                         capability("Authentication", "Supported", "BreadBackend auth — signup, login, refresh, sessions, logout."),
                         capability("Per-collection queries", "Limited", "The SDK supports limit / orderBy only, so the app loads each collection once and filters client-side."),
-                        capability("Roles / RBAC", "Not provided", "Access is gated by operator-verified email. Require a verified email in the BreadBackend project rules — that is the real boundary."),
+                        capability("Roles / RBAC", "Not provided", "The owner approves each account and each sign-in location here in Settings. Approved emails must also be listed in the BreadBackend project rules — that is the real server-side boundary; location checks happen in the app."),
                         capability("Realtime", "SSE subscribe", "Used where the backend streams; falls back to the local cache when unavailable."),
                         capability("File uploads", "bread.files.upload", "Images and attachments are uploaded to BreadBackend and referenced by URL — never stored as base64."),
                         capability("Version history", "App-level", "Snapshots are written to the change_history collection on every save."),
@@ -227,6 +231,165 @@ function capability(name, level, detail) {
     ]);
 }
 
+/* -------------------------------------------------------- access approvals */
+
+const RULES_SEEN_KEY = "afo_storyplan_rules_emails";
+
+function approvalsCard() {
+    const host = el("div", { class: "stack sm" }, [el("p", { class: "field-hint", text: "Loading requests…" })]);
+    const refreshBtn = el("button", { class: "btn btn-ghost btn-sm", type: "button", onclick: () => load() }, [icon("refresh"), "Refresh"]);
+    let timer = null;
+
+    const fmtWho = (r) => r.email || r.uid || "(unknown account)";
+    const shortAgent = (ua) => {
+        const s = String(ua || "");
+        const browser = /Edg\//.test(s) ? "Edge" : /Chrome\//.test(s) ? "Chrome" : /Firefox\//.test(s) ? "Firefox" : /Safari\//.test(s) ? "Safari" : "";
+        const os = /Windows/.test(s) ? "Windows" : /iPhone|iPad/.test(s) ? "iOS" : /Android/.test(s) ? "Android" : /Mac OS/.test(s) ? "Mac" : /Linux/.test(s) ? "Linux" : "";
+        return [browser, os].filter(Boolean).join(" on ");
+    };
+
+    async function act(r, status) {
+        try {
+            await decide(r.id, status, getUser()?.email);
+            toast(`${r.kind === "account" ? "Account" : "Location"} ${status === "approved" ? "approved" : status === "denied" ? "refused" : "updated"}: ${fmtWho(r)}${r.ip ? ` · ${r.ip}` : ""}`, "success", 3500);
+            load();
+        } catch (err) {
+            toastError(err, "Updating access");
+        }
+    }
+
+    async function forget(r) {
+        const ok = await confirmDialog({
+            title: "Remove this request?",
+            message: "The record is deleted. If this person signs in again from there, a fresh request appears for you to approve.",
+            confirmLabel: "Remove",
+            danger: true,
+        });
+        if (!ok) return;
+        try {
+            await removeRequest(r.id);
+            load();
+        } catch (err) {
+            toastError(err, "Removing request");
+        }
+    }
+
+    function row(r) {
+        const pending = r.status === "pending";
+        const approved = r.status === "approved";
+        const detail =
+            r.kind === "account"
+                ? `New account · requested ${r.requestedAt ? relTime(r.requestedAt) : r.createdAt ? relTime(r.createdAt) : ""}`
+                : `Location ${r.ip || "?"}${shortAgent(r.userAgent) ? ` · ${shortAgent(r.userAgent)}` : ""} · ${r.requestedAt ? relTime(r.requestedAt) : ""}`;
+        return el("div", { class: "session-item" }, [
+            el("div", { class: "si-main" }, [el("strong", { text: fmtWho(r) }), el("span", { text: detail })]),
+            badge(r.kind === "account" ? "Account" : "Location", "ghost"),
+            badge(r.status || "pending", approved ? "success" : pending ? "warning" : "muted"),
+            !approved ? el("button", { class: "btn btn-primary btn-sm", type: "button", onclick: () => act(r, "approved") }, "Approve") : null,
+            pending || approved ? el("button", { class: "btn btn-ghost btn-sm", type: "button", onclick: () => act(r, "denied") }, approved ? "Revoke" : "Refuse") : null,
+            el("button", { class: "icon-btn", type: "button", title: "Remove request", "aria-label": "Remove request", onclick: () => forget(r) }, icon("trash")),
+        ]);
+    }
+
+    function rulesBlock(requests) {
+        const emails = approvedEmails(requests);
+        const json = JSON.stringify(rulesFor(emails), null, 2);
+        let seen = "";
+        try {
+            seen = localStorage.getItem(RULES_SEEN_KEY) || "";
+        } catch (_) {}
+        const changed = seen !== emails.join(",");
+        const area = el("textarea", { rows: 8, readonly: true, value: json, style: { fontFamily: "monospace", fontSize: "0.75rem", width: "100%" } });
+        return el("div", { class: "stack sm" }, [
+            el("div", { class: `notice ${changed ? "danger" : ""}` }, [
+                icon(changed ? "alert" : "check"),
+                el("div", {}, [
+                    el("strong", { text: changed ? "Backend rules need updating" : "Backend rules are up to date (on this device)" }),
+                    el("p", {
+                        style: { margin: "0.2rem 0 0" },
+                        text: changed
+                            ? "The approved accounts changed. Copy these rules, then in the BreadBackend dashboard open project allforone-story-planner → Rules, replace everything and save. Until then, newly approved people get errors loading data, and revoked people can still reach it directly through the API."
+                            : `Approved accounts in the rules: ${emails.join(", ")}`,
+                    }),
+                ]),
+            ]),
+            area,
+            el("div", { class: "row", style: { gap: "0.4rem" } }, [
+                el("button", {
+                    class: "btn btn-primary btn-sm",
+                    type: "button",
+                    onclick: async () => {
+                        try {
+                            await navigator.clipboard.writeText(json);
+                        } catch (_) {
+                            area.select();
+                            document.execCommand("copy");
+                        }
+                        toast("Rules copied — paste them into the dashboard's Rules tab.", "success", 4000);
+                    },
+                }, [icon("copy"), "Copy rules"]),
+                el("button", {
+                    class: "btn btn-ghost btn-sm",
+                    type: "button",
+                    onclick: () => {
+                        try {
+                            localStorage.setItem(RULES_SEEN_KEY, emails.join(","));
+                        } catch (_) {}
+                        load();
+                    },
+                }, "I've pasted them"),
+            ]),
+        ]);
+    }
+
+    async function load() {
+        try {
+            const requests = await listRequests();
+            host.innerHTML = "";
+            const pending = requests.filter((r) => r.status === "pending");
+            const others = requests.filter((r) => r.status !== "pending");
+            host.appendChild(el("h3", { style: { fontSize: "0.9rem", margin: "0" }, text: pending.length ? `Waiting for you (${pending.length})` : "Nothing waiting" }));
+            if (!pending.length) host.appendChild(el("p", { class: "field-hint", text: "New accounts and new sign-in locations appear here. The person's screen lets them in within about 20 seconds of you approving." }));
+            pending.forEach((r) => host.appendChild(row(r)));
+            if (others.length) {
+                host.appendChild(el("h3", { style: { fontSize: "0.9rem", margin: "0.6rem 0 0" }, text: "Decided" }));
+                others.forEach((r) => host.appendChild(row(r)));
+            }
+            host.appendChild(el("h3", { style: { fontSize: "0.9rem", margin: "0.6rem 0 0" }, text: "Backend rules" }));
+            host.appendChild(rulesBlock(requests));
+        } catch (err) {
+            host.innerHTML = "";
+            host.appendChild(
+                el("div", { class: "error-panel" }, [
+                    icon("alert"),
+                    el("div", {}, [
+                        el("strong", { text: "Couldn't load access requests" }),
+                        el("p", { text: `${err?.message || err}. If this is a 403, the backend rules haven't been updated yet — paste the rules below into the dashboard.` }),
+                    ]),
+                ])
+            );
+            host.appendChild(rulesBlock([]));
+        }
+    }
+
+    load();
+    // keep the list fresh while Settings is open
+    timer = setInterval(() => {
+        if (!host.isConnected) return clearInterval(timer);
+        if (!document.hidden) load();
+    }, 30000);
+
+    return card({
+        title: "Access approvals",
+        iconName: "lock",
+        actions: [refreshBtn],
+        body: [
+            el("p", { class: "field-hint", text: `Only you (${OWNER_EMAIL}) see this. Approve each new account once, and each new location (IP address) they sign in from.` }),
+            host,
+        ],
+    });
+}
+
 /* ---------------------------------------------------------------- members */
 
 function membersCard() {
@@ -234,11 +397,11 @@ function membersCard() {
     const body = el("div", { class: "stack sm" }, [
         el("p", {
             class: "field-hint",
-            text: "This list is read-only. Access is granted by the operator marking an account's email as verified in the backend console — no button here can let an account in.",
+            text: "Access itself is granted by the owner under Access approvals. This list only adjusts roles.",
         }),
         el("p", {
             class: "field-hint",
-            text: "Member records are optional. A verified account with no record is an editor. Add { email, role } to change a role, or { email, status: \"revoked\" } to block an account.",
+            text: "Member records are optional. An approved account with no record is an editor. Add { email, role } to change a role, or { email, status: \"revoked\" } to block an account.",
         }),
         host,
     ]);
@@ -251,7 +414,7 @@ function membersCard() {
                 emptyState({
                     iconName: "users",
                     title: "No one is listed",
-                    message: "Every verified account enters as an editor. Add member records only to give someone a different role or to block them.",
+                    message: "Every approved account enters as an editor. Add member records only to give someone a different role or to block them.",
                 })
             );
             return;

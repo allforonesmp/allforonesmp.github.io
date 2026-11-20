@@ -3,32 +3,21 @@
  * Sessions live in the BreadBackend SDK's own token storage; no password is
  * ever held by this app.
  *
- * ACCESS = A VERIFIED EMAIL. The account's email must be marked verified on
- * the backend. The operator does that by hand in the BreadBackend console.
- * This app never verifies an address itself: it makes no verification call,
- * sends no verification mail and has no "resend" button. Until the account is
- * verified the app reads and writes NOTHING and the data layer stays locked
- * (api.js setDataAccess). A missing/unknown verification state counts as
- * unverified. Verification is re-checked while the app is open, so
- * un-verifying an account locks it out.
+ * ACCESS = OWNER APPROVAL (see access.js). Email verification is not needed.
+ * The owner approves each account once, and each location (IP address) the
+ * account signs in from. Until both are approved the data layer stays locked
+ * (api.js setDataAccess) and the user sees the "waiting for approval" screen,
+ * which re-checks by itself. Approval is re-checked while the app is open, so
+ * a revoked account — or a move to a new, unapproved location — locks it.
  *
- * The `members` collection is OPTIONAL. A verified account needs no record
- * there and enters as an editor. A record matching the account's email can:
- *   - set its role:   { email, role: "owner" | "admin" | "editor" | "viewer" }
- *   - block it:       { email, status: "revoked" }  (any status other than
- *                     active/approved, or an unrecognised role, blocks)
- *
- * Unverified and blocked accounts land on the Access pending screen, which
- * offers exactly two actions: "check again" and "sign out".
- *
- * IMPORTANT LIMITATION: this is a client-side gate. BreadBackend's public
- * client key carries no per-user roles, so a determined signed-up account could
- * still call the API directly unless the project rules on the backend also
- * require a verified email. Set that in the dashboard too.
+ * The `members` collection is still OPTIONAL and only sets roles / blocks:
+ *   { email, role: "owner" | "admin" | "editor" | "viewer" }
+ *   { email, status: "revoked" }
  */
 
 import { auth, db, COLLECTIONS, onUnauthorized, setDataAccess, ApiError } from "./api.js";
 import { el, clear } from "./util.js";
+import { checkAccess, isOwnerEmail } from "./access.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -46,7 +35,12 @@ export function getMember() {
 }
 
 export function isOwner() {
-    return currentMember?.role === "owner";
+    return currentMember?.role === "owner" || isOwnerEmail(currentUser?.email);
+}
+
+/** True for the one account that approves everyone else. */
+export function isApprover() {
+    return isOwnerEmail(currentUser?.email);
 }
 
 function showPanel(name) {
@@ -90,43 +84,33 @@ function buttonBusy(btn, busy, label) {
     }
 }
 
-/* ----------------------------------------------------------- verification */
-
-/**
- * True only when the backend explicitly reports the email as verified. The
- * flag is set by the operator in the backend console; nothing in this app can
- * change it. Missing, null or non-boolean values are treated as unverified.
- */
-export function isEmailVerified(user) {
-    if (!user || typeof user !== "object") return false;
-    return [user.isVerified, user.emailVerified, user.email_verified, user.verified].some((v) => v === true);
-}
+/* ------------------------------------------------------------ access watch */
 
 /** Lock the data layer and take the workspace off screen. */
 function lockWorkspace() {
     setDataAccess(false);
     currentMember = null;
-    stopVerificationWatch();
+    stopAccessWatch();
+    stopPendingPoll();
     const app = $("app");
     if (app) app.hidden = true;
 }
 
-/* While the app is open, periodically re-ask the backend whether the account
- * is still verified, so the operator un-verifying it takes effect without a
- * reload. Network hiccups are ignored; only an explicit "not verified" locks. */
+/* While the app is open, re-check approval every couple of minutes (and when
+ * the tab comes back), so a revoked account or a new unapproved location locks
+ * the workspace without a reload. Network hiccups are ignored. */
 const RECHECK_MS = 2 * 60 * 1000;
 let recheckTimer = null;
 let rechecking = false;
 
-async function recheckVerification() {
-    if (rechecking || !currentMember || document.hidden) return;
+async function recheckAccess() {
+    if (rechecking || !currentMember || document.hidden || !currentUser) return;
     rechecking = true;
     try {
-        const fresh = await auth.me();
-        if (fresh && currentMember && !isEmailVerified(fresh)) {
-            currentUser = fresh;
+        const result = await checkAccess(currentUser);
+        if (!result.allowed && currentMember) {
             lockWorkspace();
-            showPending(fresh, "unverified");
+            showPending(currentUser, result);
         }
     } catch (_) {
         /* 401s are handled by onUnauthorized; anything else is transient */
@@ -135,16 +119,44 @@ async function recheckVerification() {
     }
 }
 
-function startVerificationWatch() {
-    stopVerificationWatch();
-    recheckTimer = setInterval(recheckVerification, RECHECK_MS);
-    document.addEventListener("visibilitychange", recheckVerification);
+function startAccessWatch() {
+    stopAccessWatch();
+    recheckTimer = setInterval(recheckAccess, RECHECK_MS);
+    document.addEventListener("visibilitychange", recheckAccess);
 }
 
-function stopVerificationWatch() {
+function stopAccessWatch() {
     if (recheckTimer) clearInterval(recheckTimer);
     recheckTimer = null;
-    document.removeEventListener("visibilitychange", recheckVerification);
+    document.removeEventListener("visibilitychange", recheckAccess);
+}
+
+/* On the waiting screen, quietly check every 20 s so the user gets in as soon
+ * as the owner approves — no need to keep pressing "Check again". */
+const PENDING_POLL_MS = 20 * 1000;
+let pendingTimer = null;
+
+function startPendingPoll() {
+    stopPendingPoll();
+    pendingTimer = setInterval(async () => {
+        if (document.hidden || !currentUser) return;
+        try {
+            const result = await checkAccess(currentUser);
+            if (result.allowed) {
+                stopPendingPoll();
+                await gateOnUser(currentUser);
+            } else {
+                showPending(currentUser, result);
+            }
+        } catch (_) {
+            /* keep waiting */
+        }
+    }, PENDING_POLL_MS);
+}
+
+function stopPendingPoll() {
+    if (pendingTimer) clearInterval(pendingTimer);
+    pendingTimer = null;
 }
 
 /* ------------------------------------------------------------- membership */
@@ -160,19 +172,19 @@ function normaliseEmail(value) {
     return String(value || "").trim().toLowerCase();
 }
 
-/** Role given to a verified account that has no members record. */
+/** Role given to an approved account that has no members record. */
 const DEFAULT_ROLE = "editor";
 
 /**
- * Work out the role of a verified account, and whether the operator has
+ * Work out the role of an approved account, and whether the operator has
  * blocked it. The members collection is optional: no record (or an unreadable
- * collection) means "verified, default role".
+ * collection) means "approved, default role".
  *
  * Returns { allowed: boolean, member, reason } with reason allowed | not-approved.
  */
 async function resolveMembership(user) {
     const email = normaliseEmail(user.email);
-    const fallback = { email: user.email || "", role: DEFAULT_ROLE, status: "active", implicit: true };
+    const fallback = { email: user.email || "", role: isOwnerEmail(user.email) ? "owner" : DEFAULT_ROLE, status: "active", implicit: true };
     let members = [];
     try {
         members = await db.list(COLLECTIONS.members, { limit: 500 });
@@ -198,7 +210,8 @@ async function enterApp(user, member) {
     currentUser = user;
     currentMember = member;
     $("gate").hidden = true;
-    startVerificationWatch();
+    stopPendingPoll();
+    startAccessWatch();
     if (onReady) await onReady(user, member);
 }
 
@@ -211,47 +224,60 @@ async function afterLogin(user) {
 }
 
 /**
- * Render the pending screen. Used for every refusal — unverified email or a
- * blocked members record. No path from here into the app.
+ * Render the waiting / refused screen. `info` is either a checkAccess() result
+ * ({ stage, status, ip }) or a string reason ("not-approved", "list-unavailable").
  */
-function showPending(user, reason) {
+function showPending(user, info) {
     const emailNode = $("deniedEmail");
     if (emailNode) emailNode.textContent = user?.email || "—";
 
+    const reason = typeof info === "string" ? info : info?.stage === "location" ? `location-${info.status}` : `account-${info?.status || "pending"}`;
+    const title = $("deniedTitle");
+    if (title) title.textContent = reason.endsWith("denied") || reason === "not-approved" ? "Access refused" : "Waiting for approval";
+
+    const messages = {
+        "account-pending": "Your account is waiting for the owner to approve it. This page checks again by itself every 20 seconds — you can leave it open.",
+        "account-denied": "The owner has refused access for this account.",
+        "location-pending": `Your account is approved, but you're signing in from a new location (${info?.ip || "unknown IP"}). The owner needs to approve this location first. This page checks again by itself every 20 seconds.`,
+        "location-denied": `The owner has refused access from this location (${info?.ip || "unknown IP"}).`,
+        "not-approved": "The owner has blocked this account in the members list.",
+        "list-unavailable": "The backend could not be reached to confirm your access, so it is refused for safety. Try again.",
+    };
     const reasonNode = $("deniedReason");
-    if (reasonNode) {
-        reasonNode.textContent =
-            reason === "unverified"
-                ? "This account's email has not been verified by the operator. Until it is, nothing in this workspace can be read or changed."
-                : reason === "not-approved"
-                ? "Your email is verified, but the operator has blocked this account in the members list."
-                : reason === "list-unavailable"
-                  ? "The backend could not be reached to confirm your access, so it is refused for safety. Try again."
-                  : "Your account is not on this workspace's access list.";
-    }
+    if (reasonNode) reasonNode.textContent = messages[reason] || "This account is not approved for this workspace.";
 
     const noteNode = $("deniedVerifyNote");
     if (noteNode) {
-        noteNode.hidden = reason !== "unverified";
-        noteNode.textContent =
-            reason === "unverified"
-                ? "Verification is done by the operator, by hand. No email will be sent to you and there is nothing to click — send them the address above and wait."
-                : "";
+        noteNode.hidden = true;
+        noteNode.textContent = "";
     }
 
     showPanel("Denied");
+    if (reason.endsWith("pending")) startPendingPoll();
+    else stopPendingPoll();
 }
 
 /**
- * The single entry decision. Email verification comes first: an unverified
- * account is refused before any collection is touched and the data layer stays
- * locked. A verified account is in, unless a `members` record blocks it.
+ * The single entry decision. Owner approval (account, then location) comes
+ * first: until both are approved, no workspace collection is touched and the
+ * data layer stays locked. An approved account is in, unless a `members`
+ * record blocks it.
  */
 async function gateOnUser(user) {
     showPanel("Booting");
-    if (!isEmailVerified(user)) {
+    let access;
+    try {
+        access = await checkAccess(user);
+    } catch (err) {
+        if (err?.status === 401) throw err;
+        console.warn("[story-plan] access check failed", err?.message || err);
         lockWorkspace();
-        showPending(user, "unverified");
+        showPending(user, "list-unavailable");
+        return;
+    }
+    if (!access.allowed) {
+        lockWorkspace();
+        showPending(user, access);
         return;
     }
     setDataAccess(true);
@@ -259,11 +285,6 @@ async function gateOnUser(user) {
     try {
         resolved = await resolveMembership(user);
     } catch (err) {
-        lockWorkspace();
-        showPending(user, "list-unavailable");
-        return;
-    }
-    if (resolved.reason === "list-unavailable") {
         lockWorkspace();
         showPending(user, "list-unavailable");
         return;
@@ -379,7 +400,7 @@ function wire() {
             showPanel("Login");
             setError(
                 "loginError",
-                "Account created. Sign in — the operator must verify your email by hand before the workspace opens."
+                "Account created. Sign in — the owner has to approve your account before the workspace opens."
             );
         } catch (err) {
             setError("signupError", errorText(err));

@@ -419,12 +419,52 @@ export function setDataAccess(allowed) {
 
 function assertDataAccess() {
     if (!dataUnlocked) {
-        throw new ApiError("This account's email is not verified, so workspace data is locked.", {
+        throw new ApiError("This account or location has not been approved yet, so workspace data is locked.", {
             status: 403,
             code: "email-unverified",
         });
     }
 }
+
+/* ---------------------------------------------------------- access gate */
+
+/* The sign-in gate must read and write approval requests BEFORE the workspace
+   data lock opens, so it gets its own narrow client that can only ever touch
+   the access_requests collection. Its backend rules let each user see and
+   create only their own requests; only the owner may approve. */
+export const ACCESS_COLLECTION = "access_requests";
+
+export const accessDb = {
+    async get(id) {
+        const c = getClient();
+        try {
+            const res = await guarded(() => c.collection(ACCESS_COLLECTION).getById(id));
+            return normalizeDoc(res?.document || res?.doc || res?.data || res);
+        } catch (err) {
+            if (err?.status === 404) return null;
+            throw err;
+        }
+    },
+    async create(id, data) {
+        const c = getClient();
+        const res = await guarded(() => c.collection(ACCESS_COLLECTION).create({ ...data }, id));
+        return normalizeDoc(res?.document || res?.doc || res?.data || res) || { ...data, id };
+    },
+    async list() {
+        const c = getClient();
+        const res = await guarded(() => c.collection(ACCESS_COLLECTION).get({ limit: 500, orderBy: "createdAt", order: "desc" }));
+        return unwrapList(res).map(normalizeDoc).filter(Boolean);
+    },
+    async update(id, data) {
+        const c = getClient();
+        const res = await guarded(() => c.collection(ACCESS_COLLECTION).update(id, data));
+        return normalizeDoc(res?.document || res?.doc || res?.data || res) || { ...data, id };
+    },
+    async remove(id) {
+        const c = getClient();
+        return guarded(() => c.collection(ACCESS_COLLECTION).delete(id));
+    },
+};
 
 /* -------------------------------------------------------------- collections */
 
