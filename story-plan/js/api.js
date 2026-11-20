@@ -86,7 +86,12 @@ function FallbackBreadClient({ baseUrl, projectSlug, apiKey }) {
             if (res.token) self._setTokens(res.token, res.refreshToken);
             return res;
         },
-        logout: () => {
+        logout: async () => {
+            try {
+                await request("POST", "/auth/logout");
+            } catch (_) {
+                /* clearing local tokens is what matters */
+            }
             self.token = null;
             self.refreshToken = null;
             localStorage.removeItem(`bread_auth_${projectSlug}`);
@@ -119,7 +124,7 @@ function FallbackBreadClient({ baseUrl, projectSlug, apiKey }) {
             fd.append("file", file);
             const headers = { "x-api-key": self.apiKey };
             if (self.token) headers.Authorization = `Bearer ${self.token}`;
-            const res = await fetch(`${self.baseUrl}/api/v1/${self.projectSlug}/files/upload`, {
+            const res = await fetch(`${self.baseUrl}/api/v1/${self.projectSlug}/upload`, {
                 method: "POST",
                 headers,
                 body: fd,
@@ -129,7 +134,7 @@ function FallbackBreadClient({ baseUrl, projectSlug, apiKey }) {
             return data;
         },
     };
-    this.analytics = { logEvent: (name, props) => request("POST", "/analytics/events", { name, props }) };
+    this.analytics = { logEvent: (event, params) => request("POST", "/analytics/event", { event, params }) };
 }
 
 /* ------------------------------------------------------------------ client */

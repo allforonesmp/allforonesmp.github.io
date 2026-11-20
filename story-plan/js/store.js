@@ -682,20 +682,11 @@ export function resetStore() {
 
 /* ------------------------------------------------------------- realtime */
 
-const REALTIME_COLLECTIONS = [
-    "events",
-    "characters",
-    "lore",
-    "factions",
-    "locations",
-    "story_arcs",
-    "story_threads",
-    "chapters",
-    "seasons",
-    "notes",
-    "character_relationships",
-    "faction_relationships",
-];
+/* BreadBackend allows 20 realtime streams per IP address, and each collection
+   is its own stream. Everyone on the same network (and every open tab) shares
+   that budget, so only the most-edited collections stream live; the rest
+   refresh on navigation/reload. 5 streams per tab = 4 tabs on one network. */
+const REALTIME_COLLECTIONS = ["events", "characters", "lore", "story_arcs", "story_threads"];
 
 /**
  * Subscribe to every entity collection. Falls back silently when the backend

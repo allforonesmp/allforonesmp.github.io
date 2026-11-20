@@ -73,18 +73,22 @@ export async function checkAccess(user) {
     const email = user.email || "";
 
     const account = await readOrRequest(accountId(uid), { kind: "account", uid, email });
-    if (account.status !== "approved") {
-        return { allowed: false, stage: "account", status: account.status || "pending", ip: "" };
-    }
-
     const ip = await currentIp();
-    const location = await readOrRequest(locationId(uid, ip), {
+    const locationData = {
         kind: "location",
         uid,
         email,
         ip,
         userAgent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : "",
-    });
+    };
+    if (account.status !== "approved") {
+        // File the location request now too, so the owner can approve the
+        // account and where it's signing in from in one go.
+        if (account.status === "pending") await readOrRequest(locationId(uid, ip), locationData).catch(() => {});
+        return { allowed: false, stage: "account", status: account.status || "pending", ip };
+    }
+
+    const location = await readOrRequest(locationId(uid, ip), locationData);
     if (location.status !== "approved") {
         return { allowed: false, stage: "location", status: location.status || "pending", ip };
     }
